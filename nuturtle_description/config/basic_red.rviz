@@ -58,7 +58,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_description
+        Value: /red/robot_description
       Enabled: true
       Links:
         All Links Enabled: true
@@ -103,14 +103,14 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: RobotModel
-      TF Prefix: ""
+      TF Prefix: red
       Update Interval: 0
       Value: true
       Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_link
+    Fixed Frame: red/base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -153,7 +153,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.977055311203003
+      Distance: 0.6626291871070862
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -168,10 +168,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3753983974456787
+      Pitch: 0.5203985571861267
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.5903981924057007
+      Yaw: 2.3754043579101562
     Saved: ~
 Window Geometry:
   Displays:
