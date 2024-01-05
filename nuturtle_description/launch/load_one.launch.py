@@ -3,7 +3,9 @@ from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, Shutdown
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution
-from launch_ros.substitutions import ExecutableInPackage, FindPackageShare
+from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
+
+package_name = "nuturtle_description"
 
 
 def generate_launch_description():
@@ -24,6 +26,16 @@ def generate_launch_description():
                 executable="rviz2",
                 name="rviz2",
                 condition=IfCondition(LaunchConfiguration("use_rviz")),
+                arguments=[
+                    "-d",
+                    PathJoinSubstitution(
+                        [
+                            FindPackageShare(package=package_name),
+                            "config",
+                            "basic_turple.rviz",
+                        ]
+                    ),
+                ],
             ),
             Node(
                 package="joint_state_publisher",
@@ -39,12 +51,13 @@ def generate_launch_description():
                     {
                         "robot_description": Command(
                             [
-                                "cat ",
+                                ExecutableInPackage("xacro", "xacro"),
+                                " ",
                                 PathJoinSubstitution(
                                     [
-                                        FindPackageShare("turtlebot3_gazebo"),
+                                        FindPackageShare(package=package_name),
                                         "urdf",
-                                        "turtlebot3_burger.urdf",
+                                        "turtlebot3_burger.urdf.xacro",
                                     ]
                                 ),
                             ]
