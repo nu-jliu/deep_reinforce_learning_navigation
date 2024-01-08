@@ -20,28 +20,40 @@
         <arg name="use_rviz" value="false" />
     </include>
 
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="static_tranform_publisher"
+    <node
+        pkg="tf2_ros"
+        exec="static_transform_publisher"
+        name="static_tranform_publisher"
         args="--frame-id nusim/world 
               --child-frame-id red/base_footprint
               --x 0.3
               --y 0.0
               --z 0.0" />
 
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="static_tranform_publisher"
+    <node
+        pkg="tf2_ros"
+        exec="static_transform_publisher"
+        name="static_tranform_publisher"
         args="--frame-id nusim/world 
              --child-frame-id green/base_footprint
              --x 0.0
              --y 0.6
              --z 0.0" />
 
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="static_tranform_publisher"
+    <node
+        pkg="tf2_ros"
+        exec="static_transform_publisher"
+        name="static_tranform_publisher"
         args="--frame-id nusim/world 
               --child-frame-id blue/base_footprint
               --x -0.71
               --y 0.0
               --z 0.0" />
 
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="static_tranform_publisher"
+    <node
+        pkg="tf2_ros"
+        exec="static_transform_publisher"
+        name="static_tranform_publisher"
         args="--frame-id nusim/world 
               --child-frame-id purple/base_footprint
               --x 0.0
