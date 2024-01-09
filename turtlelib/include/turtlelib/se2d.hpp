@@ -38,6 +38,10 @@ namespace turtlelib
     /// \brief a rigid body transformation in 2 dimensions
     class Transform2D
     {
+    private:
+        struct Twist2D __twist;
+        double __trans_matrix[3][3];
+
     public:
         /// \brief Create an identity transformation
         Transform2D();
@@ -84,7 +88,6 @@ namespace turtlelib
         /// \brief the translational component of the transform
         /// \return the x,y translation
         Vector2D translation() const;
-
         /// \brief get the angular displacement of the transform
         /// \return the angular displacement, in radians
         double rotation() const;

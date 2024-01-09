@@ -1,4 +1,4 @@
-#include "geometry2d.hpp"
+#include "turtlelib/geometry2d.hpp"
 #include <iostream>
 #include <string>
 #include <iomanip>
@@ -49,11 +49,10 @@ namespace turtlelib
 
     Vector2D operator-(const Point2D &head, const Point2D &tail)
     {
-        struct Vector2D *result = (struct Vector2D *)malloc(sizeof(struct Vector2D));
-        result->x = head.x - tail.x;
-        result->y = head.y - tail.y;
+        double result_x = head.x - tail.x;
+        double result_y = head.y - tail.y;
 
-        return *result;
+        return {result_x, result_y};
     }
 
     Point2D operator+(const Point2D &head, const Vector2D &disp)
