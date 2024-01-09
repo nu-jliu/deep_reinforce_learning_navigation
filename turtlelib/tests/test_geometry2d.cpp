@@ -46,14 +46,14 @@ TEST_CASE("Point2D stream", "[point2d]")
     test.x = 1.2;
     test.y = 2.5;
     std::stringstream ss;
-    turtlelib::operator<<(ss, test);
+    ss << test;
     REQUIRE(ss.str() == "[1.2 2.5]");
 
     struct Point2D test2;
     test2.x = 1.0;
     test2.y = 2.0;
     std::stringstream ss2;
-    turtlelib::operator<<(ss2, test2);
+    ss2 << test2;
     REQUIRE(ss2.str() == "[1 2]");
 }
 
@@ -64,8 +64,9 @@ TEST_CASE("Point2D read", "[point2d]")
     sample.x = 1.2;
     sample.y = 2.5;
     std::stringstream ss;
-    turtlelib::operator<<(ss, sample);
-    turtlelib::operator>>(ss, test);
+
+    ss << sample;
+    ss >> test;
     REQUIRE_THAT(test.x, WithinRel(1.2, tolerance));
     REQUIRE_THAT(test.y, WithinRel(2.5, tolerance));
 }
@@ -83,9 +84,9 @@ TEST_CASE("Point subs", "[vector]")
     p3.x = -1.3;
     p3.y = -2.4;
 
-    struct Vector2D v12 = turtlelib::operator-(p2, p1);
-    struct Vector2D v23 = turtlelib::operator-(p3, p2);
-    struct Vector2D v13 = turtlelib::operator-(p3, p1);
+    struct Vector2D v12 = p2 - p1;
+    struct Vector2D v23 = p3 - p2;
+    struct Vector2D v13 = p3 - p1;
 
     REQUIRE_THAT(v12.x, WithinRel(3.3, tolerance));
     REQUIRE_THAT(v12.y, WithinRel(3.2, tolerance));
@@ -113,9 +114,9 @@ TEST_CASE("Point adds", "[vector]")
     v3.x = -2.2;
     v3.y = -5.6;
 
-    struct Point2D p1 = turtlelib::operator+(p, v1);
-    struct Point2D p2 = turtlelib::operator+(p, v2);
-    struct Point2D p3 = turtlelib::operator+(p, v3);
+    struct Point2D p1 = p + v1;
+    struct Point2D p2 = p + v2;
+    struct Point2D p3 = p + v3;
 
     REQUIRE_THAT(p1.x, WithinRel(2.4, tolerance));
     REQUIRE_THAT(p1.y, WithinRel(1.0, tolerance));
@@ -131,14 +132,14 @@ TEST_CASE("Vector2D stream", "[vector2d]")
     test.x = 1.2;
     test.y = 2.5;
     std::stringstream ss;
-    turtlelib::operator<<(ss, test);
+    ss << test;
     REQUIRE(ss.str() == "[1.2 2.5]");
 
     struct Vector2D test2;
     test2.x = 1.0;
     test2.y = 2.0;
     std::stringstream ss2;
-    turtlelib::operator<<(ss2, test2);
+    ss2 << test2;
     REQUIRE(ss2.str() == "[1 2]");
 }
 
@@ -149,8 +150,9 @@ TEST_CASE("Vector2D read", "[vector2d]")
     sample.x = 1.2;
     sample.y = 2.5;
     std::stringstream ss;
-    turtlelib::operator<<(ss, sample);
-    turtlelib::operator>>(ss, test);
+
+    ss << sample;
+    ss >> test;
     REQUIRE_THAT(test.x, WithinRel(1.2, tolerance));
     REQUIRE_THAT(test.y, WithinRel(2.5, tolerance));
 }
