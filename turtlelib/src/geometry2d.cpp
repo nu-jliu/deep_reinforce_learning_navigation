@@ -26,12 +26,20 @@ namespace turtlelib
 
     std::istream &operator>>(std::istream &is, Point2D &p)
     {
-        std::string data_str;
+        std::string x_str;
+        std::string y_str;
 
-        is >> data_str;
-        std::string x_str = data_str.substr(1, data_str.length() - 1);
-        is >> data_str;
-        std::string y_str = data_str.substr(0, data_str.length() - 1);
+        char first = is.peek();
+        bool has_brk = (first == '[');
+
+        is >> x_str;
+        is >> y_str;
+
+        if (has_brk)
+        {
+            x_str = x_str.substr(1, x_str.length() - 1);
+            y_str = y_str.substr(0, y_str.length() - 1);
+        }
 
         p.x = stod(x_str);
         p.y = stod(y_str);
@@ -66,12 +74,20 @@ namespace turtlelib
 
     std::istream &operator>>(std::istream &is, Vector2D &v)
     {
-        std::string data_str;
+        std::string x_str;
+        std::string y_str;
 
-        is >> data_str;
-        std::string x_str = data_str.substr(1, data_str.length() - 1);
-        is >> data_str;
-        std::string y_str = data_str.substr(0, data_str.length() - 1);
+        char first = is.peek();
+        bool has_brk = (first == '[');
+
+        is >> x_str;
+        is >> y_str;
+
+        if (has_brk)
+        {
+            x_str = x_str.substr(1, x_str.length() - 1);
+            y_str = y_str.substr(0, y_str.length() - 1);
+        }
 
         v.x = stod(x_str);
         v.y = stod(y_str);
