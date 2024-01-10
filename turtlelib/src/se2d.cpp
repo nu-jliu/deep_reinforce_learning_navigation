@@ -37,101 +37,92 @@ namespace turtlelib
         return is;
     }
 
-    inline Transform2D::Transform2D()
+    Transform2D::Transform2D()
     {
         __twist.omega = 0.0;
         __twist.x = 0.0;
         __twist.y = 0.0;
     }
 
-    inline Transform2D::Transform2D(Vector2D trans)
+    Transform2D::Transform2D(Vector2D trans)
     {
         __twist.omega = 0.0;
         __twist.x = trans.x;
         __twist.y = trans.y;
     }
 
-    inline Transform2D::Transform2D(double radians)
+    Transform2D::Transform2D(double radians)
     {
         __twist.omega = radians;
         __twist.x = 0.0;
         __twist.y = 0.0;
     }
 
-    inline Transform2D::Transform2D(Vector2D trans, double radians)
+    Transform2D::Transform2D(Vector2D trans, double radians)
     {
         __twist.omega = radians;
         __twist.x = trans.x;
         __twist.y = trans.y;
     }
 
-    inline Point2D Transform2D::operator()(Point2D p) const
+    Point2D Transform2D::operator()(Point2D p) const
     {
-        double matrix[3][3];
-        matrix[0][0] = cos(__twist.omega);
-        matrix[0][1] = -sin(__twist.omega);
-        matrix[1][0] = sin(__twist.omega);
-        matrix[1][1] = cos(__twist.omega);
+        double c = cos(__twist.omega);
+        double s = sin(__twist.omega);
+        double x = __twist.x;
+        double y = __twist.y;
 
-        matrix[0][2] = __twist.x;
-        matrix[1][2] = __twist.y;
-        matrix[2][2] = 1.0;
+        double result_x = c * p.x - s * p.y + x;
+        double result_y = s * p.x + c * p.y + y;
 
-        struct Point2D *result = (struct Point2D *)malloc(sizeof(struct Point2D));
-
-        result->x = matrix[0][0] * p.x + matrix[0][1] * p.y + matrix[0][2];
-        result->y = matrix[1][0] * p.x + matrix[1][1] * p.y + matrix[1][2];
-
-        return *result;
+        return {result_x, result_y};
     }
 
-    inline Vector2D Transform2D::operator()(Vector2D v) const
+    Vector2D Transform2D::operator()(Vector2D v) const
     {
-        struct Vector2D *result = (struct Vector2D *)malloc(sizeof(struct Vector2D));
+        double c = cos(__twist.omega);
+        double s = sin(__twist.omega);
+        double x = __twist.x;
+        double y = __twist.y;
 
-        result->x = __trans_matrix[0][0] * v.x + __trans_matrix[0][1] * v.y + __trans_matrix[0][2];
-        result->y = __trans_matrix[1][0] * v.x + __trans_matrix[1][1] * v.y + __trans_matrix[1][2];
+        double result_x = c * v.x - s * v.y + x;
+        double result_y = s * v.x + c * v.y + y;
 
-        return *result;
+        return {result_x, result_y};
     }
 
-    inline Twist2D Transform2D::operator()(Twist2D v) const
+    Twist2D Transform2D::operator()(Twist2D v) const
     {
-        struct Twist2D *result = (struct Twist2D *)malloc(sizeof(struct Twist2D));
+        double c = cos(__twist.omega);
+        double s = sin(__twist.omega);
+        double x = __twist.x;
+        double y = __twist.y;
 
         double angle = v.omega;
 
-        double cos_omg = __trans_matrix[0][0] * cos(angle) + __trans_matrix[0][1] * sin(angle);
-        double tw_x = __trans_matrix[0][0] * v.x + __trans_matrix[0][1] * v.y + __trans_matrix[0][2];
-        double tw_y = __trans_matrix[1][0] * v.x + __trans_matrix[1][1] * v.y + __trans_matrix[1][2];
+        double cos_omg = c * cos(angle) - s * sin(angle);
+        double sin_omg = s * cos(angle) + c * sin(angle);
+        double tw_omega = atan2(sin_omg, cos_omg);
+        double tw_x = c * v.x - s * v.y + x;
+        double tw_y = s * v.x + c * v.y + y;
 
-        result->omega = acos(cos_omg);
-        result->x = tw_x;
-        result->y = tw_y;
-
-        return *result;
+        return {tw_omega, tw_x, tw_y};
     }
 
-    inline Transform2D Transform2D::inv() const
+    Transform2D Transform2D::inv() const
     {
-        double new_tran[3][3];
+        double c = cos(__twist.omega);
+        double s = sin(__twist.omega);
+        double x = __twist.x;
+        double y = __twist.y;
 
-        new_tran[0][0] = __trans_matrix[0][0];
-        new_tran[0][1] = __trans_matrix[1][0];
-        new_tran[1][0] = __trans_matrix[0][1];
-        new_tran[1][1] = __trans_matrix[1][1];
+        double inv_cos = c;
+        double inv_sin = -s;
+        double inv_x = -(inv_cos * x - inv_sin * y);
+        double inv_y = -(inv_sin * x + inv_cos * y);
 
-        new_tran[0][2] = -(__trans_matrix[0][0] * __trans_matrix[0][2] + __trans_matrix[0][1] * __trans_matrix[1][2]);
-        new_tran[1][2] = -(__trans_matrix[1][0] * __trans_matrix[0][2] + __trans_matrix[1][1] * __trans_matrix[1][2]);
-
-        new_tran[2][0] = 0.0;
-        new_tran[2][1] = 0.0;
-        new_tran[2][2] = 1.0;
-
-        double radian = atan2(new_tran[0][0], new_tran[1][0]);
-        struct Vector2D v;
-        v.x = new_tran[0][2];
-        v.y = new_tran[1][2];
+        double radian = atan2(inv_sin, inv_cos);
+        Vector2D v = {inv_x, inv_y};
 
         return Transform2D(v, radian);
     }
@@ -162,12 +153,12 @@ namespace turtlelib
         return *this;
     }
 
-    inline Vector2D Transform2D::translation() const
+    Vector2D Transform2D::translation() const
     {
         return {__twist.x, __twist.y};
     }
 
-    inline double Transform2D::rotation() const
+    double Transform2D::rotation() const
     {
         return __twist.omega;
     }

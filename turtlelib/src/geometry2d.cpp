@@ -57,11 +57,10 @@ namespace turtlelib
 
     Point2D operator+(const Point2D &head, const Vector2D &disp)
     {
-        struct Point2D *result = (struct Point2D *)malloc(sizeof(struct Point2D));
-        result->x = head.x + disp.x;
-        result->y = head.y + disp.y;
+        double result_x = head.x + disp.x;
+        double result_y = head.y + disp.y;
 
-        return *result;
+        return {result_x, result_y};
     }
 
     std::ostream &operator<<(std::ostream &os, const Vector2D &v)

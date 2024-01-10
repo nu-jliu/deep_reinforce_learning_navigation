@@ -146,9 +146,7 @@ TEST_CASE("Vector2D stream", "[vector2d]")
 TEST_CASE("Vector2D read", "[vector2d]")
 {
     struct Vector2D test;
-    struct Vector2D sample;
-    sample.x = 1.2;
-    sample.y = 2.5;
+    struct Vector2D sample = {1.2, 2.5};
     std::stringstream ss;
 
     ss << sample;

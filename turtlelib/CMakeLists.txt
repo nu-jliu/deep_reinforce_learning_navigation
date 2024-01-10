@@ -120,6 +120,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_se2d ${PROJECT_NAME} Catch2::Catch2WithMain)
 
     # register the test with CTest, telling it what executable to run
-    add_test(NAME ${PROJECT_NAME} COMMAND test_geometry2d test_se2d)
+    add_test(NAME geometry2d COMMAND test_geometry2d)
+    add_test(NAME se2d COMMAND test_se2d)
     # add_test(NAME ${PROJECT_NAME} COMMAND test_se2d)
 endif()
