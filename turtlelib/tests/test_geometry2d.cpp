@@ -6,7 +6,7 @@ using namespace Catch::Matchers;
 
 double tolerance = 1e-12;
 
-TEST_CASE("Almost Equal", "[almost_equal]")
+TEST_CASE("Almost Equal", "[almost_equal]") // Allen Liu
 {
     REQUIRE(almost_equal(2.0, 2.0 + 1e-15));
     REQUIRE(almost_equal(-5.3, -5.3 - 1e-13));
@@ -14,7 +14,7 @@ TEST_CASE("Almost Equal", "[almost_equal]")
     REQUIRE_FALSE(almost_equal(1.2, 1.2 + 1e-5));
 }
 
-TEST_CASE("Degree to radian", "[deg2rad]")
+TEST_CASE("Degree to radian", "[deg2rad]") // Allen Liu
 {
     REQUIRE_THAT(deg2rad(360), WithinRel(2.0 * turtlelib::PI, tolerance));
     REQUIRE_THAT(deg2rad(180), WithinRel(turtlelib::PI, tolerance));
@@ -23,14 +23,14 @@ TEST_CASE("Degree to radian", "[deg2rad]")
     REQUIRE_THAT(deg2rad(45), WithinRel(turtlelib::PI / 4.0, tolerance));
 }
 
-TEST_CASE("Radian to degree", "[rad2deg]")
+TEST_CASE("Radian to degree", "[rad2deg]") // Allen Liu
 {
     REQUIRE_THAT(rad2deg(PI), WithinRel(180.0, tolerance));
     REQUIRE_THAT(rad2deg(PI / 2.0), WithinRel(90.0, tolerance));
     REQUIRE_THAT(rad2deg(PI * 2.0), WithinRel(360.0, tolerance));
 }
 
-TEST_CASE("Normalize angle", "[normalize_angle]")
+TEST_CASE("Normalize angle", "[normalize_angle]") // Allen Liu
 {
     REQUIRE_THAT(normalize_angle(PI), WithinRel(PI, tolerance));
     REQUIRE_THAT(normalize_angle(-PI), WithinRel(PI, tolerance));
@@ -40,7 +40,7 @@ TEST_CASE("Normalize angle", "[normalize_angle]")
     REQUIRE_THAT(normalize_angle(-5.0 * PI / 2.0), WithinRel(-PI / 2.0, tolerance));
 }
 
-TEST_CASE("Point2D stream", "[point2d]")
+TEST_CASE("Point2D stream", "[point2d]") // Allen Liu
 {
     struct Point2D test;
     test.x = 1.2;
@@ -57,7 +57,7 @@ TEST_CASE("Point2D stream", "[point2d]")
     REQUIRE(ss2.str() == "[1 2]");
 }
 
-TEST_CASE("Point2D read", "[point2d]")
+TEST_CASE("Point2D read", "[point2d]") // Allen Liu
 {
     struct Point2D test;
     struct Point2D sample;
@@ -71,7 +71,7 @@ TEST_CASE("Point2D read", "[point2d]")
     REQUIRE_THAT(test.y, WithinRel(2.5, tolerance));
 }
 
-TEST_CASE("Point subs", "[vector]")
+TEST_CASE("Point subs", "[vector]") // Allen Liu
 {
     struct Point2D p1;
     struct Point2D p2;
@@ -96,7 +96,7 @@ TEST_CASE("Point subs", "[vector]")
     REQUIRE_THAT(v13.y, WithinRel(-4.8, tolerance));
 }
 
-TEST_CASE("Point adds", "[vector]")
+TEST_CASE("Point adds", "[vector]") // Allen Liu
 {
     struct Point2D p;
 
@@ -126,7 +126,7 @@ TEST_CASE("Point adds", "[vector]")
     REQUIRE_THAT(p3.y, WithinRel(-2.2, tolerance));
 }
 
-TEST_CASE("Vector2D stream", "[vector2d]")
+TEST_CASE("Vector2D stream", "[vector2d]") // Allen Liu
 {
     struct Vector2D test;
     test.x = 1.2;
@@ -143,7 +143,7 @@ TEST_CASE("Vector2D stream", "[vector2d]")
     REQUIRE(ss2.str() == "[1 2]");
 }
 
-TEST_CASE("Vector2D read", "[vector2d]")
+TEST_CASE("Vector2D read", "[vector2d]") // Allen Liu
 {
     struct Vector2D test;
     struct Vector2D sample = {1.2, 2.5};

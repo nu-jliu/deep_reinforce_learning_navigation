@@ -127,7 +127,7 @@ namespace turtlelib
         return Transform2D(v, radian);
     }
 
-    inline Transform2D &Transform2D::operator*=(const Transform2D &rhs)
+    Transform2D &Transform2D::operator*=(const Transform2D &rhs)
     {
         double c1 = cos(__twist.omega);
         double s1 = sin(__twist.omega);
@@ -141,7 +141,7 @@ namespace turtlelib
 
         double cos_omg = c1 * c2 - s1 * s2;
         double sin_omg = s1 * c2 + c1 * s2;
-        double omega = atan2(cos_omg, sin_omg);
+        double omega = atan2(sin_omg, cos_omg);
 
         double x = c1 * x2 - s1 * y2 + x1;
         double y = s1 * x2 + c1 * y2 + y1;
