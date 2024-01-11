@@ -1,10 +1,18 @@
 #include "turtlelib/geometry2d.hpp"
 #include <catch2/catch_all.hpp>
 
+#define TOLERANCE 1e-12
+// double TOLERANCE;
+
 using namespace turtlelib;
 using namespace Catch::Matchers;
 
-double tolerance = 1e-12;
+// #ifdef TOLERANCE_DEFINE_GUARD
+// #define TOLERANCE_DEFINE_GUARD
+
+// TOLERANCE = 1e-12;
+
+// #endif
 
 TEST_CASE("Almost Equal", "[almost_equal]") // Allen Liu
 {
@@ -16,28 +24,28 @@ TEST_CASE("Almost Equal", "[almost_equal]") // Allen Liu
 
 TEST_CASE("Degree to radian", "[deg2rad]") // Allen Liu
 {
-    REQUIRE_THAT(deg2rad(360), WithinRel(2.0 * turtlelib::PI, tolerance));
-    REQUIRE_THAT(deg2rad(180), WithinRel(turtlelib::PI, tolerance));
-    REQUIRE_THAT(deg2rad(135), WithinRel(turtlelib::PI * 0.75, tolerance));
-    REQUIRE_THAT(deg2rad(90), WithinRel(turtlelib::PI / 2.0, tolerance));
-    REQUIRE_THAT(deg2rad(45), WithinRel(turtlelib::PI / 4.0, tolerance));
+    REQUIRE_THAT(deg2rad(360), WithinAbs(2.0 * turtlelib::PI, TOLERANCE));
+    REQUIRE_THAT(deg2rad(180), WithinAbs(turtlelib::PI, TOLERANCE));
+    REQUIRE_THAT(deg2rad(135), WithinAbs(turtlelib::PI * 0.75, TOLERANCE));
+    REQUIRE_THAT(deg2rad(90), WithinAbs(turtlelib::PI / 2.0, TOLERANCE));
+    REQUIRE_THAT(deg2rad(45), WithinAbs(turtlelib::PI / 4.0, TOLERANCE));
 }
 
 TEST_CASE("Radian to degree", "[rad2deg]") // Allen Liu
 {
-    REQUIRE_THAT(rad2deg(PI), WithinRel(180.0, tolerance));
-    REQUIRE_THAT(rad2deg(PI / 2.0), WithinRel(90.0, tolerance));
-    REQUIRE_THAT(rad2deg(PI * 2.0), WithinRel(360.0, tolerance));
+    REQUIRE_THAT(rad2deg(PI), WithinAbs(180.0, TOLERANCE));
+    REQUIRE_THAT(rad2deg(PI / 2.0), WithinAbs(90.0, TOLERANCE));
+    REQUIRE_THAT(rad2deg(PI * 2.0), WithinAbs(360.0, TOLERANCE));
 }
 
 TEST_CASE("Normalize angle", "[normalize_angle]") // Allen Liu
 {
-    REQUIRE_THAT(normalize_angle(PI), WithinRel(PI, tolerance));
-    REQUIRE_THAT(normalize_angle(-PI), WithinRel(PI, tolerance));
-    REQUIRE_THAT(normalize_angle(0), WithinRel(0, tolerance));
-    REQUIRE_THAT(normalize_angle(-PI / 4.0), WithinRel(-PI / 4.0, tolerance));
-    REQUIRE_THAT(normalize_angle(3.0 / 2.0 * PI), WithinRel(-PI / 2.0, tolerance));
-    REQUIRE_THAT(normalize_angle(-5.0 * PI / 2.0), WithinRel(-PI / 2.0, tolerance));
+    REQUIRE_THAT(normalize_angle(PI), WithinAbs(PI, TOLERANCE));
+    REQUIRE_THAT(normalize_angle(-PI), WithinAbs(PI, TOLERANCE));
+    REQUIRE_THAT(normalize_angle(0), WithinAbs(0, TOLERANCE));
+    REQUIRE_THAT(normalize_angle(-PI / 4.0), WithinAbs(-PI / 4.0, TOLERANCE));
+    REQUIRE_THAT(normalize_angle(3.0 / 2.0 * PI), WithinAbs(-PI / 2.0, TOLERANCE));
+    REQUIRE_THAT(normalize_angle(-5.0 * PI / 2.0), WithinAbs(-PI / 2.0, TOLERANCE));
 }
 
 TEST_CASE("Point2D stream", "[point2d]") // Allen Liu
@@ -67,8 +75,8 @@ TEST_CASE("Point2D read", "[point2d]") // Allen Liu
 
     ss << sample;
     ss >> test;
-    REQUIRE_THAT(test.x, WithinRel(1.2, tolerance));
-    REQUIRE_THAT(test.y, WithinRel(2.5, tolerance));
+    REQUIRE_THAT(test.x, WithinAbs(1.2, TOLERANCE));
+    REQUIRE_THAT(test.y, WithinAbs(2.5, TOLERANCE));
 }
 
 TEST_CASE("Point subs", "[vector]") // Allen Liu
@@ -88,12 +96,12 @@ TEST_CASE("Point subs", "[vector]") // Allen Liu
     struct Vector2D v23 = p3 - p2;
     struct Vector2D v13 = p3 - p1;
 
-    REQUIRE_THAT(v12.x, WithinRel(3.3, tolerance));
-    REQUIRE_THAT(v12.y, WithinRel(3.2, tolerance));
-    REQUIRE_THAT(v23.x, WithinRel(-5.8, tolerance));
-    REQUIRE_THAT(v23.y, WithinRel(-8.0, tolerance));
-    REQUIRE_THAT(v13.x, WithinRel(-2.5, tolerance));
-    REQUIRE_THAT(v13.y, WithinRel(-4.8, tolerance));
+    REQUIRE_THAT(v12.x, WithinAbs(3.3, TOLERANCE));
+    REQUIRE_THAT(v12.y, WithinAbs(3.2, TOLERANCE));
+    REQUIRE_THAT(v23.x, WithinAbs(-5.8, TOLERANCE));
+    REQUIRE_THAT(v23.y, WithinAbs(-8.0, TOLERANCE));
+    REQUIRE_THAT(v13.x, WithinAbs(-2.5, TOLERANCE));
+    REQUIRE_THAT(v13.y, WithinAbs(-4.8, TOLERANCE));
 }
 
 TEST_CASE("Point adds", "[vector]") // Allen Liu
@@ -118,12 +126,12 @@ TEST_CASE("Point adds", "[vector]") // Allen Liu
     struct Point2D p2 = p + v2;
     struct Point2D p3 = p + v3;
 
-    REQUIRE_THAT(p1.x, WithinRel(2.4, tolerance));
-    REQUIRE_THAT(p1.y, WithinRel(1.0, tolerance));
-    REQUIRE_THAT(p2.x, WithinRel(2.6, tolerance));
-    REQUIRE_THAT(p2.y, WithinRel(5.2, tolerance));
-    REQUIRE_THAT(p3.x, WithinRel(-1.0, tolerance));
-    REQUIRE_THAT(p3.y, WithinRel(-2.2, tolerance));
+    REQUIRE_THAT(p1.x, WithinAbs(2.4, TOLERANCE));
+    REQUIRE_THAT(p1.y, WithinAbs(1.0, TOLERANCE));
+    REQUIRE_THAT(p2.x, WithinAbs(2.6, TOLERANCE));
+    REQUIRE_THAT(p2.y, WithinAbs(5.2, TOLERANCE));
+    REQUIRE_THAT(p3.x, WithinAbs(-1.0, TOLERANCE));
+    REQUIRE_THAT(p3.y, WithinAbs(-2.2, TOLERANCE));
 }
 
 TEST_CASE("Vector2D stream", "[vector2d]") // Allen Liu
@@ -151,6 +159,6 @@ TEST_CASE("Vector2D read", "[vector2d]") // Allen Liu
 
     ss << sample;
     ss >> test;
-    REQUIRE_THAT(test.x, WithinRel(1.2, tolerance));
-    REQUIRE_THAT(test.y, WithinRel(2.5, tolerance));
+    REQUIRE_THAT(test.x, WithinAbs(1.2, TOLERANCE));
+    REQUIRE_THAT(test.y, WithinAbs(2.5, TOLERANCE));
 }

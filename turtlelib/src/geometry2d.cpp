@@ -55,10 +55,10 @@ namespace turtlelib
         return {result_x, result_y};
     }
 
-    Point2D operator+(const Point2D &head, const Vector2D &disp)
+    Point2D operator+(const Point2D &tail, const Vector2D &disp)
     {
-        double result_x = head.x + disp.x;
-        double result_y = head.y + disp.y;
+        double result_x = tail.x + disp.x;
+        double result_y = tail.y + disp.y;
 
         return {result_x, result_y};
     }

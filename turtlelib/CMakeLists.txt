@@ -39,7 +39,7 @@ endif()
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target"
-add_library(${PROJECT_NAME} src/geometry2d.cpp src/se2d.cpp)
+add_library(${PROJECT_NAME} src/geometry2d.cpp src/se2d.cpp src/svg.cpp)
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
 # The use of the <BUILD_INTERFACE> and <INSTALL_INTERFACE> is because when
@@ -50,7 +50,7 @@ add_library(${PROJECT_NAME} src/geometry2d.cpp src/se2d.cpp)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+    $<INSTALL_INTERFACE:include/>)
 
 # specify additional compilation flags for the library
 # Public causes the flags to propagate to anything
@@ -103,24 +103,24 @@ if(BUILD_TESTING)
 
     
     # A test is just an executable that is linked against the unit testing library
-    add_executable(test_geometry2d tests/test_geometry2d.cpp)
-    add_executable(test_se2d tests/test_se2d.cpp)
+    add_executable(test_${PROJECT_NAME} tests/test_geometry2d.cpp tests/test_se2d.cpp tests/test_svg.cpp)
+    # add_executable(test_se2d tests/test_se2d2.cpp)
 
-    target_include_directories(test_geometry2d
+    target_include_directories(test_${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-        $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+        $<INSTALL_INTERFACE:include/>)
 
-    target_include_directories(test_se2d
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-        $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+    # target_include_directories(test_se2d
+    #     PUBLIC
+    #     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+    #     $<INSTALL_INTERFACE:include/>)
     
-    target_link_libraries(test_geometry2d ${PROJECT_NAME} Catch2::Catch2WithMain)
-    target_link_libraries(test_se2d ${PROJECT_NAME} Catch2::Catch2WithMain)
+    target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME} Catch2::Catch2WithMain)
+    # target_link_libraries(test_se2d ${PROJECT_NAME} Catch2::Catch2WithMain)
 
     # register the test with CTest, telling it what executable to run
-    add_test(NAME geometry2d COMMAND test_geometry2d)
-    add_test(NAME se2d COMMAND test_se2d)
+    add_test(NAME ${PROJECT_NAME}_test COMMAND test_${PROJECT_NAME})
+    # add_test(NAME se2d COMMAND test_se2d)
     # add_test(NAME ${PROJECT_NAME} COMMAND test_se2d)
 endif()
