@@ -29,20 +29,23 @@ namespace turtlelib
             __ofs << "<svg width=\"8.500000in\" height=\"11.000000in\" viewBox=\"0 0 816.000000 1056.000000\" xmlns=\"http://www.w3.org/2000/svg\">" << std::endl;
             __ofs << "<defs>" << std::endl;
             __ofs << "<marker" << std::endl;
-            __ofs << "style=\"overflow:visible\"" << std::endl;
-            __ofs << "id=\"Arrow1Sstart\"" << std::endl;
-            __ofs << "refX=\"0.0\"" << std::endl;
-            __ofs << "refY=\"0.0\"" << std::endl;
-            __ofs << "orient=\"auto\">" << std::endl;
+            __ofs << "\tstyle=\"overflow:visible\"" << std::endl;
+            __ofs << "\tid=\"Arrow1Sstart\"" << std::endl;
+            __ofs << "\trefX=\"0.0\"" << std::endl;
+            __ofs << "\trefY=\"0.0\"" << std::endl;
+            __ofs << "\torient=\"auto\">" << std::endl;
             __ofs << "<path" << std::endl;
-            __ofs << "transform=\"scale(0.2) translate(6,0)\"" << std::endl;
-            __ofs << "style=\"fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt\"" << std::endl;
-            __ofs << "d=\"M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z \"" << std::endl;
+            __ofs << "\ttransform=\"scale(0.2) translate(6,0)\"" << std::endl;
+            __ofs << "\tstyle=\"fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt\"" << std::endl;
+            __ofs << "\td=\"M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z \"" << std::endl;
             __ofs << "/>" << std::endl;
             __ofs << "</marker>" << std::endl;
             __ofs << "</defs>" << std::endl;
 
-            __ofs << "<circle cx=\"504.2\" cy=\"403.5\" r=\"3\" stroke=\"purple\" fill=\"purple\" stroke-width=\"1\" />" << std::endl;
+            __ofs << "<circle cx=\"" << __origin_x;
+            __ofs << "\" cy=\"" << __origin_y;
+            __ofs << "\" r=\"5\" stroke=\"black\" fill=\"black\" stroke-width=\"1\" />";
+            __ofs << std::endl;
         }
 
     public:
@@ -54,8 +57,9 @@ namespace turtlelib
         explicit Svg(std::string filename);
 
         /// @brief Draw a with for the specified vector
+        /// @param tail the tail of the vector
         /// @param v the vector to be drawn.
-        void draw_line(Vector2D v, std::string color);
+        void draw_line(Point2D tail, Vector2D v, std::string color);
 
         /// @brief
         /// @param p
@@ -64,10 +68,8 @@ namespace turtlelib
 
         /// @brief
         /// @param tf
-        /// @param color_x
-        /// @param color_y
-        /// @param color_z
-        void draw_frame(Transform2D tf, std::string color_x, std::string color_y, std::string color_z);
+        /// @param
+        void draw_frame(Transform2D tf, std::string name);
 
         /// @brief
         void finish();

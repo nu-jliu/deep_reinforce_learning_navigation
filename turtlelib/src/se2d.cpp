@@ -82,11 +82,9 @@ namespace turtlelib
     {
         double c = cos(__twist.omega);
         double s = sin(__twist.omega);
-        double x = __twist.x;
-        double y = __twist.y;
 
-        double result_x = c * v.x - s * v.y + x;
-        double result_y = s * v.x + c * v.y + y;
+        double result_x = c * v.x - s * v.y;
+        double result_y = s * v.x + c * v.y;
 
         return {result_x, result_y};
     }
