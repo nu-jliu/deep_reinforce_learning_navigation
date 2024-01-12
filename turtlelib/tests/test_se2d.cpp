@@ -134,8 +134,8 @@ TEST_CASE("Transform twist", "[transform]") // Allen Liu
     Twist2D tw2 = tf2(tw);
 
     REQUIRE_THAT(tw2.omega, WithinAbs(PI, TOLERANCE));
-    REQUIRE_THAT(tw2.x, WithinAbs(3.5, TOLERANCE));
-    REQUIRE_THAT(tw2.y, WithinAbs(5.6, TOLERANCE));
+    REQUIRE_THAT(tw2.x, WithinAbs(11.5673, 1e-4));
+    REQUIRE_THAT(tw2.y, WithinAbs(-4.9257, 1e-4));
 }
 
 TEST_CASE("Transform inverse", "[transform]") // Allen Liu
@@ -176,6 +176,18 @@ TEST_CASE("Transform *=", "[transform]") // Allen Liu
     REQUIRE_THAT(tf3.rotation(), WithinAbs(-2.7032, 1e-4));
     REQUIRE_THAT(tf3.translation().x, WithinAbs(0.2629, 1e-4));
     REQUIRE_THAT(tf3.translation().y, WithinAbs(8.4398, 1e-4));
+
+    Vector2D v5 = {1.2, 2.3};
+    Vector2D v6 = {3.5, 4.5};
+
+    Transform2D tf5(v5, PI / 2.0);
+    Transform2D tf6(v6, PI / 2.0);
+
+    tf5 *= tf6;
+
+    REQUIRE_THAT(tf5.rotation(), WithinAbs(3.1416, 1e-4));
+    REQUIRE_THAT(tf5.translation().x, WithinAbs(-3.3, 1e-4));
+    REQUIRE_THAT(tf5.translation().y, WithinAbs(5.8, 1e-4));
 }
 
 TEST_CASE("Transform rotation", "[transform]") // Allen Liu
@@ -243,14 +255,8 @@ TEST_CASE("Transform >>", "[transform]") // Allen Liu
 
 TEST_CASE("Transform <<", "[transform]") // Allen Liu
 {
-    std::string s1 = "deg: 90 x: 1.2 y: 2.3";
-    std::string s2 = "[deg 180 x: 2.2 y: 3.2]";
-
-    std::stringstream ss1;
-    std::stringstream ss2;
-
-    ss1 << s1;
-    ss2 << s2;
+    std::stringstream ss1("90 1.2 2.3");
+    std::stringstream ss2("180\n2.2\n3.2");
 
     Transform2D tf1;
     Transform2D tf2;
@@ -265,4 +271,39 @@ TEST_CASE("Transform <<", "[transform]") // Allen Liu
     REQUIRE_THAT(tf2.rotation(), WithinAbs(PI, TOLERANCE));
     REQUIRE_THAT(tf2.translation().x, WithinAbs(2.2, TOLERANCE));
     REQUIRE_THAT(tf2.translation().y, WithinAbs(3.2, TOLERANCE));
+}
+
+TEST_CASE("Transform *", "[transform]") // Allen Liu
+{
+    Transform2D tf1;
+    Transform2D tf2(PI);
+
+    Transform2D tf12 = tf1 * tf2;
+    REQUIRE_THAT(tf12.rotation(), WithinAbs(PI, TOLERANCE));
+    REQUIRE_THAT(tf12.translation().x, WithinAbs(0.0, TOLERANCE));
+    REQUIRE_THAT(tf12.translation().y, WithinAbs(0.0, TOLERANCE));
+
+    Vector2D v3 = {1.2, 4.5};
+    Vector2D v4 = {3.4, 2.2};
+
+    Transform2D tf3(v3, 1.23);
+    Transform2D tf4(v4, 2.35);
+
+    Transform2D tf34 = tf3 * tf4;
+
+    REQUIRE_THAT(tf34.rotation(), WithinAbs(-2.7032, 1e-4));
+    REQUIRE_THAT(tf34.translation().x, WithinAbs(0.2629, 1e-4));
+    REQUIRE_THAT(tf34.translation().y, WithinAbs(8.4398, 1e-4));
+
+    Vector2D v5 = {1.2, 2.3};
+    Vector2D v6 = {3.5, 4.5};
+
+    Transform2D tf5(v5, PI / 2.0);
+    Transform2D tf6(v6, PI / 2.0);
+
+    Transform2D tf56 = tf5 * tf6;
+
+    REQUIRE_THAT(tf56.rotation(), WithinAbs(3.1416, 1e-4));
+    REQUIRE_THAT(tf56.translation().x, WithinAbs(-3.3, 1e-4));
+    REQUIRE_THAT(tf56.translation().y, WithinAbs(5.8, 1e-4));
 }

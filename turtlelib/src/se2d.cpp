@@ -96,13 +96,9 @@ namespace turtlelib
         double x = __twist.x;
         double y = __twist.y;
 
-        double angle = v.omega;
-
-        double cos_omg = c * cos(angle) - s * sin(angle);
-        double sin_omg = s * cos(angle) + c * sin(angle);
-        double tw_omega = atan2(sin_omg, cos_omg);
-        double tw_x = c * v.x - s * v.y + x;
-        double tw_y = s * v.x + c * v.y + y;
+        double tw_omega = v.omega;
+        double tw_x = y * v.omega + c * v.x - s * v.y;
+        double tw_y = -x * v.omega + s * v.x + c * v.y;
 
         return {tw_omega, tw_x, tw_y};
     }
@@ -116,8 +112,8 @@ namespace turtlelib
 
         double inv_cos = c;
         double inv_sin = -s;
-        double inv_x = -(inv_cos * x - inv_sin * y);
-        double inv_y = -(inv_sin * x + inv_cos * y);
+        double inv_x = -(inv_cos * x + inv_sin * y);
+        double inv_y = -(-inv_sin * x + inv_cos * y);
 
         double radian = atan2(inv_sin, inv_cos);
         Vector2D v = {inv_x, inv_y};
@@ -177,11 +173,8 @@ namespace turtlelib
         std::string y_str;
         std::string temp;
 
-        is >> temp;
         is >> deg_str;
-        is >> temp;
         is >> x_str;
-        is >> temp;
         is >> y_str;
 
         double deg = stod(deg_str);
@@ -196,8 +189,24 @@ namespace turtlelib
 
     Transform2D operator*(Transform2D lhs, const Transform2D &rhs)
     {
-        lhs *= rhs;
-        return lhs;
+        double c1 = cos(lhs.rotation());
+        double s1 = sin(lhs.rotation());
+        double x1 = lhs.translation().x;
+        double y1 = lhs.translation().y;
+
+        double c2 = cos(rhs.rotation());
+        double s2 = sin(rhs.rotation());
+        double x2 = rhs.translation().x;
+        double y2 = rhs.translation().y;
+
+        double cos_omg = c1 * c2 - s1 * s2;
+        double sin_omg = s1 * c2 + c1 * s2;
+        double omega = atan2(sin_omg, cos_omg);
+
+        double x = c1 * x2 - s1 * y2 + x1;
+        double y = s1 * x2 + c1 * y2 + y1;
+
+        return Transform2D(Vector2D{x, y}, omega);
     }
 
 };

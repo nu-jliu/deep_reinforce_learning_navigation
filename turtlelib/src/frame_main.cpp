@@ -1,5 +1,16 @@
+///
+/// \file frame_main.cpp
+/// \author your name (you@domain.com)
+/// \brief
+/// \version 0.1
+/// \date 2024-01-12
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 #include "turtlelib/geometry2d.hpp"
 #include "turtlelib/se2d.hpp"
@@ -7,19 +18,71 @@
 
 using namespace turtlelib;
 
-int main(int argc, char **argv)
+/// @brief
+/// @return
+int main()
 {
-    double tab_rot;
-    Vector2D trans;
-    Svg svg_output("svg_main.svg");
+    Transform2D tf_ab;
+    Transform2D tf_bc;
+    Point2D p_a;
+    Vector2D v_b;
+    Twist2D V_b;
+    Svg svg_output("/tmp/frames.svg");
 
-    std::cout << "Please input the Tab rotation in radians:" << std::endl;
-    std::cin >> tab_rot;
-    std::cout << "Please input the Tab translation seperated by space" << std::endl;
-    std::cin >> trans;
+    std::cout << "Enter transform T_{a,b}:" << std::endl;
+    std::cin >> tf_ab;
+    std::cout << "Enter transform T_{b,c}:" << std::endl;
+    std::cin >> tf_bc;
 
-    Transform2D tf_ab(trans, tab_rot);
+    Transform2D tf_ba = tf_ab.inv();
+    Transform2D tf_cb = tf_bc.inv();
+    Transform2D tf_ac = tf_ab * tf_bc;
+    Transform2D tf_ca = tf_cb * tf_ba;
+
+    std::cout << "T_{a,b}: " << tf_ab << std::endl;
+    std::cout << "T_{b,a}: " << tf_ba << std::endl;
+    std::cout << "T_{b,c}: " << tf_bc << std::endl;
+    std::cout << "T_{c,b}: " << tf_cb << std::endl;
+    std::cout << "T_{a,c}: " << tf_ac << std::endl;
+    std::cout << "T_{c,a}: " << tf_ca << std::endl;
+
     svg_output.draw_frame(tf_ab, "{b}");
+    svg_output.draw_frame(tf_ac, "{c}");
 
+    std::cout << "Enter point p_a:" << std::endl;
+    std::cin >> p_a;
+
+    Point2D p_b = tf_ba(p_a);
+    Point2D p_c = tf_ca(p_a);
+
+    std::cout << "p_a: " << p_a << std::endl;
+    std::cout << "p_b: " << p_b << std::endl;
+    std::cout << "p_c: " << p_c << std::endl;
+
+    std::cout << "Enter vector v_b:" << std::endl;
+    std::cin >> v_b;
+
+    double mag_vb = sqrt(pow(v_b.x, 2.0) + pow(v_b.y, 2.0));
+    Vector2D v_bhat = {v_b.x / mag_vb, v_b.y / mag_vb};
+
+    Vector2D v_a = tf_ab(v_b);
+    Vector2D v_c = tf_cb(v_b);
+
+    std::cout << "v_bhat: " << v_bhat << std::endl;
+    std::cout << "v_a: " << v_a << std::endl;
+    std::cout << "v_b: " << v_b << std::endl;
+    std::cout << "v_c: " << v_c << std::endl;
+
+    std::cout << "Enter twist V_b:" << std::endl;
+    std::cin >> V_b;
+
+    Twist2D V_a = tf_ab(V_b);
+    Twist2D V_c = tf_cb(V_b);
+
+    std::cout << "V_a: " << V_a << std::endl;
+    std::cout << "V_b: " << V_b << std::endl;
+    std::cout << "V_c: " << V_c << std::endl;
+
+    svg_output.finish();
     return EXIT_SUCCESS;
 }

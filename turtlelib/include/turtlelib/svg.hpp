@@ -48,6 +48,11 @@ namespace turtlelib
             __ofs << std::endl;
         }
 
+        Point2D __point_tf(Point2D p)
+        {
+            return Point2D{__origin_x + p.x, __origin_y - p.y};
+        }
+
     public:
         /// @brief Opens a default svg file.
         Svg();
@@ -63,8 +68,9 @@ namespace turtlelib
 
         /// @brief
         /// @param p
+        /// @param radius
         /// @param color
-        void draw_point(Point2D p, std::string color);
+        void draw_point(Point2D p, int radius, std::string color);
 
         /// @brief
         /// @param tf
