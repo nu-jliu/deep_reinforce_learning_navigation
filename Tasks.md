@@ -19,6 +19,7 @@
  - B.4 unit testing SE(2)
  - B.5 visualization
  - B.6 executable implementation
+ - B.7 README
  
 ## Task C. The Simulator
  - C.1 `nusim` package

@@ -5,24 +5,26 @@
 #include "std_srvs/srv/empty.hpp"
 
 using namespace std::chrono_literals;
-using namespace std_srvs::srv;
-using namespace std_msgs::msg;
+using std_msgs::msg::UInt64;
+using std_srvs::srv::Empty;
 
 class NuSim : public rclcpp::Node
 {
-public:
+  public:
     NuSim() : Node("nusim"), __timestep(0)
     {
         this->declare_parameter("rate", "The timer frequency");
         __rate = this->get_parameter("rate").as_double();
 
-        __timer = this->create_wall_timer(operator""s(1.0 / __rate), std::bind(&NuSim::__timer_callback, this));
+        __timer = this->create_wall_timer(operator""s(1.0 / __rate),
+                                          std::bind(&NuSim::__timer_callback, this));
 
         __pub_timestep = this->create_publisher<UInt64>("~/timestep", 10);
-        __srv_reset = this->create_service<Empty>("~/reset", std::bind(&NuSim::__srv_reset_callback, this));
+        __srv_reset = this->create_service<Empty>(
+            "~/reset", std::bind(&NuSim::__srv_reset_callback, this));
     }
 
-private:
+  private:
     /// @brief
     void __timer_callback()
     {
@@ -35,7 +37,8 @@ private:
     /// @brief
     /// @param request
     /// @param response
-    void __srv_reset_callback(std::shared_ptr<Empty::Request> request, std::shared_ptr<Empty::Response> response)
+    void __srv_reset_callback(std::shared_ptr<Empty::Request> request,
+                              std::shared_ptr<Empty::Response> response)
     {
         __timestep = 0;
     }
