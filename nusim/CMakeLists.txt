@@ -12,9 +12,18 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+# find_package(rosidl_default_generators REQUIRED)
 
 add_executable(nusim src/nusim.cpp)
 ament_target_dependencies(nusim rclcpp std_msgs std_srvs)
+# ament_export_dependencies(rosidl_default_runtime)
+
+# rosidl_get_typesupport_target(
+#     cpp_typesupport_target
+#     ${PROJECT_NAME} rosidl_typesupport_cpp
+# )
+
+# target_link_libraries(nusim "${cpp_typesupport_target}")
 
 install(TARGETS
     nusim

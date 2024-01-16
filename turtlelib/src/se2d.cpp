@@ -112,8 +112,8 @@ namespace turtlelib
 
         double inv_cos = c;
         double inv_sin = -s;
-        double inv_x = -(inv_cos * x + inv_sin * y);
-        double inv_y = -(-inv_sin * x + inv_cos * y);
+        double inv_x = -(inv_cos * x - inv_sin * y);
+        double inv_y = -(inv_sin * x + inv_cos * y);
 
         double radian = atan2(inv_sin, inv_cos);
         Vector2D v = {inv_x, inv_y};

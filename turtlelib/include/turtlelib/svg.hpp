@@ -17,10 +17,11 @@ namespace turtlelib
         Transform2D __tf_origin;
         double __origin_x;
         double __origin_y;
+        double __scale;
         /// @brief
         void init_svg()
         {
-
+            __scale = 96.0;
             __origin_x = 408.0;
             __origin_y = 528.0;
 
@@ -50,7 +51,7 @@ namespace turtlelib
 
         Point2D __point_tf(Point2D p)
         {
-            return Point2D{__origin_x + p.x, __origin_y - p.y};
+            return Point2D{__origin_x + p.x * __scale, __origin_y - p.y * __scale};
         }
 
     public:
@@ -62,15 +63,17 @@ namespace turtlelib
         explicit Svg(std::string filename);
 
         /// @brief Draw a with for the specified vector
+        /// @param frame
         /// @param tail the tail of the vector
         /// @param v the vector to be drawn.
-        void draw_line(Point2D tail, Vector2D v, std::string color);
+        void draw_line(Transform2D frame, Point2D tail, Vector2D v, std::string color);
 
         /// @brief
+        /// @param frame
         /// @param p
         /// @param radius
         /// @param color
-        void draw_point(Point2D p, int radius, std::string color);
+        void draw_point(Transform2D frame, Point2D p, int radius, std::string color);
 
         /// @brief
         /// @param tf

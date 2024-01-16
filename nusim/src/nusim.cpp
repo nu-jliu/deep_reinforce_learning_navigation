@@ -19,15 +19,7 @@ public:
         __timer = this->create_wall_timer(operator""s(1.0 / __rate), std::bind(&NuSim::__timer_callback, this));
 
         __pub_timestep = this->create_publisher<UInt64>("~/timestep", 10);
-        // this->__srv_reset = this->create_service<Empty>("~/reset", &NuSim::srv_reset_callback);
-    }
-
-    /// @brief
-    /// @param request
-    /// @param response
-    void srv_reset_callback(const std::shared_ptr<Empty::Request> request, std::shared_ptr<Empty::Response> response)
-    {
-        __timestep = 0;
+        __srv_reset = this->create_service<Empty>("~/reset", std::bind(&NuSim::__srv_reset_callback, this));
     }
 
 private:
@@ -35,9 +27,17 @@ private:
     void __timer_callback()
     {
         // RCLCPP_INFO(this->get_logger(), "Timer");
-        auto msg_timestep = std_msgs::msg::UInt64();
+        auto msg_timestep = UInt64();
         msg_timestep.data = 1.0 / this->__rate;
         this->__pub_timestep->publish(msg_timestep);
+    }
+
+    /// @brief
+    /// @param request
+    /// @param response
+    void __srv_reset_callback(std::shared_ptr<Empty::Request> request, std::shared_ptr<Empty::Response> response)
+    {
+        __timestep = 0;
     }
 
     rclcpp::TimerBase::SharedPtr __timer;
