@@ -21,6 +21,7 @@ _deps
 
 *.o
 *.a
+*.cfg
 
 # Test from others
 test_se2d2.cpp

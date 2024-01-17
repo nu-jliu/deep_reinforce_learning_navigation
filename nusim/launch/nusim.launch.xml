@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_all.launch.xml" />
+    <node pkg="nusim" exec="nusim" name="nusim">
+        <param name="rate" value="100.0" />
+    </node>
+</launch>
