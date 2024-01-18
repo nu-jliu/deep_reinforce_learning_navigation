@@ -13,6 +13,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
@@ -24,6 +25,7 @@ ament_export_dependencies(rosidl_default_runtime)
 
 set(NUSIM_DEPENDENCIES
     rclcpp
+    visualization_msgs
     std_msgs
     std_srvs
     tf2_ros
@@ -39,10 +41,10 @@ install(TARGETS
 )
 
 install(
-    DIRECTORY launch
+    DIRECTORY launch config
     DESTINATION share/${PROJECT_NAME}
 )
-    
+
 rosidl_get_typesupport_target(cpp_typesupport_target
     ${PROJECT_NAME}_interfaces rosidl_typesupport_cpp)
 target_link_libraries(nusim "${cpp_typesupport_target}")

@@ -23,3 +23,8 @@
  
 ## Task C. The Simulator
  - C.1 `nusim` package
+ - C.2 simulation node
+ - C.3 simulated turtle
+ - C.4 walls
+ - C.5 cylindrical obstacles
+ - C.6 nusim launch 
