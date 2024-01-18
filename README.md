@@ -4,4 +4,5 @@
 # Package List
 This repository consists of several ROS packages
 - nuturtle_description - Display the turtlebot in the rviz
-- turtlelib - 
+- turtlelib - The library used for geometry calculations
+- nusim - Simulate the turtlebot on rviz
