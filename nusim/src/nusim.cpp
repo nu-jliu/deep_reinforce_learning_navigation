@@ -33,7 +33,7 @@ using nusim::srv::Teleport;
 class NuSim : public Node
 {
 private:
-  /// @brief
+  /// @brief Timer callback funcrion of the nusim node, calls at every cycle
   void __timer_callback()
   {
     // RCLCPP_INFO(this->get_logger(), "Timer");
@@ -58,7 +58,7 @@ private:
     __tf_broadcaster->sendTransform(tf);
   }
 
-  /// @brief
+  /// @brief publish the markers to display wall on rviz
   void __publish_wall_markers()
   {
     Marker m1;
@@ -143,7 +143,7 @@ private:
     __pub_wall_markers->publish(m_array);
   }
 
-  /// @brief
+  /// @brief publish marker to display obstacle on rviz
   void __publish_obstacle_markers()
   {
     MarkerArray m_array_obs;
@@ -173,9 +173,17 @@ private:
     __pub_obstacle_markers->publish(m_array_obs);
   }
 
-  /// @brief
-  /// @param request
-  /// @param response
+  /// @brief reset the position of the turtlebot.
+  void __reset_turtle_pose()
+  {
+    __turtle_x = __x_0;
+    __turtle_y = __y_0;
+    __turtle_theta = __theta_0;
+  }
+
+  /// @brief Callback function for reset service, reset the position of turtlebot and timestep
+  /// @param request The request object
+  /// @param response The response object
   void __srv_reset_callback(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
@@ -187,9 +195,9 @@ private:
     __timestep = 0;
   }
 
-  /// @brief
-  /// @param request
-  /// @param response
+  /// @brief Callback function of the teleport service, teleport the turtlebot to a place
+  /// @param request The request object
+  /// @param response The response object
   void __srv_teleport_callback(
     std::shared_ptr<Teleport::Request> request,
     std::shared_ptr<Teleport::Response> response)
@@ -199,14 +207,6 @@ private:
     __turtle_theta = request->theta;
 
     response->result = true;
-  }
-
-  /// @brief
-  void __reset_turtle_pose()
-  {
-    __turtle_x = __x_0;
-    __turtle_y = __y_0;
-    __turtle_theta = __theta_0;
   }
 
   /// timer
@@ -249,6 +249,7 @@ private:
   double __obstacle_height;
 
 public:
+  /// @brief Initialize the nusim node
   NuSim()
   : Node("nusim"), __marker_qos(10), __timestep(0), __nu_r(78.0 / 255.0), __nu_g(42.0 / 255.0),
     __nu_b(132.0 / 255.0), __wall_height(0.25), __wall_thickness(0.1), __obstacle_height(0.25)
@@ -337,10 +338,10 @@ public:
   }
 };
 
-/// @brief
-/// @param argc
-/// @param argv
-/// @return
+/// @brief The main function for the nusim node
+/// @param argc number of arguments
+/// @param argv value of the arguments
+/// @return result code
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
