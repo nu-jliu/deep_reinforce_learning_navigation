@@ -3,7 +3,7 @@
 
 using namespace turtlelib;
 
-TEST_CASE("Testing line svg writen to file", "[svg]")
+TEST_CASE("Testing line svg writen to file", "[svg]") // Allen Liu
 {
   Svg svg("svg_line.svg");
   Transform2D frame;
@@ -21,7 +21,7 @@ TEST_CASE("Testing line svg writen to file", "[svg]")
   svg.finish();
 }
 
-TEST_CASE("Testing point svg writen to a file", "[svg]")
+TEST_CASE("Testing point svg writen to a file", "[svg]") // Allen Liu
 {
   Svg svg("svg_point.svg");
   Transform2D frame;
@@ -35,7 +35,7 @@ TEST_CASE("Testing point svg writen to a file", "[svg]")
   svg.finish();
 }
 
-TEST_CASE("Testing frame svg writen to a file", "[svg]")
+TEST_CASE("Testing frame svg writen to a file", "[svg]") // Allen Liu
 {
   Svg svg("svg_frame.svg");
 

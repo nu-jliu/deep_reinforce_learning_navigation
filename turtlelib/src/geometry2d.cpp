@@ -7,7 +7,7 @@
 // using namespace std;
 namespace turtlelib
 {
-double         normalize_angle(double rad)
+double normalize_angle(double rad)
 {
   if ((rad > -turtlelib::PI) && (rad <= turtlelib::PI)) {
     return rad;

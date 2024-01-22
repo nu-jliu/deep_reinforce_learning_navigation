@@ -4,7 +4,7 @@
 #define TOLERANCE 1e-12
 
 using namespace turtlelib;
-using namespace Catch::Matchers;
+using Catch::Matchers::WithinAbs;
 
 TEST_CASE("Twist2D <<", "[twist2d]") // Allen Liu
 {

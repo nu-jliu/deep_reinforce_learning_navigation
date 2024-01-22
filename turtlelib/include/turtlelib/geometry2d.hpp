@@ -18,7 +18,7 @@ constexpr double PI = 3.14159265358979323846;
 /// NOTE: implement this in the header file
 /// constexpr means that the function can be computed at compile time
 /// if given a compile-time constant as input
-constexpr bool   almost_equal(double d1, double d2, double epsilon = 1.0e-12)
+constexpr bool almost_equal(double d1, double d2, double epsilon = 1.0e-12)
 {
   double diff = d1 - d2;
   if (diff < 0) {

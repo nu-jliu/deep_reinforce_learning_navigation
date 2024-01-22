@@ -55,16 +55,16 @@ void Svg::draw_point(Transform2D frame, Point2D p, int radius, std::string color
 
 void Svg::draw_frame(Transform2D tf, std::string name)
 {
-  Vector2D v_x = {-sqrt(2.0) / 2.0, -sqrt(2.0) / 2.0};
-  Vector2D v_y = {1.0, 0.0};
-  Vector2D v_z = {0.0, 1.0};
+//   Vector2D v_x = {-sqrt(2.0) / 2.0, -sqrt(2.0) / 2.0};
+  Vector2D v_x = {1.0, 0.0};
+  Vector2D v_y = {0.0, 1.0};
 
   Point2D origin{tf.translation().x, tf.translation().y};
   Point2D origin_tf = __point_tf(origin);
 
   Svg::draw_line(tf, Point2D{0.0, 0.0}, v_x, "red");
   Svg::draw_line(tf, Point2D{0.0, 0.0}, v_y, "green");
-  Svg::draw_line(tf, Point2D{0.0, 0.0}, v_z, "blue");
+//   Svg::draw_line(tf, Point2D{0.0, 0.0}, v_z, "blue");
 
   if (__ofs.is_open()) {
     __ofs << "<text x=\"" << origin_tf.x << "\" ";

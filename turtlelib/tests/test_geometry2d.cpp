@@ -2,17 +2,10 @@
 #include <catch2/catch_all.hpp>
 
 #define TOLERANCE 1e-12
-// double TOLERANCE;
 
 using namespace turtlelib;
-using namespace Catch::Matchers;
+using Catch::Matchers::WithinAbs;
 
-// #ifdef TOLERANCE_DEFINE_GUARD
-// #define TOLERANCE_DEFINE_GUARD
-
-// TOLERANCE = 1e-12;
-
-// #endif
 
 TEST_CASE("Almost Equal", "[almost_equal]") // Allen Liu
 {
