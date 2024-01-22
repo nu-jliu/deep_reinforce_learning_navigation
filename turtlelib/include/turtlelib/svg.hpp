@@ -8,7 +8,6 @@
 #define TURTLELIB_SVG_HPP_INCLUDE_GUARD
 namespace turtlelib
 {
-/// @brief
 class Svg
 {
 
@@ -18,8 +17,9 @@ private:
   double __origin_x;
   double __origin_y;
   double __scale;
-  /// @brief
-  void    init_svg()
+
+  /// @brief Initialize the environment for the frame
+  void init_svg()
   {
     __scale = 96.0;
     __origin_x = 408.0;
@@ -53,6 +53,8 @@ private:
     __ofs << std::endl;
   }
 
+  /// @brief Calculate the transform from turtlelib frame to svg frame
+  /// @param p The point to transform
   Point2D __point_tf(Point2D p)
   {
     return Point2D{__origin_x + p.x * __scale, __origin_y - p.y * __scale};
@@ -66,28 +68,27 @@ public:
   /// @param filename the name of the svg file.
   explicit Svg(std::string filename);
 
-  /// @brief Draw a with for the specified vector
+  /// @brief Draw a line for the specified vector
   /// @param frame
   /// @param tail the tail of the vector
   /// @param v the vector to be drawn.
-  void    draw_line(Transform2D frame, Point2D tail, Vector2D v, std::string color);
+  void draw_line(Transform2D frame, Point2D tail, Vector2D v, std::string color);
+
+  /// @brief Draw a point in svg file
+  /// @param frame the frame to draw on
+  /// @param p the point to draw
+  /// @param radius the radius for the point
+  /// @param color the color for the point
+  void draw_point(Transform2D frame, Point2D p, int radius, std::string color);
+
+  /// @brief Draw a frame on the svg file
+  /// @param tf The frame to draw
+  /// @param name The name of the frame
+  void draw_frame(Transform2D tf, std::string name);
 
   /// @brief
-  /// @param frame
-  /// @param p
-  /// @param radius
-  /// @param color
-  void    draw_point(Transform2D frame, Point2D p, int radius, std::string color);
-
-  /// @brief
-  /// @param tf
-  /// @param
-  void    draw_frame(Transform2D tf, std::string name);
-
-  /// @brief
-  void    finish();
+  void finish();
 };
-
 }
 
 #endif
