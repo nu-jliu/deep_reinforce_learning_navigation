@@ -64,7 +64,7 @@ class NuSim : public Node
 {
 private:
   /// \brief Timer callback funcrion of the nusim node, calls at every cycle
-  void timer_callback()
+  void timer_callback__()
   {
     auto msg_timestep = UInt64();
     msg_timestep.data = timestep__++;
@@ -88,7 +88,7 @@ private:
   }
 
   /// \brief publish the markers to display wall on rviz
-  void publish_wall_markers()
+  void publish_wall_markers__()
   {
     Marker m1;
     Marker m2;
@@ -173,7 +173,7 @@ private:
   }
 
   /// \brief publish marker to display obstacle on rviz
-  void publish_obstacle_markers()
+  void publish_obstacle_markers__()
   {
     MarkerArray m_array_obs;
 
@@ -203,7 +203,7 @@ private:
   }
 
   /// \brief reset the position of the turtlebot.
-  void reset_turtle_pose()
+  void reset_turtle_pose__()
   {
     turtle_x__ = x_0__;
     turtle_y__ = y_0__;
@@ -213,21 +213,21 @@ private:
   /// \brief Callback function for reset service, reset the position of turtlebot and timestep
   /// \param request The request object
   /// \param response The response object
-  void srv_reset_callback(
+  void srv_reset_callback__(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
   {
     (void) request;
     (void) response;
 
-    reset_turtle_pose();
+    reset_turtle_pose__();
     timestep__ = 0;
   }
 
   /// \brief Callback function of the teleport service, teleport the turtlebot to a place
   /// \param request The request object
   /// \param response The response object
-  void srv_teleport_callback(
+  void srv_teleport_callback__(
     std::shared_ptr<Teleport::Request> request,
     std::shared_ptr<Teleport::Response> response)
   {
@@ -333,7 +333,7 @@ public:
     }
 
     /// initialize attributes
-    reset_turtle_pose();
+    reset_turtle_pose__();
 
     // set marker qos policy
     marker_qos__.transient_local();
@@ -341,7 +341,7 @@ public:
     /// timer
     timer__ = this->create_wall_timer(
       duration<long double>{1.0 / rate__},
-      std::bind(&NuSim::timer_callback, this));
+      std::bind(&NuSim::timer_callback__, this));
 
     // publishers
     pub_timestep__ = this->create_publisher<UInt64>("~/timestep", 10);
@@ -352,20 +352,20 @@ public:
     srv_reset__ = this->create_service<Empty>(
       "~/reset",
       std::bind(
-        &NuSim::srv_reset_callback, this, std::placeholders::_1,
+        &NuSim::srv_reset_callback__, this, std::placeholders::_1,
         std::placeholders::_2));
     srv_teleport__ =
       this->create_service<Teleport>(
       "~/teleport",
       std::bind(
-        &NuSim::srv_teleport_callback, this, std::placeholders::_1,
+        &NuSim::srv_teleport_callback__, this, std::placeholders::_1,
         std::placeholders::_2));
 
     /// transform broadcasters
     tf_broadcaster__ = std::make_unique<TransformBroadcaster>(*this);
 
-    publish_wall_markers();
-    publish_obstacle_markers();
+    publish_wall_markers__();
+    publish_obstacle_markers__();
   }
 };
 
