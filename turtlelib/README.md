@@ -25,14 +25,14 @@ A library for handling transformations in SE(2) and other turtlebot-related math
    - The class coresponding an object, which can contain private and public members, each member can be either class method or attribute, which private members can only be accessed and modified within a class.
    - The struct is just a conbination of different data, it does not contain any methods, and all data can be accessed and modified anywhere.
 
-<!-- TODO: Complete questions -->
-
 3. Why is Vector2D a struct and Transform2D a Class (refer to at least 2 specific C++ core guidelines in your answer)?
- - Since the Vector2D does not need to perform any operation on itself, or perform any operation on others so that it only need to contain the data required that does not need to have any member methods. 
+ - Based on C++ core guidlines C.2 *Use class if the class has an invariant; use struct if the data members can vary independently*,  Since the `Transform2D` has an invariant that tranlation and rotation won't change independently so that it should be made as class, while `Vector2D`'s member `x` and `y` can be changed independently so it should be `struct`. 
 
 
 4. Why are some of the constructors in Transform2D explicit (refer to a specific C++ core guideline in your answer)?
-
+ - Based on The C++ core guidline C.46: *By Default, declare single-argument constructors explicit*, hence the constructor of `Transform2D` `Transform2D(Vector2D trans)` and `Transform2D(double radian)` should be made `explicit`.
 
 5. Why is Transform2D::inv() declared const while Transform2D::operator*=() is not?
    - Refer to [[https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#con-constants-and-immutability][C++ Core Guidelines (Constants and Immutability)]] in your answer
+   - `Transform2D::inv()` is declared const since based on the core guidlines Con.2: *By default, make member functions `const`*.
+   - `Transform2D::operator*=()` is not const since the value of the `Transform2D` object itself will change after the execution of the function.

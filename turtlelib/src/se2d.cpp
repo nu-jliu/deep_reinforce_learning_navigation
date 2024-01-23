@@ -1,3 +1,13 @@
+///
+/// \file se2d.cpp
+/// \author Allen Liu (jingkunliu2025@northwestern.edu)
+/// \brief Turtle lib library function for 2d transformation
+/// \version 0.1
+/// \date 2024-01-23
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include "turtlelib/se2d.hpp"
 
 #include <cmath>

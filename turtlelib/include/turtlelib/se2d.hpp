@@ -77,7 +77,7 @@ public:
 
   /// \brief invert the transformation
   /// \return the inverse transformation.
-  Transform2D           inv() const;
+  Transform2D inv() const;
 
   /// \brief compose this transform with another and store the result
   /// in this object
@@ -87,10 +87,11 @@ public:
 
   /// \brief the translational component of the transform
   /// \return the x,y translation
-  Vector2D              translation() const;
+  Vector2D translation() const;
+
   /// \brief get the angular displacement of the transform
   /// \return the angular displacement, in radians
-  double                rotation() const;
+  double rotation() const;
 
   /// \brief \see operator<<(...) (declared outside this class)
   /// for a description

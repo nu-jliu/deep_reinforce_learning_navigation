@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="config_file" default="basic_world.yaml" />
+    <arg name="config_file" default="basic_world.yaml" description="Simulator configuration file" />
 
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_all.launch.xml">
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="use_rviz" value="false" />
+        <arg name="color" value="red" />
     </include>
 
     <node pkg="nusim" exec="nusim" name="nusim">

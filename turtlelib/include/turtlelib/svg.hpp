@@ -1,3 +1,13 @@
+///
+/// \file svg.hpp
+/// \author your name (you\domain.com)
+/// \brief
+/// \version 0.1
+/// \date 2024-01-22
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include "turtlelib/geometry2d.hpp"
 #include "turtlelib/se2d.hpp"
 
@@ -8,6 +18,10 @@
 #define TURTLELIB_SVG_HPP_INCLUDE_GUARD
 namespace turtlelib
 {
+/// \brief Normalize a vector
+/// \param v The vector to be normalize
+/// \return The normalized vector
+Vector2D normalize(Vector2D v);
 class Svg
 {
 
@@ -18,7 +32,7 @@ private:
   double __origin_y;
   double __scale;
 
-  /// @brief Initialize the environment for the frame
+  /// \brief Initialize the environment for the frame
   void init_svg()
   {
     __scale = 96.0;
@@ -53,40 +67,40 @@ private:
     __ofs << std::endl;
   }
 
-  /// @brief Calculate the transform from turtlelib frame to svg frame
-  /// @param p The point to transform
+  /// \brief Calculate the transform from turtlelib frame to svg frame
+  /// \param p The point to transform
   Point2D __point_tf(Point2D p)
   {
     return Point2D{__origin_x + p.x * __scale, __origin_y - p.y * __scale};
   }
 
 public:
-  /// @brief Opens a default svg file.
+  /// \brief Opens a default svg file.
   Svg();
 
-  /// @brief Opens the svg file with specified filename
-  /// @param filename the name of the svg file.
+  /// \brief Opens the svg file with specified filename
+  /// \param filename the name of the svg file.
   explicit Svg(std::string filename);
 
-  /// @brief Draw a line for the specified vector
-  /// @param frame
-  /// @param tail the tail of the vector
-  /// @param v the vector to be drawn.
+  /// \brief Draw a line for the specified vector
+  /// \param frame
+  /// \param tail the tail of the vector
+  /// \param v the vector to be drawn.
   void draw_line(Transform2D frame, Point2D tail, Vector2D v, std::string color);
 
-  /// @brief Draw a point in svg file
-  /// @param frame the frame to draw on
-  /// @param p the point to draw
-  /// @param radius the radius for the point
-  /// @param color the color for the point
+  /// \brief Draw a point in svg file
+  /// \param frame the frame to draw on
+  /// \param p the point to draw
+  /// \param radius the radius for the point
+  /// \param color the color for the point
   void draw_point(Transform2D frame, Point2D p, int radius, std::string color);
 
-  /// @brief Draw a frame on the svg file
-  /// @param tf The frame to draw
-  /// @param name The name of the frame
+  /// \brief Draw a frame on the svg file
+  /// \param tf The frame to draw
+  /// \param name The name of the frame
   void draw_frame(Transform2D tf, std::string name);
 
-  /// @brief
+  /// \brief Finish drawing, close the svg file
   void finish();
 };
 }

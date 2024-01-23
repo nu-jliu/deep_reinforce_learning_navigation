@@ -1,7 +1,7 @@
 ///
 /// \file frame_main.cpp
-/// \author your name (you@domain.com)
-/// \brief
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Let user to specify the transforms and draws on a svg file
 /// \version 0.1
 /// \date 2024-01-12
 ///
@@ -18,8 +18,9 @@
 
 using namespace turtlelib;
 
-/// @brief
-/// @return
+/// \brief Takes the input from user about frame b, c point a and vector b
+///        Then display them as output in svg file
+/// \return result code
 int main()
 {
   Transform2D tf_aa;
@@ -68,8 +69,7 @@ int main()
   std::cout << "Enter vector v_b:" << std::endl;
   std::cin >> v_b;
 
-  double mag_vb = sqrt(pow(v_b.x, 2.0) + pow(v_b.y, 2.0));
-  Vector2D v_bhat = {v_b.x / mag_vb, v_b.y / mag_vb};
+  Vector2D v_bhat = normalize(v_b);
 
   Vector2D v_a = tf_ab(v_b);
   Vector2D v_c = tf_cb(v_b);

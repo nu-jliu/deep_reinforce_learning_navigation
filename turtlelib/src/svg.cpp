@@ -1,3 +1,13 @@
+///
+/// @file svg.cpp
+/// @author your name (you@domain.com)
+/// @brief
+/// @version 0.1
+/// @date 2024-01-23
+///
+/// @copyright Copyright (c) 2024
+///
+///
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -7,6 +17,12 @@
 
 namespace turtlelib
 {
+Vector2D normalize(Vector2D v)
+{
+  double mag = sqrt(pow(v.x, 2.0) + pow(v.y, 2.0));
+  return Vector2D{v.x / mag, v.y / mag};
+}
+
 Svg::Svg()
 {
   __ofs.open("default.svg");

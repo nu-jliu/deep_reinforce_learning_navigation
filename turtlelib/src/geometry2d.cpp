@@ -1,3 +1,13 @@
+///
+/// \file geometry2d.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Turtlelib libruary function used for 2d geometry calculation
+/// \version 0.1
+/// \date 2024-01-23
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include "turtlelib/geometry2d.hpp"
 
 #include <iomanip>
