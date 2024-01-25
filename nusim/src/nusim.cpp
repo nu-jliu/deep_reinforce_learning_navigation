@@ -60,6 +60,7 @@ using visualization_msgs::msg::MarkerArray;
 using std_srvs::srv::Empty;
 using nusim::srv::Teleport;
 
+/// @brief Simulate the turtlebot in a rviz world.
 class NuSim : public Node
 {
 private:
