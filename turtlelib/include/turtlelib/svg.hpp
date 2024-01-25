@@ -86,6 +86,7 @@ public:
   /// \param frame
   /// \param tail the tail of the vector
   /// \param v the vector to be drawn.
+  /// \param color the color for the line
   void draw_line(Transform2D frame, Point2D tail, Vector2D v, std::string color);
 
   /// \brief Draw a point in svg file
