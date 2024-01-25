@@ -21,23 +21,26 @@ private:
 
   constexpr void initialize_config__()
   {
-    this->left_wheel__ = 0.0;
-    this->right_wheel__ = 0.0;
-    this->robot_x__ = 0.0;
-    this->robot_y__ = 0.0;
-    this->robot_theta__ = 0.0;
+    left_wheel__ = 0.0;
+    right_wheel__ = 0.0;
+    robot_x__ = 0.0;
+    robot_y__ = 0.0;
+    robot_theta__ = 0.0;
   }
 
   constexpr void compute_wheel_tf__()
   {
-
+    tf_left__ = Transform2D(Vector2D{0.0, track_width__ / 2.0}, 0.0);
+    tf_right__ = Transform2D(Vector2D{0.0, -track_width__ / 2.0}, 0.0);
   }
 
 public:
   /// \brief
   DiffDrive();
 
-
+  /// \brief
+  /// \param track_width
+  /// \param wheel_radius
   DiffDrive(double track_width, double wheel_radius);
 
   /// \brief
