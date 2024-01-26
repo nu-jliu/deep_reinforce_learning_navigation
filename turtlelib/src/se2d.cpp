@@ -48,38 +48,38 @@ std::istream & operator>>(std::istream & is, Twist2D & tw)
 
 Transform2D::Transform2D()
 {
-  __twist.omega = 0.0;
-  __twist.x = 0.0;
-  __twist.y = 0.0;
+  twist__.omega = 0.0;
+  twist__.x = 0.0;
+  twist__.y = 0.0;
 }
 
 Transform2D::Transform2D(Vector2D trans)
 {
-  __twist.omega = 0.0;
-  __twist.x = trans.x;
-  __twist.y = trans.y;
+  twist__.omega = 0.0;
+  twist__.x = trans.x;
+  twist__.y = trans.y;
 }
 
 Transform2D::Transform2D(double radians)
 {
-  __twist.omega = radians;
-  __twist.x = 0.0;
-  __twist.y = 0.0;
+  twist__.omega = radians;
+  twist__.x = 0.0;
+  twist__.y = 0.0;
 }
 
 Transform2D::Transform2D(Vector2D trans, double radians)
 {
-  __twist.omega = radians;
-  __twist.x = trans.x;
-  __twist.y = trans.y;
+  twist__.omega = radians;
+  twist__.x = trans.x;
+  twist__.y = trans.y;
 }
 
 Point2D Transform2D::operator()(Point2D p) const
 {
-  double c = cos(__twist.omega);
-  double s = sin(__twist.omega);
-  double x = __twist.x;
-  double y = __twist.y;
+  double c = cos(twist__.omega);
+  double s = sin(twist__.omega);
+  double x = twist__.x;
+  double y = twist__.y;
 
   double result_x = c * p.x - s * p.y + x;
   double result_y = s * p.x + c * p.y + y;
@@ -89,8 +89,8 @@ Point2D Transform2D::operator()(Point2D p) const
 
 Vector2D Transform2D::operator()(Vector2D v) const
 {
-  double c = cos(__twist.omega);
-  double s = sin(__twist.omega);
+  double c = cos(twist__.omega);
+  double s = sin(twist__.omega);
 
   double result_x = c * v.x - s * v.y;
   double result_y = s * v.x + c * v.y;
@@ -100,10 +100,10 @@ Vector2D Transform2D::operator()(Vector2D v) const
 
 Twist2D Transform2D::operator()(Twist2D v) const
 {
-  double c = cos(__twist.omega);
-  double s = sin(__twist.omega);
-  double x = __twist.x;
-  double y = __twist.y;
+  double c = cos(twist__.omega);
+  double s = sin(twist__.omega);
+  double x = twist__.x;
+  double y = twist__.y;
 
   double tw_omega = v.omega;
   double tw_x = y * v.omega + c * v.x - s * v.y;
@@ -114,10 +114,10 @@ Twist2D Transform2D::operator()(Twist2D v) const
 
 Transform2D Transform2D::inv() const
 {
-  double c = cos(__twist.omega);
-  double s = sin(__twist.omega);
-  double x = __twist.x;
-  double y = __twist.y;
+  double c = cos(twist__.omega);
+  double s = sin(twist__.omega);
+  double x = twist__.x;
+  double y = twist__.y;
 
   double inv_cos = c;
   double inv_sin = -s;
@@ -132,10 +132,10 @@ Transform2D Transform2D::inv() const
 
 Transform2D & Transform2D::operator*=(const Transform2D & rhs)
 {
-  double c1 = cos(__twist.omega);
-  double s1 = sin(__twist.omega);
-  double x1 = __twist.x;
-  double y1 = __twist.y;
+  double c1 = cos(twist__.omega);
+  double s1 = sin(twist__.omega);
+  double x1 = twist__.x;
+  double y1 = twist__.y;
 
   double c2 = cos(rhs.rotation());
   double s2 = sin(rhs.rotation());
@@ -149,21 +149,21 @@ Transform2D & Transform2D::operator*=(const Transform2D & rhs)
   double x = c1 * x2 - s1 * y2 + x1;
   double y = s1 * x2 + c1 * y2 + y1;
 
-  __twist.omega = omega;
-  __twist.x = x;
-  __twist.y = y;
+  twist__.omega = omega;
+  twist__.x = x;
+  twist__.y = y;
 
   return *this;
 }
 
 Vector2D Transform2D::translation() const
 {
-  return {__twist.x, __twist.y};
+  return {twist__.x, twist__.y};
 }
 
 double Transform2D::rotation() const
 {
-  return __twist.omega;
+  return twist__.omega;
 }
 
 std::ostream & operator<<(std::ostream & os, const Transform2D & tf)

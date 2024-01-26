@@ -8,14 +8,15 @@
 /// \copyright Copyright (c) 2024
 ///
 ///
+#ifndef TURTLELIB_SVG_HPP_INCLUDE_GUARD
+#define TURTLELIB_SVG_HPP_INCLUDE_GUARD
+
 #include "turtlelib/geometry2d.hpp"
 #include "turtlelib/se2d.hpp"
 
 #include <iostream>
 #include <fstream>
 
-#ifndef TURTLELIB_SVG_HPP_INCLUDE_GUARD
-#define TURTLELIB_SVG_HPP_INCLUDE_GUARD
 namespace turtlelib
 {
 /// \brief Normalize a vector
