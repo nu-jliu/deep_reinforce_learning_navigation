@@ -1,8 +1,18 @@
+///
+/// \file test_svg.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Test svg display functionalities
+/// \version 0.1
+/// \date 2024-01-25
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include "turtlelib/svg.hpp"
 #include "catch2/catch_all.hpp"
 
-using namespace turtlelib;
-
+namespace turtlelib
+{
 TEST_CASE("Testing line svg writen to file", "[svg]") // Allen Liu
 {
   Svg svg("svg_line.svg");
@@ -46,4 +56,5 @@ TEST_CASE("Testing frame svg writen to a file", "[svg]") // Allen Liu
   svg.draw_frame(tf2, "{b}");
 
   svg.finish();
+}
 }

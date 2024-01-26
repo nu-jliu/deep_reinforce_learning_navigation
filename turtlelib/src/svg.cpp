@@ -1,11 +1,11 @@
 ///
-/// @file svg.cpp
-/// @author your name (you@domain.com)
-/// @brief
-/// @version 0.1
-/// @date 2024-01-23
+/// \file svg.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Library for displaying frames, vectors and points on a svg file
+/// \version 0.1
+/// \date 2024-01-23
 ///
-/// @copyright Copyright (c) 2024
+/// \copyright Copyright (c) 2024
 ///
 ///
 #include <cmath>

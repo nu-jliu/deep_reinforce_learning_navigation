@@ -1,11 +1,22 @@
+///
+/// \file test_se2d.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Test 2D transformation functions
+/// \version 0.1
+/// \date 2024-01-25
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include "turtlelib/se2d.hpp"
 #include "catch2/catch_all.hpp"
 
 #define TOLERANCE 1e-12
 
-using namespace turtlelib;
 using Catch::Matchers::WithinAbs;
 
+namespace turtlelib
+{
 TEST_CASE("Twist2D <<", "[twist2d]") // Allen Liu
 {
   struct Twist2D test = {1.2, 1.4, 1.5};
@@ -306,4 +317,5 @@ TEST_CASE("Transform *", "[transform]") // Allen Liu
   REQUIRE_THAT(tf56.rotation(), WithinAbs(3.1416, 1e-4));
   REQUIRE_THAT(tf56.translation().x, WithinAbs(-3.3, 1e-4));
   REQUIRE_THAT(tf56.translation().y, WithinAbs(5.8, 1e-4));
+}
 }

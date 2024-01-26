@@ -1,3 +1,13 @@
+///`
+/// \file test_geometry2d.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Test 2D geometry library functions
+/// \version 0.1
+/// \date 2024-01-25
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include "turtlelib/geometry2d.hpp"
 #include <catch2/catch_all.hpp>
 
