@@ -14,7 +14,6 @@ project(turtlelib)
 # here: we find the eigen library as per the instruction
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
 find_package(Doxygen)
 
 # Building documentation should be optional.
@@ -39,7 +38,16 @@ endif()
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target"
-add_library(${PROJECT_NAME} src/geometry2d.cpp src/se2d.cpp src/svg.cpp)
+set(TURTLELIB_SRC_FILES
+    "src/diff_drive.cpp"
+    "src/geometry2d.cpp"
+    "src/se2d.cpp"
+    "src/svg.cpp"
+)
+
+add_library(${PROJECT_NAME} 
+    ${TURTLELIB_SRC_FILES}
+)
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
 # The use of the <BUILD_INTERFACE> and <INSTALL_INTERFACE> is because when
@@ -50,7 +58,8 @@ add_library(${PROJECT_NAME} src/geometry2d.cpp src/se2d.cpp src/svg.cpp)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-    $<INSTALL_INTERFACE:include/>)
+    $<INSTALL_INTERFACE:include/>
+)
 
 # specify additional compilation flags for the library
 # Public causes the flags to propagate to anything
@@ -69,7 +78,8 @@ add_executable(frame_main src/frame_main.cpp)
 target_include_directories(frame_main
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-    $<INSTALL_INTERFACE:include/>)
+    $<INSTALL_INTERFACE:include/>
+)
 
 # Use target_link_libraries to add dependencies to a "target"
 # (e.g., a library or executable)
@@ -95,10 +105,12 @@ install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 # find_package(project_name) from another cmake project
 # A user can then target_link_libraries(target project_name::library)
 # to use the libraries installed here
-install(EXPORT ${PROJECT_NAME}-targets
-        FILE ${PROJECT_NAME}-config.cmake
-        NAMESPACE ${PROJECT_NAME}::
-        DESTINATION lib/cmake/${PROJECT_NAME})
+install(
+    EXPORT ${PROJECT_NAME}-targets
+    FILE ${PROJECT_NAME}-config.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION lib/cmake/${PROJECT_NAME}
+)
 
 include(CTest)
 
@@ -107,23 +119,25 @@ if(BUILD_TESTING)
     # Find the Unit testing framework. In this example, Catch2
     find_package(Catch2 3 REQUIRED)
 
-    
+    file(GLOB TEST_SRC_FILES
+        CMAKE_CONFIGURE_DEPENDS
+        "tests/test_*.cpp"
+    )
+
     # A test is just an executable that is linked against the unit testing library
-    add_executable(test_${PROJECT_NAME} tests/test_geometry2d.cpp tests/test_se2d.cpp tests/test_svg.cpp)
+    add_executable(test_${PROJECT_NAME} ${TEST_SRC_FILES})
     # add_executable(test_se2d tests/test_se2d2.cpp)
 
-    target_include_directories(test_${PROJECT_NAME}
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-        $<INSTALL_INTERFACE:include/>)
-
-    # target_include_directories(test_se2d
+    # target_include_directories(test_${PROJECT_NAME}
     #     PUBLIC
     #     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-    #     $<INSTALL_INTERFACE:include/>)
+    #     $<INSTALL_INTERFACE:include/>
+    # )
     
-    target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME} Catch2::Catch2WithMain)
-    # target_link_libraries(test_se2d ${PROJECT_NAME} Catch2::Catch2WithMain)
+    target_link_libraries(test_${PROJECT_NAME} 
+        ${PROJECT_NAME} 
+        Catch2::Catch2WithMain
+    )
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME ${PROJECT_NAME}_test COMMAND test_${PROJECT_NAME})
