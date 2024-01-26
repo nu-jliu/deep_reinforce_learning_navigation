@@ -60,5 +60,48 @@ TEST_CASE("Pure Rotations fk", "[forward]") /// Allen Liu
   REQUIRE_THAT(
     turtlebot1.config_theta(),
     WithinAbs(PI * turtleobt_wheel_radius / (turtlebot_track_width / 2.0), TOLERANCE));
+
+  DiffDrive turtlebot2;
+  turtlebot2.compute_fk(PI, -PI);
+
+  REQUIRE_THAT(turtlebot2.left_wheel(), WithinAbs(PI, TOLERANCE));
+  REQUIRE_THAT(turtlebot2.right_wheel(), WithinAbs(-PI, TOLERANCE));
+  REQUIRE_THAT(turtlebot2.config_x(), WithinAbs(0.0, TOLERANCE));
+  REQUIRE_THAT(turtlebot2.config_y(), WithinAbs(0.0, TOLERANCE));
+  REQUIRE_THAT(
+    turtlebot2.config_theta(),
+    WithinAbs(-PI * turtleobt_wheel_radius / (turtlebot_track_width / 2.0), TOLERANCE));
+}
+
+TEST_CASE("Pure Rotations ik", "[inverse]") // Allen Liu
+{
+  DiffDrive turtlebot1;
+  WheelSpeed phidot1 = turtlebot1.compute_ik(Twist2D{PI, 0.0, 0.0});
+
+  REQUIRE_THAT(
+    phidot1.left,
+    WithinAbs(-PI * (turtlebot_track_width / 2.0) / turtleobt_wheel_radius, TOLERANCE));
+  REQUIRE_THAT(
+    phidot1.right,
+    WithinAbs(PI * (turtlebot_track_width / 2.0) / turtleobt_wheel_radius, TOLERANCE));
+
+  DiffDrive turtlebot2;
+  WheelSpeed phidot2 = turtlebot2.compute_ik(Twist2D{-PI, 0.0, 0.0});
+
+  REQUIRE_THAT(
+    phidot2.left,
+    WithinAbs(PI * (turtlebot_track_width / 2.0) / turtleobt_wheel_radius, TOLERANCE));
+  REQUIRE_THAT(
+    phidot2.right,
+    WithinAbs(-PI * (turtlebot_track_width / 2.0) / turtleobt_wheel_radius, TOLERANCE));
+}
+
+TEST_CASE("Round Track fk", "[forward]")
+{
+  DiffDrive turtlebot1;
+  turtlebot1.compute_fk(PI, 2.0 * PI);
+
+  REQUIRE_THAT(turtlebot1.left_wheel(), WithinAbs(PI, TOLERANCE));
+  REQUIRE_THAT(turtlebot1.right_wheel(), WithinAbs(2.0 * PI, TOLERANCE));
 }
 }

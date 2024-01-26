@@ -6,17 +6,17 @@
 
 namespace turtlelib
 {
-/// @brief
+/// @brief Structure to represent the wheel speed
 struct WheelSpeed
 {
-  /// @brief
+  /// @brief The left wheel speed
   double left;
 
-  /// @brief
+  /// @brief The right wheel speed
   double right;
 };
 
-/// @brief
+/// @brief The DiffDrive class to represent a diffdrive mobile robot
 class DiffDrive
 {
 private:
@@ -29,17 +29,17 @@ private:
   double robot_theta__;
 
 public:
-  /// \brief
+  /// \brief Creates a default diffdrive robot using turtlebot3 specs
   DiffDrive();
 
-  /// \brief
-  /// \param track_width
-  /// \param wheel_radius
+  /// \brief Creates a custom diffdrive robot
+  /// \param track_width The distance between to wheel
+  /// \param wheel_radius The radius of the wheel
   DiffDrive(double track_width, double wheel_radius);
 
-  /// \brief
-  /// \param left_wheel
-  /// \param right_wheel
+  /// \brief Computes forward kinematics
+  /// \param left_wheel The left wheel target configuration
+  /// \param right_wheel The right wheel target configuration
   void compute_fk(double left_wheel, double right_wheel);
 
   /// \brief
