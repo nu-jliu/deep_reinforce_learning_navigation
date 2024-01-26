@@ -53,14 +53,14 @@ TEST_CASE("Normalize angle", "[normalize_angle]") // Allen Liu
 
 TEST_CASE("Point2D stream", "[point2d]") // Allen Liu
 {
-  struct Point2D test;
+  Point2D test;
   test.x = 1.2;
   test.y = 2.5;
   std::stringstream ss;
   ss << test;
   REQUIRE(ss.str() == "[1.2 2.5]");
 
-  struct Point2D test2;
+  Point2D test2;
   test2.x = 1.0;
   test2.y = 2.0;
   std::stringstream ss2;
@@ -70,8 +70,8 @@ TEST_CASE("Point2D stream", "[point2d]") // Allen Liu
 
 TEST_CASE("Point2D read", "[point2d]") // Allen Liu
 {
-  struct Point2D test;
-  struct Point2D sample;
+  Point2D test;
+  Point2D sample;
   sample.x = 1.2;
   sample.y = 2.5;
   std::stringstream ss;
@@ -84,9 +84,9 @@ TEST_CASE("Point2D read", "[point2d]") // Allen Liu
 
 TEST_CASE("Point subs", "[vector]") // Allen Liu
 {
-  struct Point2D p1;
-  struct Point2D p2;
-  struct Point2D p3;
+  Point2D p1;
+  Point2D p2;
+  Point2D p3;
 
   p1.x = 1.2;
   p1.y = 2.4;
@@ -95,9 +95,9 @@ TEST_CASE("Point subs", "[vector]") // Allen Liu
   p3.x = -1.3;
   p3.y = -2.4;
 
-  struct Vector2D v12 = p2 - p1;
-  struct Vector2D v23 = p3 - p2;
-  struct Vector2D v13 = p3 - p1;
+  Vector2D v12 = p2 - p1;
+  Vector2D v23 = p3 - p2;
+  Vector2D v13 = p3 - p1;
 
   REQUIRE_THAT(v12.x, WithinAbs(3.3, TOLERANCE));
   REQUIRE_THAT(v12.y, WithinAbs(3.2, TOLERANCE));
@@ -109,14 +109,14 @@ TEST_CASE("Point subs", "[vector]") // Allen Liu
 
 TEST_CASE("Point adds", "[vector]") // Allen Liu
 {
-  struct Point2D p;
+  Point2D p;
 
   p.x = 1.2;
   p.y = 3.4;
 
-  struct Vector2D v1;
-  struct Vector2D v2;
-  struct Vector2D v3;
+  Vector2D v1;
+  Vector2D v2;
+  Vector2D v3;
 
   v1.x = 1.2;
   v1.y = -2.4;
@@ -125,9 +125,9 @@ TEST_CASE("Point adds", "[vector]") // Allen Liu
   v3.x = -2.2;
   v3.y = -5.6;
 
-  struct Point2D p1 = p + v1;
-  struct Point2D p2 = p + v2;
-  struct Point2D p3 = p + v3;
+  Point2D p1 = p + v1;
+  Point2D p2 = p + v2;
+  Point2D p3 = p + v3;
 
   REQUIRE_THAT(p1.x, WithinAbs(2.4, TOLERANCE));
   REQUIRE_THAT(p1.y, WithinAbs(1.0, TOLERANCE));
@@ -139,14 +139,14 @@ TEST_CASE("Point adds", "[vector]") // Allen Liu
 
 TEST_CASE("Vector2D stream", "[vector2d]") // Allen Liu
 {
-  struct Vector2D test;
+  Vector2D test;
   test.x = 1.2;
   test.y = 2.5;
   std::stringstream ss;
   ss << test;
   REQUIRE(ss.str() == "[1.2 2.5]");
 
-  struct Vector2D test2;
+  Vector2D test2;
   test2.x = 1.0;
   test2.y = 2.0;
   std::stringstream ss2;
@@ -156,12 +156,116 @@ TEST_CASE("Vector2D stream", "[vector2d]") // Allen Liu
 
 TEST_CASE("Vector2D read", "[vector2d]") // Allen Liu
 {
-  struct Vector2D test;
-  struct Vector2D sample = {1.2, 2.5};
+  Vector2D test;
+  Vector2D sample = {1.2, 2.5};
   std::stringstream ss;
 
   ss << sample;
   ss >> test;
   REQUIRE_THAT(test.x, WithinAbs(1.2, TOLERANCE));
   REQUIRE_THAT(test.y, WithinAbs(2.5, TOLERANCE));
+}
+
+TEST_CASE("Vector2D +", "[vector2d]") // Allen Liu
+{
+  Vector2D v1{1.2, 2.3};
+  Vector2D v2{3.4, 4.5};
+
+  Vector2D v12 = v1 + v2;
+
+  REQUIRE_THAT(v12.x, WithinAbs(4.6, TOLERANCE));
+  REQUIRE_THAT(v12.y, WithinAbs(6.8, TOLERANCE));
+
+  Vector2D v3{3.4, -5.6};
+  Vector2D v4{-1.3, 3.3};
+
+  Vector2D v34 = v3 + v4;
+  REQUIRE_THAT(v34.x, WithinAbs(2.1, TOLERANCE));
+  REQUIRE_THAT(v34.y, WithinAbs(-2.3, TOLERANCE));
+}
+
+TEST_CASE("Vector2D +=", "[vector2d]")
+{
+  Vector2D v1{1.2, 3.4};
+  Vector2D v2{3.5, 4.6};
+
+  v1 += v2;
+
+  REQUIRE_THAT(v1.x, WithinAbs(4.7, TOLERANCE));
+  REQUIRE_THAT(v1.y, WithinAbs(8.0, TOLERANCE));
+
+  Vector2D v3{1.2, -3.4};
+  Vector2D v4{-5.6, 4.6};
+
+  v3 += v4;
+
+  REQUIRE_THAT(v3.x, WithinAbs(-4.4, TOLERANCE));
+  REQUIRE_THAT(v3.y, WithinAbs(1.2, TOLERANCE));
+}
+
+TEST_CASE("Vector2D -", "[vector2d]") // Allen Liu
+{
+  Vector2D v{1.2, 4.5};
+
+  Vector2D v1{2.4, 0.5};
+  Vector2D test1 = v - v1;
+
+  REQUIRE_THAT(test1.x, WithinAbs(-1.2, TOLERANCE));
+  REQUIRE_THAT(test1.y, WithinAbs(4.0, TOLERANCE));
+
+  Vector2D v2{3.5, -6.7};
+  Vector2D test2 = v - v2;
+
+  REQUIRE_THAT(test2.x, WithinAbs(-2.3, TOLERANCE));
+  REQUIRE_THAT(test2.y, WithinAbs(11.2, TOLERANCE));
+}
+
+TEST_CASE("Vector2D -=", "[vector2d]") // Allen Liu
+{
+  Vector2D v1{1.2, 4.5};
+  Vector2D v2{3.4, 6.7};
+
+  v1 -= v2;
+
+  REQUIRE_THAT(v1.x, WithinAbs(-2.2, TOLERANCE));
+  REQUIRE_THAT(v1.y, WithinAbs(-2.2, TOLERANCE));
+
+  Vector2D v3{3.2, -5.6};
+  Vector2D v4{-0.5, 2.4};
+
+  v3 -= v4;
+  REQUIRE_THAT(v3.x, WithinAbs(3.7, TOLERANCE));
+  REQUIRE_THAT(v3.y, WithinAbs(-8.0, TOLERANCE));
+}
+
+TEST_CASE("Vector2D *", "[vector2d]") {
+  Vector2D v{1.2, 4.5};
+
+  double r1(1.2);
+  Vector2D v1 = v * r1;
+
+  REQUIRE_THAT(v1.x, WithinAbs(1.44, TOLERANCE));
+  REQUIRE_THAT(v1.y, WithinAbs(5.4, TOLERANCE));
+
+  double r2(-3.4);
+  Vector2D v2 = v * r2;
+
+  REQUIRE_THAT(v2.x, WithinAbs(-4.08, TOLERANCE));
+  REQUIRE_THAT(v2.y, WithinAbs(-15.3, TOLERANCE));
+}
+
+TEST_CASE("Vector2D *=", "[vector2d]")
+{
+  Vector2D v1{1.2, 5.6};
+  v1 *= 3.4;
+
+  REQUIRE_THAT(v1.x, WithinAbs(4.08, TOLERANCE));
+  REQUIRE_THAT(v1.y, WithinAbs(19.04, TOLERANCE));
+
+
+  Vector2D v2{-1.3, 4.6};
+  v2 *= -4.5;
+
+  REQUIRE_THAT(v2.x, WithinAbs(5.85, TOLERANCE));
+  REQUIRE_THAT(v2.y, WithinAbs(-20.7, TOLERANCE));
 }

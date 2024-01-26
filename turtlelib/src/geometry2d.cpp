@@ -99,4 +99,41 @@ std::istream & operator>>(std::istream & is, Vector2D & v)
 
   return is;
 }
+
+Vector2D operator+(const Vector2D & lhs, const Vector2D & rhs)
+{
+  return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+
+Vector2D operator-(const Vector2D & lhs, const Vector2D & rhs)
+{
+  return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+
+Vector2D operator*(const Vector2D & lhs, const double & rhs)
+{
+  return {lhs.x * rhs, lhs.y * rhs};
+}
+
+Vector2D & Vector2D::operator+=(const Vector2D & rhs)
+{
+  this->x += rhs.x;
+  this->y += rhs.y;
+  return *this;
+}
+
+Vector2D & Vector2D::operator-=(const Vector2D & rhs)
+{
+  this->x -= rhs.x;
+  this->y -= rhs.y;
+  return *this;
+}
+
+Vector2D & Vector2D::operator*=(const double & rhs)
+{
+  this->x *= rhs;
+  this->y *= rhs;
+  return *this;
+}
 }  // namespace turtlelib

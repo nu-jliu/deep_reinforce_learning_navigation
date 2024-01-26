@@ -3,24 +3,25 @@
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
 /// \brief This node simulates the turtlebot in a world
 ///
-/// Publishers:
+/// PUBLISHERS:
 ///     ~/timestep: [std_msgs/msg/UInt64]                 Current timestep
 ///     ~/walls:    [visualization_msgs/msg/MarkerArray]  Wall markers
 ///     ~/obstacles: [visualization_msgs/msg/MarkerArray] Obstacle markers
 ///
-/// Services:
+/// SERVICES:
 ///     ~/reset:    [std_srvs/srv/Empty] Reset the turtlebot
 ///     ~/teleport: [nusim/srv/Teleport] Teleport the turtlebot
 ///
-/// \param rate           (double)   The rate of the simulator
-/// \param x0             (double)   Tnitial x value
-/// \param y0             (double)   Initial y value
-/// \param theta0         (double)   Initial theta value
-/// \param arena_x_length (double)   Length of arena in x direction
-/// \param arena_y_length (double)   Length of arena in y direction
-/// \param obstacles/x    (double[]) X coordinates of obstacles
-/// \param obstacles/y    (double[]) Y coordinates of obstacles
-/// \param obstacles/r    (double)   Radius of obstacles
+/// PARAMETERS:
+///     \param rate           (double)   The rate of the simulator
+///     \param x0             (double)   Tnitial x value
+///     \param y0             (double)   Initial y value
+///     \param theta0         (double)   Initial theta value
+///     \param arena_x_length (double)   Length of arena in x direction
+///     \param arena_y_length (double)   Length of arena in y direction
+///     \param obstacles/x    (double[]) X coordinates of obstacles
+///     \param obstacles/y    (double[]) Y coordinates of obstacles
+///     \param obstacles/r    (double)   Radius of obstacles
 ///
 /// \version 0.1
 /// \date 2024-01-22

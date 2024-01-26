@@ -92,7 +92,40 @@ struct Vector2D
 
   /// \brief the y coordinate
   double y = 0.0;
+
+  /// @brief Adds from another vector
+  /// @param rhs the other vector
+  /// @return The resulting vector
+  Vector2D & operator+=(const Vector2D & rhs);
+
+  /// @brief Substract from another vector
+  /// @param rhs the other vector
+  /// @return The resulting vector
+  Vector2D & operator-=(const Vector2D & rhs);
+
+  /// @brief Multiply from a scalar
+  /// @param rhs the scalar
+  /// @return The resulting vector
+  Vector2D & operator*=(const double & rhs);
 };
+
+/// @brief Add between two vectors
+/// @param lhs first vector
+/// @param rhs second vector
+/// @return The resulting vector
+Vector2D operator+(const Vector2D & lhs, const Vector2D & rhs);
+
+/// @brief Substract between two vectors
+/// @param lhs first vector
+/// @param rhs second vector
+/// @return The resulting vector
+Vector2D operator-(const Vector2D & lhs, const Vector2D & rhs);
+
+/// @brief Multiply between a vector and a scalar
+/// @param lhs the vector
+/// @param rhs the scalar
+/// @return
+Vector2D operator*(const Vector2D & lhs, const double & rhs);
 
 /// \brief Subtracting one point from another yields a vector
 /// \param head point corresponding to the head of the vector

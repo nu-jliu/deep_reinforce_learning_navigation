@@ -218,4 +218,8 @@ Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
   return Transform2D(Vector2D{x, y}, omega);
 }
 
+Transform2D integrate_twist(Twist2D tw)
+{
+  return Transform2D(Vector2D{tw.x, tw.y}, tw.omega);
+}
 }  // namespace turtlelib
