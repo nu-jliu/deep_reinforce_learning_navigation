@@ -80,6 +80,15 @@ WheelSpeed DiffDrive::compute_ik(Twist2D body_twist)
   return {phidot_x, phidot_y};
 }
 
+void DiffDrive::update_config(double x, double y, double theta, double phi_left, double phi_right)
+{
+  robot_x__ = x;
+  robot_y__ = y;
+  robot_theta__ = theta;
+  left_wheel__ = phi_left;
+  right_wheel__ = phi_right;
+}
+
 double DiffDrive::left_wheel()
 {
   return left_wheel__;

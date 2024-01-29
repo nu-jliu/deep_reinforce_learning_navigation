@@ -47,6 +47,14 @@ public:
   /// \return
   WheelSpeed compute_ik(Twist2D body_twist);
 
+  /// @brief 
+  /// @param x
+  /// @param y
+  /// @param theta
+  /// @param phi_left
+  /// @param phi_right
+  void update_config(double x, double y, double theta, double phi_left, double phi_right);
+
   /// \brief
   /// \return
   double left_wheel();

@@ -15,10 +15,10 @@ find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(Doxygen REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
     "srv/Teleport.srv"
-    # DEPENDENCIES
     LIBRARY_NAME ${PROJECT_NAME}
 )
 ament_export_dependencies(rosidl_default_runtime)
@@ -46,10 +46,12 @@ install(
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target
-    ${PROJECT_NAME}_interfaces rosidl_typesupport_cpp)
+    ${PROJECT_NAME}_interfaces 
+    rosidl_typesupport_cpp
+)
+
 target_link_libraries(nusim "${cpp_typesupport_target}")
 
-find_package(Doxygen REQUIRED)
 
 # Building documentation should be optional.
 # To build documentation pass -DBUILD_DOCS=ON when generating the build system

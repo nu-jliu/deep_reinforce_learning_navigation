@@ -31,3 +31,8 @@
  - C.5 cylindrical obstacles
  - C.6 nusim launch 
  - C.7 README
+
+## Task D. Kinematics
+ - E.1 `DiffDrive` class
+ - E.2 `DiffDrive` 
+ - E.3 Documentation 
