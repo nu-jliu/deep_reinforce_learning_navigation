@@ -15,8 +15,11 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -43,20 +46,42 @@ set(TURTLE_CONTROL_DEPENDENCIES
 
 set(ODOMETRY_DEPENDENCIES
     rclcpp
+    tf2_ros
     geometry_msgs
     nav_msgs
+    sensor_msgs
+)
 
+set(CIRCLE_DEPENDENCIES
+    rclcpp
+    geometry_msgs
+    std_srvs
 )
 
 add_executable(turtle_control src/turtle_control.cpp)
 ament_target_dependencies(turtle_control ${TURTLE_CONTROL_DEPENDENCIES})
 target_link_libraries(turtle_control 
+    turtlelib::turtlelib
+)
+
+add_executable(odometry src/odometry.cpp)
+ament_target_dependencies(odometry ${ODOMETRY_DEPENDENCIES})
+target_link_libraries(odometry 
+    turtlelib::turtlelib 
+    "${cpp_typesupport_target}"
+)
+
+add_executable(circle src/circle.cpp)
+ament_target_dependencies(circle ${CIRCLE_DEPENDENCIES})
+target_link_libraries(circle 
     turtlelib::turtlelib 
     "${cpp_typesupport_target}"
 )
 
 install(TARGETS
     turtle_control
+    odometry
+    circle
     DESTINATION lib/${PROJECT_NAME}
 )
 

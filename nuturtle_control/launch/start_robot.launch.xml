@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="cmd_src" default="circle" description="The source of the cmd_vel" />
+    <arg name="robot" default="nusim" description="The robot target" />
+    <arg name="use_rviz" default="true" description="whether to use rviz" />
+
+    <!-- cmd_src argument -->
+    <group if="$(eval '\'$(var cmd_src)\' == \'circle\'')">
+        <node pkg="nuturtle_control" exec="circle" name="circle">
+            <param name="velocity" value="1.2" />
+            <param name="radius" value="1.5" />
+        </node>
+    </group>
+
+    <group if="$(eval '\'$(var cmd_src)\' == \'teleop\'')">
+        <node pkg="turtlebot3_teleop teleop_twistkeyboard" />
+    </group>
+
+    <!-- robot argument -->
+    <group if="$(eval '\'$(var robot)\' == \'nusim\'')">
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+            <arg name="use_rviz" value="false" />
+            <arg name="color" value="red" />
+        </include>
+
+        <node pkg="nusim" exec="nusim" name="nusim">
+            <param from="$(find-pkg-share nusim)/config/$(var config_file)" />
+        </node>
+
+        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control" />
+        <node pkg="nuturtle_control" exec="odometry" name="odometry" />
+    </group>
+
+    <include file="$(find nuturtle_description)/launch/load_one.launch.py">
+        <arg name="use_rviz" value="false" />
+        <arg name="color" value="blue" />
+    </include>
+
+
+</launch>

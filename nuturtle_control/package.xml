@@ -17,9 +17,12 @@
     <exec_depend>rosidl_default_runtime</exec_depend>
 
     <depend>rclcpp</depend>
+    <depend>std_srvs</depend>
     <depend>sensor_msgs</depend>
     <depend>geometry_msgs</depend>
+    <depend>nav_msgs</depend>
     <depend>nuturtlebot_msgs</depend>
+    <depend>tf2_ros</depend>
     <depend>turtlelib</depend>
 
     <member_of_group>rosidl_interface_packages</member_of_group>

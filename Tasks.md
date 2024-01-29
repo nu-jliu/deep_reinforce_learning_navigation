@@ -33,6 +33,11 @@
  - C.7 README
 
 ## Task D. Kinematics
- - E.1 `DiffDrive` class
- - E.2 `DiffDrive` 
- - E.3 Documentation 
+ - D.1 `DiffDrive` class
+ - D.2 `DiffDrive` 
+ - D.3 Documentation 
+
+# Task E Robot Control
+ - E.1 Turtle Interface
+ - E.2 Odometry Node
+ - E.3 Circle

@@ -39,6 +39,23 @@ private:
   {
     joint_states__ = *msg;
 
+    if (!joint_states_available__) {
+      joint_states_available__ = true;
+
+      for (size_t i = 0; i < joint_states__.name.size(); i++) {
+        if (joint_states__.name.at(i) == wheel_left__) {
+          index_left__ = i;
+        } else if (joint_states__.name.at(i) == wheel_right__) {
+          index_right__ = i;
+        }
+      }
+
+      if (index_left__ == INT64_MAX || index_right__ == INT64_MAX) {
+        RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid wheel joint name");
+        exit(EXIT_FAILURE);
+      }
+    }
+
     publish_odom__();
   }
 
@@ -61,9 +78,8 @@ private:
   {
     Odometry msg_odom;
 
-
-    double phi_left = joint_states__.position.at(0);
-    double phi_right = joint_states__.position.at(1);
+    double phi_left = joint_states__.position.at(index_left__);
+    double phi_right = joint_states__.position.at(index_right__);
 
     turtlebot__.compute_fk(phi_left, phi_right);
 
@@ -126,10 +142,13 @@ private:
 
   turtlelib::DiffDrive turtlebot__;
   bool joint_states_available__;
+  size_t index_left__;
+  size_t index_right__;
 
 public:
   Odom()
-  : Node("odometry"), joint_states_available__(false)
+  : Node("odometry"), joint_states_available__(false), index_left__(SIZE_MAX), index_right__(
+      SIZE_MAX)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;
@@ -183,7 +202,7 @@ public:
     sub_joint_states__ =
       this->create_subscription<JointState>(
       "joint_states", 10,
-      std::bind(&Odom::sub_joint_states_callback__, this));
+      std::bind(&Odom::sub_joint_states_callback__, this, std::placeholders::_1));
 
     pub_odometry__ = this->create_publisher<Odometry>("odom", 10);
 
