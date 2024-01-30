@@ -112,6 +112,9 @@ if(BUILD_TESTING)
     add_executable(turtle_control_test
         tests/turtle_control_test.cpp
     )
+    add_executable(turtle_odom_test
+        tests/turtle_odom_test.cpp
+    )
 
     target_link_libraries(turtle_control_test
         catch_ros2::catch_ros2_with_node_main
@@ -122,13 +125,22 @@ if(BUILD_TESTING)
         nuturtlebot_msgs
     )
 
+    target_link_libraries(turtle_odom_test
+        catch_ros2::catch_ros2_with_node_main
+    )
+    ament_target_dependencies(turtle_odom_test
+        nav_msgs
+    )
+
     install(TARGETS
         turtle_control_test
+        turtle_odom_test
         DESTINATION lib/${PROJECT_NAME}
     )
 
     install(FILES
         tests/turtle_control_test.launch.xml
+        tests/turtle_odom_test.launch.xml
         DESTINATION share/${PROJECT_NAME}
     )
 
