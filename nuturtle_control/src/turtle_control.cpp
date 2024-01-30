@@ -36,8 +36,6 @@ private:
   /// @brief
   void timer_callback__()
   {
-    RCLCPP_INFO_STREAM(this->get_logger(), "Timer callback");
-
     if (cmd_twist_available__) {
       publish_wheel_cmd__();
     }
@@ -140,10 +138,10 @@ public:
     encoder_ticks_des.description = "Encoder ticks per radian";
     mcu_per_vel_des.description = "Speed per motor mcu";
 
-    this->declare_parameter("track_width", 160e-3, track_witdth_des);
-    this->declare_parameter("wheel_radius", 33e-3, wheel_radius_des);
-    this->declare_parameter("encoder_ticks_per_rad", 4096, encoder_ticks_des);
-    this->declare_parameter("motor_cmd_per_rad_sec", 0.024, mcu_per_vel_des);
+    this->declare_parameter<double>("track_width", 160e-3, track_witdth_des);
+    this->declare_parameter<double>("wheel_radius", 33e-3, wheel_radius_des);
+    this->declare_parameter<int>("encoder_ticks_per_rad", 4096, encoder_ticks_des);
+    this->declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, mcu_per_vel_des);
 
     turtlebot_track_width__ = this->get_parameter("track_width").as_double();
     turtlebot_wheel_radius__ = this->get_parameter("wheel_radius").as_double();
@@ -157,6 +155,10 @@ public:
     sub_cmd_vel__ = this->create_subscription<Twist>(
       "cmd_vel", 10,
       std::bind(&TurtleControl::sub_cmd_vel_callback__, this, std::placeholders::_1));
+    sub_sensor_data__ =
+      this->create_subscription<SensorData>(
+      "sensor_data", 10,
+      std::bind(&TurtleControl::sub_sensor_data_callback__, this, std::placeholders::_1));
 
     pub_wheel_cmd__ = this->create_publisher<WheelCommands>("wheel_cmd", 10);
     pub_joint_states__ = this->create_publisher<JointState>("joint_states", 10);

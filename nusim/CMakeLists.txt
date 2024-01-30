@@ -46,7 +46,7 @@ install(
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target
-    ${PROJECT_NAME}_interfaces 
+    ${PROJECT_NAME}_interfaces
     rosidl_typesupport_cpp
 )
 

@@ -93,9 +93,9 @@ public:
       "The angular velocity, positive for counter-clockwise, negative is clockwise";
     radius_des.description = "The radius of the arc";
 
-    this->declare_parameter("frequency", 100.0, frequency_des);
-    this->declare_parameter("velocity", 0.0, velocity_des);
-    this->declare_parameter("radius", 0.0, radius_des);
+    this->declare_parameter<double>("frequency", 100.0, frequency_des);
+    this->declare_parameter<double>("velocity", 0.0, velocity_des);
+    this->declare_parameter<double>("radius", 0.0, radius_des);
 
     frequency__ = this->get_parameter("frequency").as_double();
     velocity__ = this->get_parameter("velocity").as_double();

@@ -164,12 +164,12 @@ public:
     wheel_radius_des.description = "Wheel radius of the turtlebot.";
     track_width_des.description = "Track width of the turtlebot.";
 
-    this->declare_parameter("body_id", "", body_id_des);
-    this->declare_parameter("odom_id", "odom", odom_id_des);
-    this->declare_parameter("wheel_left", "", wheel_left_des);
-    this->declare_parameter("wheel_right", "", wheel_right_des);
-    this->declare_parameter("wheel_radius", 0.033, wheel_radius_des);
-    this->declare_parameter("track_width", 0.16, track_width_des);
+    this->declare_parameter<std::string>("body_id", "", body_id_des);
+    this->declare_parameter<std::string>("odom_id", "odom", odom_id_des);
+    this->declare_parameter<std::string>("wheel_left", "", wheel_left_des);
+    this->declare_parameter<std::string>("wheel_right", "", wheel_right_des);
+    this->declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
+    this->declare_parameter<double>("track_width", 0.16, track_width_des);
 
     body_id__ = this->get_parameter("body_id").as_string();
     odom_id__ = this->get_parameter("odom_id").as_string();

@@ -43,9 +43,6 @@
 #include <std_srvs/srv/empty.hpp>
 #include "nusim/srv/teleport.hpp"
 
-using std::chrono::duration;
-using std::vector;
-
 using rclcpp::QoS;
 using rclcpp::Node;
 using tf2_ros::TransformBroadcaster;
@@ -274,8 +271,8 @@ private:
   double wall_b__;
   double wall_height__;
   double wall_thickness__;
-  vector<double> obstacles_x__;
-  vector<double> obstacles_y__;
+  std::vector<double> obstacles_x__;
+  std::vector<double> obstacles_y__;
   double obstacle_radius__;
   double obstacle_height__;
 
@@ -306,15 +303,15 @@ public:
     obs_r_des.description = "The radius of the obstacles";
 
     /// declare parameters
-    this->declare_parameter("rate", 100.0, rate_des);
-    this->declare_parameter("x0", 0.0, x0_des);
-    this->declare_parameter("y0", 0.0, y0_des);
-    this->declare_parameter("theta0", 0.0, theta0_des);
-    this->declare_parameter("arena_x_length", 10.0, arena_x_des);
-    this->declare_parameter("arena_y_length", 10.0, arena_y_des);
-    this->declare_parameter("obstacles/x", vector{1.2, 2.3}, obs_x_des);
-    this->declare_parameter("obstacles/y", vector{2.3, 4.5}, obs_y_des);
-    this->declare_parameter("obstacles/r", 0.05, obs_r_des);
+    this->declare_parameter<double>("rate", 100.0, rate_des);
+    this->declare_parameter<double>("x0", 0.0, x0_des);
+    this->declare_parameter<double>("y0", 0.0, y0_des);
+    this->declare_parameter<double>("theta0", 0.0, theta0_des);
+    this->declare_parameter<double>("arena_x_length", 10.0, arena_x_des);
+    this->declare_parameter<double>("arena_y_length", 10.0, arena_y_des);
+    this->declare_parameter<std::vector<double>>("obstacles/x", std::vector{1.2, 2.3}, obs_x_des);
+    this->declare_parameter<std::vector<double>>("obstacles/y", std::vector{2.3, 4.5}, obs_y_des);
+    this->declare_parameter<double>("obstacles/r", 0.05, obs_r_des);
 
     /// get parameter values
     rate__ = this->get_parameter("rate").as_double();
@@ -342,7 +339,7 @@ public:
 
     /// timer
     timer__ = this->create_wall_timer(
-      duration<long double>{1.0 / rate__},
+      std::chrono::duration<long double>{1.0 / rate__},
       std::bind(&NuSim::timer_callback__, this));
 
     // publishers
