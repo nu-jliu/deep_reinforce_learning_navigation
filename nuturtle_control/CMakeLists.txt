@@ -13,11 +13,13 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
+
 find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -127,8 +129,12 @@ if(BUILD_TESTING)
 
     target_link_libraries(turtle_odom_test
         catch_ros2::catch_ros2_with_node_main
+        "${cpp_typesupport_target}"
     )
     ament_target_dependencies(turtle_odom_test
+        tf2_ros
+        tf2
+        geometry_msgs
         nav_msgs
     )
 
@@ -146,6 +152,10 @@ if(BUILD_TESTING)
 
     catch_ros2_add_integration_test(Turtle_Control_Test
         LAUNCH_FILE turtle_control_test.launch.xml
+    )
+
+    catch_ros2_add_integration_test(Turtle_Odom_Test
+        LAUNCH_FILE turtle_odom_test.launch.xml
     )
 
     find_package(ament_lint_auto REQUIRED)
