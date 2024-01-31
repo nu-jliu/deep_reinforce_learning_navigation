@@ -14,6 +14,9 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(nuturtlebot_msgs REQUIRED)
+find_package(turtlelib REQUIRED)
+
 find_package(rosidl_default_generators REQUIRED)
 find_package(Doxygen REQUIRED)
 
@@ -29,10 +32,12 @@ set(NUSIM_DEPENDENCIES
     std_msgs
     std_srvs
     tf2_ros
+    nuturtlebot_msgs
 )
 
 add_executable(nusim src/nusim.cpp)
 ament_target_dependencies(nusim ${NUSIM_DEPENDENCIES})
+target_link_libraries(nusim turtlelib::turtlelib)
 
 
 install(TARGETS

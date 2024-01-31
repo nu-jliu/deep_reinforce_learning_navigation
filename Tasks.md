@@ -41,3 +41,4 @@
  - E.1 Turtle Interface
  - E.2 Odometry Node
  - E.3 Circle
+ - E.4 ROS API Tesing

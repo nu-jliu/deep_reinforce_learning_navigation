@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="show_rviz" default="true" description="Whether to run rviz" />
+    <arg name="use_rviz" default="true" description="Whether to run rviz" />
+
+    <group if="$(var use_rviz)">
+        <node pkg="rviz2" exec="rviz2" name="rviz2"
+            args="-d $(find-pkg-share nuturtle_description)/config/basic_all.rviz" />
+    </group>
 
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="color" value="purple" />
@@ -62,8 +67,4 @@
               --y -0.9
               --z 0.0" />
 
-    <group if="$(var show_rviz)">
-        <node pkg="rviz2" exec="rviz2" name="rviz2"
-            args="-d $(find-pkg-share nuturtle_description)/config/basic_all.rviz" />
-    </group>
 </launch>

@@ -39,9 +39,13 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
 
 #include <std_srvs/srv/empty.hpp>
 #include "nusim/srv/teleport.hpp"
+
+#include "turtlelib/diff_drive.hpp"
 
 using rclcpp::QoS;
 using rclcpp::Node;
@@ -53,6 +57,8 @@ using std_msgs::msg::UInt64;
 using geometry_msgs::msg::TransformStamped;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using nuturtlebot_msgs::msg::WheelCommands;
+using nuturtlebot_msgs::msg::SensorData;
 
 /// services
 using std_srvs::srv::Empty;
@@ -237,17 +243,26 @@ private:
     response->result = true;
   }
 
+  void sub_wheel_cmd_callback__(WheelCommands::SharedPtr msg)
+  {
+    wheel_cmd__ = *msg;
+  }
+
   /// timer
   rclcpp::TimerBase::SharedPtr timer__;
+
+  /// services
+  rclcpp::Service<Empty>::SharedPtr srv_reset__;
+  rclcpp::Service<Teleport>::SharedPtr srv_teleport__;
+
+  /// subscribers
+  rclcpp::Subscription<WheelCommands>::SharedPtr sub_wheel_cmd__;
 
   /// publishers
   rclcpp::Publisher<UInt64>::SharedPtr pub_timestep__;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers__;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers__;
-
-  /// services
-  rclcpp::Service<Empty>::SharedPtr srv_reset__;
-  rclcpp::Service<Teleport>::SharedPtr srv_teleport__;
+  rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data__;
 
   /// transform broadcasters
   std::unique_ptr<TransformBroadcaster> tf_broadcaster__;
@@ -255,26 +270,32 @@ private:
   /// qos profile
   rclcpp::QoS marker_qos__;
 
-  /// other attributes
+  /// subscribed messages
+  WheelCommands wheel_cmd__;
+
+  /// parameters
   double rate__;
-  uint64_t timestep__;
-  double turtle_x__;
-  double turtle_y__;
-  double turtle_theta__;
   double x_0__;
   double y_0__;
   double theta_0__;
   double arena_x_length__;
   double arena_y_length__;
+  std::vector<double> obstacles_x__;
+  std::vector<double> obstacles_y__;
+  double obstacle_radius__;
+
+  /// other attributes
+  uint64_t timestep__;
+  double turtle_x__;
+  double turtle_y__;
+  double turtle_theta__;
   double wall_r__;
   double wall_g__;
   double wall_b__;
   double wall_height__;
   double wall_thickness__;
-  std::vector<double> obstacles_x__;
-  std::vector<double> obstacles_y__;
-  double obstacle_radius__;
   double obstacle_height__;
+  turtlelib::DiffDrive turtlebot__;
 
 public:
   /// \brief Initialize the nusim node
@@ -326,7 +347,10 @@ public:
 
     /// check for x y length
     if (obstacles_x__.size() != obstacles_y__.size()) {
-      RCLCPP_ERROR(this->get_logger(), "The x and y coordinates should have the same length");
+      RCLCPP_ERROR_STREAM(
+        this->get_logger(),
+        "The x and y coordinates should have the same length"
+      );
       throw std::invalid_argument("The x and y coordinate should have same length");
       exit(EXIT_FAILURE);
     }
@@ -342,11 +366,6 @@ public:
       std::chrono::duration<long double>{1.0 / rate__},
       std::bind(&NuSim::timer_callback__, this));
 
-    // publishers
-    pub_timestep__ = this->create_publisher<UInt64>("~/timestep", 10);
-    pub_wall_markers__ = this->create_publisher<MarkerArray>("~/walls", marker_qos__);
-    pub_obstacle_markers__ = this->create_publisher<MarkerArray>("~/obstacles", marker_qos__);
-
     /// services
     srv_reset__ = this->create_service<Empty>(
       "~/reset",
@@ -359,6 +378,18 @@ public:
       std::bind(
         &NuSim::srv_teleport_callback__, this, std::placeholders::_1,
         std::placeholders::_2));
+
+    // subscribers
+    sub_wheel_cmd__ =
+      this->create_subscription<WheelCommands>(
+      "red/wheel_cmd", 10,
+      std::bind(&NuSim::sub_wheel_cmd_callback__, this, std::placeholders::_1));
+
+    // publishers
+    pub_timestep__ = this->create_publisher<UInt64>("~/timestep", 10);
+    pub_sensor_data__ = this->create_publisher<SensorData>("red/sensor_data", 10);
+    pub_wall_markers__ = this->create_publisher<MarkerArray>("~/walls", marker_qos__);
+    pub_obstacle_markers__ = this->create_publisher<MarkerArray>("~/obstacles", marker_qos__);
 
     /// transform broadcasters
     tf_broadcaster__ = std::make_unique<TransformBroadcaster>(*this);
