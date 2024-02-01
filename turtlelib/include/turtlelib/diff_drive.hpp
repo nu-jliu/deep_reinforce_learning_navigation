@@ -40,14 +40,14 @@ public:
   /// \brief Computes forward kinematics
   /// \param left_wheel The left wheel target configuration
   /// \param right_wheel The right wheel target configuration
-  void compute_fk(double left_wheel, double right_wheel);
+  Twist2D compute_fk(double left_wheel, double right_wheel);
 
-  /// \brief
-  /// \param body_twist
-  /// \return
+  /// \brief Computes inverse kinematics
+  /// \param body_twist The twist command
+  /// \return The wheel velocity that follows the command
   WheelSpeed compute_ik(Twist2D body_twist);
 
-  /// @brief 
+  /// @brief
   /// @param x
   /// @param y
   /// @param theta

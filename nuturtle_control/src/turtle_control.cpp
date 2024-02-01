@@ -1,13 +1,29 @@
-/**
- * @file turtle_control.cpp
- * @author your name (you@domain.com)
- * @brief
- * @version 0.1
- * @date 2024-01-27
- *
- * @copyright Copyright (c) 2024
- *
- */
+///
+/// \file turtle_control.cpp
+/// \author Allen (jingkunliu2025@u.northwestern.edu)
+/// \brief Controls the motion of the robot.
+///
+/// PARAMETERS:
+///   \param track_width            [double] The distance between the wheels.
+///   \param wheel_radius           [double] The radius of the wheel.
+///   \param encoder_ticks_per_rad  [double] Encoder ticks per radian.
+///   \param mcu_per_rad_sec        [double] MCU per angular velocity.
+///
+/// SUBSCRIPTIONS:
+///   cmd_vel:      [geometry_msg/msg/Twist]          The command velocity.
+///   sensor_data:  [nuturtlebot_msg/msg/SensorData]  The data from all sensors of the turtlebot.
+///
+/// PUBLISHERS:
+///   wheel_cmd:    [nuturtlebot/msg/WheelCommands] The wheel velocity command.
+///   joint_states: [sensor_msgs/msg/JointState]    The joint states of the robot.
+///
+///
+/// \version 0.1
+/// \date 2024-01-27
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <chrono>
 #include <iostream>
 
@@ -29,11 +45,11 @@ using nuturtlebot_msgs::msg::SensorData;
 using sensor_msgs::msg::JointState;
 using geometry_msgs::msg::Twist;
 
-/// @brief
+/// @brief The class of the turtle_control node
 class TurtleControl : public rclcpp::Node
 {
 private:
-  /// @brief
+  /// @brief The timer callback of the turtle_control node.
   void timer_callback__()
   {
     if (cmd_twist_available__) {
@@ -45,8 +61,8 @@ private:
     }
   }
 
-  /// @brief
-  /// @param msg
+  /// @brief The subcriber callback of the cmd_vel message
+  /// @param msg The subscribed message object
   void sub_cmd_vel_callback__(const Twist::SharedPtr msg)
   {
     if (!cmd_twist_available__) {
@@ -56,15 +72,20 @@ private:
     cmd_twist__ = *msg;
   }
 
+  /// @brief The subcriber callback of the sensor_data message
+  /// @param msg The subscribed sensor data object
   void sub_sensor_data_callback__(const SensorData::SharedPtr msg)
   {
     if (!sensor_data_available__) {
       sensor_data_available__ = true;
+      sensor_data_curr__ = *msg;
     }
 
-    sensor_data__ = *msg;
+    sensor_data_prev__ = sensor_data_curr__;
+    sensor_data_curr__ = *msg;
   }
 
+  /// @brief Publish wheel command message.
   void publish_wheel_cmd__()
   {
     WheelCommands msg;
@@ -81,10 +102,23 @@ private:
     pub_wheel_cmd__->publish(msg);
   }
 
+  /// @brief Publish joint state message.
   void publish_joint_states__()
   {
-    double phi_left = (double) sensor_data__.left_encoder / (double) encoder_tick_per_rad__;
-    double phi_right = (double) sensor_data__.right_encoder / (double) encoder_tick_per_rad__;
+    double phi_left = (double) sensor_data_curr__.left_encoder / encoder_tick_per_rad__;
+    double phi_right = (double) sensor_data_curr__.right_encoder / encoder_tick_per_rad__;
+    double phi_left_prev = (double) sensor_data_prev__.left_encoder / encoder_tick_per_rad__;
+    double phi_right_prev = (double) sensor_data_prev__.right_encoder / encoder_tick_per_rad__;
+
+    double t_curr = (double) sensor_data_curr__.stamp.sec +
+      (double) sensor_data_curr__.stamp.nanosec * 1e-9;
+    double t_prev = (double) sensor_data_prev__.stamp.sec +
+      (double) sensor_data_prev__.stamp.nanosec * 1e-9;
+    double dt = t_curr - t_prev;
+
+    double phidot_left = (phi_left - phi_left_prev) / dt;
+    double phidot_right = (phi_right - phi_right_prev) / dt;
+
 
     turtlebot__.compute_fk(phi_left, phi_right);
 
@@ -94,6 +128,7 @@ private:
     msg.header.stamp = this->get_clock()->now();
     msg.name = std::vector<std::string>{"wheel_left_joint", "wheel_right_joint"};
     msg.position = std::vector<double>{phi_left, phi_right};
+    msg.velocity = std::vector<double>{phidot_left, phidot_right};
 
     pub_joint_states__->publish(msg);
   }
@@ -111,12 +146,13 @@ private:
 
   /// Subcribed messages
   Twist cmd_twist__;
-  SensorData sensor_data__;
+  SensorData sensor_data_curr__;
+  SensorData sensor_data_prev__;
 
   /// Parameters
   double turtlebot_track_width__;
   double turtlebot_wheel_radius__;
-  int encoder_tick_per_rad__;
+  double encoder_tick_per_rad__;
   double motor_cmd_per_rad_sec__;
 
   /// Other attributes
@@ -125,6 +161,7 @@ private:
   bool sensor_data_available__;
 
 public:
+  /// @brief The turtle_control constructor, initialize the environment.
   TurtleControl()
   : Node("turtle_control"), cmd_twist_available__(false), sensor_data_available__(false)
   {
@@ -140,12 +177,12 @@ public:
 
     this->declare_parameter<double>("track_width", 160e-3, track_witdth_des);
     this->declare_parameter<double>("wheel_radius", 33e-3, wheel_radius_des);
-    this->declare_parameter<int>("encoder_ticks_per_rad", 4096, encoder_ticks_des);
+    this->declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_des);
     this->declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, mcu_per_vel_des);
 
     turtlebot_track_width__ = this->get_parameter("track_width").as_double();
     turtlebot_wheel_radius__ = this->get_parameter("wheel_radius").as_double();
-    encoder_tick_per_rad__ = this->get_parameter("encoder_ticks_per_rad").as_int();
+    encoder_tick_per_rad__ = this->get_parameter("encoder_ticks_per_rad").as_double();
     motor_cmd_per_rad_sec__ = this->get_parameter("motor_cmd_per_rad_sec").as_double();
 
     turtlebot__ = turtlelib::DiffDrive(turtlebot_track_width__, turtlebot_wheel_radius__);
@@ -165,7 +202,10 @@ public:
   }
 };
 
-
+/// @brief The main function of the turtle_control node.
+/// @param argc number of arguments.
+/// @param argv value of the arguments.
+/// @return result code.
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

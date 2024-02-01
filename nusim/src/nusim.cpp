@@ -33,6 +33,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+// #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <std_msgs/msg/u_int64.hpp>
@@ -50,6 +51,8 @@
 using rclcpp::QoS;
 using rclcpp::Node;
 using tf2_ros::TransformBroadcaster;
+// using tf2::Quaternion;
+// using tf2::Vector3;
 
 /// messages
 using rcl_interfaces::msg::ParameterDescriptor;
@@ -71,10 +74,33 @@ private:
   /// \brief Timer callback funcrion of the nusim node, calls at every cycle
   void timer_callback__()
   {
-    auto msg_timestep = UInt64();
+    UInt64 msg_timestep;
     msg_timestep.data = timestep__++;
-    this->pub_timestep__->publish(msg_timestep);
+    pub_timestep__->publish(msg_timestep);
 
+    broadcast_tf__();
+    update_turtlebot_pos__();
+    publish_sensor_data__();
+  }
+
+  void update_turtlebot_pos__()
+  {
+    double left_wheel_speed = wheel_cmd__.left_velocity * motor_cmd_per_rad_sec__;
+    double right_wheel_speed = wheel_cmd__.right_velocity * motor_cmd_per_rad_sec__;
+
+    double phi_left_new = turtlebot__.left_wheel() + left_wheel_speed * period__;
+    double phi_right_new = turtlebot__.right_wheel() + right_wheel_speed * period__;
+
+    turtlebot__.compute_fk(phi_left_new, phi_right_new);
+
+    turtle_x__ = turtlebot__.config_x();
+    turtle_y__ = turtlebot__.config_y();
+    turtle_theta__ = turtlebot__.config_theta();
+  }
+
+  /// @brief
+  void broadcast_tf__()
+  {
     TransformStamped tf;
     tf.header.stamp = this->get_clock()->now();
     tf.header.frame_id = "nusim/world";
@@ -86,10 +112,21 @@ private:
 
     tf.transform.rotation.x = 0.0;
     tf.transform.rotation.y = 0.0;
-    tf.transform.rotation.z = 1.0;
-    tf.transform.rotation.w = turtle_theta__;
+    tf.transform.rotation.z = sin(turtle_theta__ / 2.0);
+    tf.transform.rotation.w = cos(turtle_theta__ / 2.0);
 
     tf_broadcaster__->sendTransform(tf);
+  }
+
+  void publish_sensor_data__()
+  {
+    SensorData msg_sensor;
+
+    msg_sensor.stamp = this->get_clock()->now();
+    msg_sensor.left_encoder = (int32_t) (turtlebot__.left_wheel() * encoder_ticks_per_rad__);
+    msg_sensor.right_encoder = (int32_t) (turtlebot__.right_wheel() * encoder_ticks_per_rad__);
+
+    pub_sensor_data__->publish(msg_sensor);
   }
 
   /// \brief publish the markers to display wall on rviz
@@ -210,9 +247,11 @@ private:
   /// \brief reset the position of the turtlebot.
   void reset_turtle_pose__()
   {
+    period__ = 1.0 / rate__;
     turtle_x__ = x_0__;
     turtle_y__ = y_0__;
     turtle_theta__ = theta_0__;
+    turtlebot__ = turtlelib::DiffDrive(track_width__, wheel_radius__);
   }
 
   /// \brief Callback function for reset service, reset the position of turtlebot and timestep
@@ -283,8 +322,14 @@ private:
   std::vector<double> obstacles_x__;
   std::vector<double> obstacles_y__;
   double obstacle_radius__;
+  double wheel_radius__;
+  double track_width__;
+  int64_t motor_cmd_max__;
+  double motor_cmd_per_rad_sec__;
+  double encoder_ticks_per_rad__;
 
   /// other attributes
+  double period__;
   uint64_t timestep__;
   double turtle_x__;
   double turtle_y__;
@@ -313,6 +358,11 @@ public:
     ParameterDescriptor obs_x_des;
     ParameterDescriptor obs_y_des;
     ParameterDescriptor obs_r_des;
+    ParameterDescriptor wheel_radius_des;
+    ParameterDescriptor track_width_des;
+    ParameterDescriptor motor_cmd_max_des;
+    ParameterDescriptor motor_cmd_per_rad_sec_des;
+    ParameterDescriptor encoder_ticks_per_rad_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -322,6 +372,11 @@ public:
     obs_x_des.description = "The list of x coordinates of the obstacles";
     obs_y_des.description = "The list of y coordinates of the obstacles";
     obs_r_des.description = "The radius of the obstacles";
+    wheel_radius_des.description = "The radius of the wheel";
+    track_width_des.description = "The width of the track";
+    motor_cmd_max_des.description = "The maximum motor command";
+    motor_cmd_per_rad_sec_des.description = "The motor command per rad/s speed";
+    encoder_ticks_per_rad_des.description = "Number of encoder ticks per radian";
 
     /// declare parameters
     this->declare_parameter<double>("rate", 100.0, rate_des);
@@ -330,9 +385,22 @@ public:
     this->declare_parameter<double>("theta0", 0.0, theta0_des);
     this->declare_parameter<double>("arena_x_length", 10.0, arena_x_des);
     this->declare_parameter<double>("arena_y_length", 10.0, arena_y_des);
-    this->declare_parameter<std::vector<double>>("obstacles/x", std::vector{1.2, 2.3}, obs_x_des);
-    this->declare_parameter<std::vector<double>>("obstacles/y", std::vector{2.3, 4.5}, obs_y_des);
+    this->declare_parameter<std::vector<double>>(
+      "obstacles/x",
+      std::vector<double>{1.2, 2.3},
+      obs_x_des
+    );
+    this->declare_parameter<std::vector<double>>(
+      "obstacles/y",
+      std::vector<double>{2.3, 4.5},
+      obs_y_des
+    );
     this->declare_parameter<double>("obstacles/r", 0.05, obs_r_des);
+    this->declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
+    this->declare_parameter<double>("track_width", 0.16, track_width_des);
+    this->declare_parameter<int64_t>("motor_cmd_max", 265, motor_cmd_max_des);
+    this->declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, motor_cmd_max_des);
+    this->declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_per_rad_des);
 
     /// get parameter values
     rate__ = this->get_parameter("rate").as_double();
@@ -344,6 +412,11 @@ public:
     obstacles_x__ = this->get_parameter("obstacles/x").as_double_array();
     obstacles_y__ = this->get_parameter("obstacles/y").as_double_array();
     obstacle_radius__ = this->get_parameter("obstacles/r").as_double();
+    wheel_radius__ = this->get_parameter("wheel_radius").as_double();
+    track_width__ = this->get_parameter("track_width").as_double();
+    motor_cmd_max__ = this->get_parameter("motor_cmd_max").as_int();
+    motor_cmd_per_rad_sec__ = this->get_parameter("motor_cmd_per_rad_sec").as_double();
+    encoder_ticks_per_rad__ = this->get_parameter("encoder_ticks_per_rad").as_double();
 
     /// check for x y length
     if (obstacles_x__.size() != obstacles_y__.size()) {
@@ -363,7 +436,7 @@ public:
 
     /// timer
     timer__ = this->create_wall_timer(
-      std::chrono::duration<long double>{1.0 / rate__},
+      std::chrono::duration<long double>{period__},
       std::bind(&NuSim::timer_callback__, this));
 
     /// services
@@ -382,7 +455,7 @@ public:
     // subscribers
     sub_wheel_cmd__ =
       this->create_subscription<WheelCommands>(
-      "red/wheel_cmd", 10,
+      "wheel_cmd", 10,
       std::bind(&NuSim::sub_wheel_cmd_callback__, this, std::placeholders::_1));
 
     // publishers

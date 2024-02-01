@@ -27,25 +27,29 @@ using geometry_msgs::msg::TransformStamped;
 
 using nuturtle_control::srv::InitialPose;
 
+/// @brief
 class Odom : public Node
 {
 private:
+  /// @brief
   void timer_callback__()
   {
     broadcast_tf__();
   }
 
+  /// @brief
+  /// @param msg
   void sub_joint_states_callback__(JointState::SharedPtr msg)
   {
-    joint_states__ = *msg;
 
     if (!joint_states_available__) {
       joint_states_available__ = true;
+      joint_states_curr__ = *msg;
 
-      for (size_t i = 0; i < joint_states__.name.size(); i++) {
-        if (joint_states__.name.at(i) == wheel_left__) {
+      for (size_t i = 0; i < msg->name.size(); i++) {
+        if (msg->name.at(i) == wheel_left__) {
           index_left__ = i;
-        } else if (joint_states__.name.at(i) == wheel_right__) {
+        } else if (msg->name.at(i) == wheel_right__) {
           index_right__ = i;
         }
       }
@@ -56,9 +60,15 @@ private:
       }
     }
 
+    joint_states_prev__ = joint_states_curr__;
+    joint_states_curr__ = *msg;
+
     publish_odom__();
   }
 
+  /// @brief
+  /// @param request
+  /// @param respose
   void srv_initial_pose_callback__(
     std::shared_ptr<InitialPose::Request> request,
     std::shared_ptr<InitialPose::Response> respose)
@@ -74,14 +84,15 @@ private:
     respose->success;
   }
 
+  /// @brief
   void publish_odom__()
   {
     Odometry msg_odom;
 
-    double phi_left = joint_states__.position.at(index_left__);
-    double phi_right = joint_states__.position.at(index_right__);
+    double phi_left = joint_states_curr__.position.at(index_left__);
+    double phi_right = joint_states_curr__.position.at(index_right__);
 
-    turtlebot__.compute_fk(phi_left, phi_right);
+    turtlelib::Twist2D twist_turtle = turtlebot__.compute_fk(phi_left, phi_right);
 
     msg_odom.header.stamp = this->get_clock()->now();
     msg_odom.header.frame_id = odom_id__;
@@ -93,12 +104,27 @@ private:
 
     msg_odom.pose.pose.orientation.x = 0.0;
     msg_odom.pose.pose.orientation.y = 0.0;
-    msg_odom.pose.pose.orientation.z = 1.0;
-    msg_odom.pose.pose.orientation.w = turtlebot__.config_theta();
+    msg_odom.pose.pose.orientation.z = sin(turtlebot__.config_theta() / 2.0);
+    msg_odom.pose.pose.orientation.w = cos(turtlebot__.config_theta() / 2.0);
+
+    double t_prev = (double) joint_states_prev__.header.stamp.sec +
+      (double) joint_states_prev__.header.stamp.nanosec * 1e-9;
+    double t_curr = (double) joint_states_curr__.header.stamp.sec +
+      (double) joint_states_curr__.header.stamp.nanosec * 1e-9;
+    double dt = t_curr - t_prev;
+
+    msg_odom.twist.twist.linear.x = twist_turtle.x / dt;
+    msg_odom.twist.twist.linear.y = twist_turtle.y / dt;
+    msg_odom.twist.twist.linear.z = 0.0;
+
+    msg_odom.twist.twist.angular.x = 0.0;
+    msg_odom.twist.twist.angular.y = 0.0;
+    msg_odom.twist.twist.angular.z = twist_turtle.omega / dt;
 
     pub_odometry__->publish(msg_odom);
   }
 
+  /// @brief
   void broadcast_tf__()
   {
     TransformStamped tf_msg;
@@ -113,8 +139,8 @@ private:
 
     tf_msg.transform.rotation.x = 0.0;
     tf_msg.transform.rotation.y = 0.0;
-    tf_msg.transform.rotation.z = 1.0;
-    tf_msg.transform.rotation.w = turtlebot__.config_theta();
+    tf_msg.transform.rotation.z = sin(turtlebot__.config_theta() / 2.0);
+    tf_msg.transform.rotation.w = cos(turtlebot__.config_theta() / 2.0);
 
     tf_broadcater__->sendTransform(tf_msg);
   }
@@ -129,7 +155,8 @@ private:
 
   rclcpp::Service<InitialPose>::SharedPtr srv_initial_pose__;
 
-  JointState joint_states__;
+  JointState joint_states_curr__;
+  JointState joint_states_prev__;
   Point odom_position__;
   Quaternion odom_orientation__;
 
@@ -146,6 +173,7 @@ private:
   size_t index_right__;
 
 public:
+  /// @brief
   Odom()
   : Node("odometry"), joint_states_available__(false), index_left__(SIZE_MAX), index_right__(
       SIZE_MAX)
@@ -215,6 +243,10 @@ public:
   }
 };
 
+/// @brief
+/// @param argc
+/// @param argv
+/// @return
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

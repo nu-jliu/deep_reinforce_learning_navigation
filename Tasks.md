@@ -29,8 +29,9 @@
  - C.3 simulated turtle
  - C.4 walls
  - C.5 cylindrical obstacles
- - C.6 nusim launch 
+ - C.6 `nusim` launch 
  - C.7 README
+ - C.8 Simulator
 
 ## Task D. Kinematics
  - D.1 `DiffDrive` class
@@ -39,6 +40,7 @@
 
 # Task E Robot Control
  - E.1 Turtle Interface
- - E.2 Odometry Node
+ - E.2 `odometry` Node
  - E.3 Circle
  - E.4 ROS API Tesing
+ - E.5 Launchfile

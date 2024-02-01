@@ -15,6 +15,7 @@ find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
@@ -30,9 +31,10 @@ set(NUSIM_DEPENDENCIES
     rclcpp
     visualization_msgs
     std_msgs
+    nuturtlebot_msgs
     std_srvs
     tf2_ros
-    nuturtlebot_msgs
+    tf2_geometry_msgs
 )
 
 add_executable(nusim src/nusim.cpp)

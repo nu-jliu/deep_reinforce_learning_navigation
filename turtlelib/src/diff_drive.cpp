@@ -22,7 +22,7 @@ DiffDrive::DiffDrive(double track_width, double wheel_radius)
   wheel_radius__ = wheel_radius;
 }
 
-void DiffDrive::compute_fk(double left_wheel, double right_wheel)
+Twist2D DiffDrive::compute_fk(double left_wheel, double right_wheel)
 {
   double delta_left = left_wheel - left_wheel__;
   double delta_right = right_wheel - right_wheel__;
@@ -54,11 +54,13 @@ void DiffDrive::compute_fk(double left_wheel, double right_wheel)
   double delta_x = cos_theta * delta_x_b - sin_theta * delta_y_b;
   double delta_y = sin_theta * delta_x_b + cos_theta * delta_y_b;
 
-  robot_theta__ += delta_theta;
+  robot_theta__ = normalize_angle(robot_theta__ + delta_theta);
   robot_x__ += delta_x;
   robot_y__ += delta_y;
   left_wheel__ = left_wheel;
   right_wheel__ = right_wheel;
+
+  return {omega_z, v_x, v_y};
 }
 
 WheelSpeed DiffDrive::compute_ik(Twist2D body_twist)

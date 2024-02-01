@@ -16,9 +16,9 @@
 
     <!-- cmd_src argument -->
     <group if="$(eval '\'$(var cmd_src)\' == \'circle\'')">
-        <push-ros-namespace namespace="red" />
+        <!-- <push-ros-namespace namespace="red" /> -->
         <node pkg="nuturtle_control" exec="circle" name="circle">
-            <param name="velocity" value="1.2" />
+            <param name="velocity" value="0.18" />
             <param name="radius" value="1.5" />
         </node>
     </group>
@@ -32,21 +32,34 @@
         <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
             <arg name="use_rviz" value="false" />
             <arg name="color" value="red" />
+            <!-- <arg name="use_jsp" value="false" /> -->
         </include>
 
         <node pkg="nusim" exec="nusim" name="nusim">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
             <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />
+            <remap from="wheel_cmd" to="red/wheel_cmd" />
         </node>
-        <group>
+
+        <node pkg="nuturtle_control" exec="odometry" name="odometry">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <param name="body_id" value="blue/base_footprint" />
+            <param name="odom_id" value="odom" />
+            <param name="wheel_left" value="wheel_left_joint" />
+            <param name="wheel_right" value="wheel_right_joint" />
+            <remap from="joint_states" to="blue/joint_states" />
+        </node>
+
+        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <remap from="joint_states" to="blue/joint_states" />
+            <remap from="joint_states" to="red/joint_states" />
+            <remap from="wheel_cmd" to="red/wheel_cmd" />
+            <remap from="sensor_data" to="red/sensor_data" />
+        </node>
+        <!-- <group>
             <push-ros-namespace namespace="red" />
-            <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control" />
-            <node pkg="nuturtle_control" exec="odometry" name="odometry">
-                <param name="body_id" value="blue/base_footprint" />
-                <param name="odom_id" value="odom" />
-                <param name="wheel_left" value="wheel_left_joint" />
-                <param name="wheel_right" value="wheel_right_joint" />
-            </node>
-        </group>
+        </group> -->
     </group>
 
     <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
@@ -75,6 +88,7 @@
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
         <arg name="use_rviz" value="false" />
         <arg name="color" value="blue" />
+        <arg name="use_jsp" value="false" />
     </include>
 
 
