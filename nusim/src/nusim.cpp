@@ -455,7 +455,7 @@ public:
     // subscribers
     sub_wheel_cmd__ =
       this->create_subscription<WheelCommands>(
-      "wheel_cmd", 10,
+      "red/wheel_cmd", 10,
       std::bind(&NuSim::sub_wheel_cmd_callback__, this, std::placeholders::_1));
 
     // publishers

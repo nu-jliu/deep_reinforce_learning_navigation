@@ -4,6 +4,18 @@
     <arg name="robot" default="nusim" description="The robot target" />
     <arg name="use_rviz" default="true" description="whether to use rviz" />
 
+    <!-- use_rviz argument -->
+    <group if="$(var use_rviz)">
+        <node pkg="rviz2" exec="rviz2"
+            args="-d $(find-pkg-share nuturtle_control)/config/turtlebot_$(var robot).rviz" />
+    </group>
+
+    <!-- load blue robot -->
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+        <arg name="use_rviz" value="false" />
+        <arg name="color" value="blue" />
+        <!-- <arg name="use_jsp" value="false" /> -->
+    </include>
     <node
         pkg="tf2_ros"
         exec="static_transform_publisher"
@@ -15,6 +27,7 @@
               --z 0.0" />
 
 
+    <!-- cmd_src argument -->
     <group if="$(eval '\'$(var cmd_src)\' == \'circle\'')">
         <!-- <push-ros-namespace namespace="red" /> -->
         <node pkg="nuturtle_control" exec="circle" name="circle">
@@ -23,14 +36,13 @@
         </node>
     </group>
 
-    <!-- cmd_src argument -->
     <group if="$(eval '\'$(var cmd_src)\' == \'teleop\'')">
         <node pkg="turtlebot3_teleop" exec="teleop_twistkeyboard" />
     </group>
 
     <!-- robot argument -->
     <group if="$(eval '\'$(var robot)\' == \'nusim\'')">
-        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+        <!-- <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
             <arg name="use_rviz" value="false" />
             <arg name="color" value="red" />
             <arg name="use_jsp" value="false" />
@@ -40,7 +52,10 @@
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
             <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />
             <remap from="wheel_cmd" to="red/wheel_cmd" />
-        </node>
+        </node> -->
+        <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
+            <arg name="use_rviz" value="false" />
+        </include>
 
         <node pkg="nuturtle_control" exec="odometry" name="odometry">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
@@ -82,15 +97,5 @@
         <!-- <arg name="use_rviz" value="false" /> -->
     </group>
 
-    <!-- use_rviz argument -->
-    <group if="$(var use_rviz)">
-        <node pkg="rviz2" exec="rviz2"
-            args="-d $(find-pkg-share nuturtle_control)/config/turtlebot_$(var robot).rviz" />
-    </group>
 
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
-        <arg name="use_rviz" value="false" />
-        <arg name="color" value="blue" />
-        <!-- <arg name="use_jsp" value="false" /> -->
-    </include>
 </launch>
