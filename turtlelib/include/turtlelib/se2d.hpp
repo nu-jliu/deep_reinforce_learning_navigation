@@ -9,6 +9,10 @@
 
 namespace turtlelib
 {
+/// \brief Normalize a vector
+/// \param v The vector to be normalize
+/// \return The normalized vector
+Vector2D normalize(Vector2D v);
 
 /// \brief represent a 2-Dimensional twist
 struct Twist2D

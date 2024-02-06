@@ -1,22 +1,22 @@
-#include "turtlelib/geometry2d.hpp"
-#include "turtlelib/se2d.hpp"
-
 #ifndef DIFF_DRIVE_HPP_INCLUDE_GUARD
 #define DIFF_DRIVE_HPP_INCLUDE_GUARD
 
+#include "turtlelib/geometry2d.hpp"
+#include "turtlelib/se2d.hpp"
+
 namespace turtlelib
 {
-/// @brief Structure to represent the wheel speed
+/// \brief Structure to represent the wheel speed
 struct WheelSpeed
 {
-  /// @brief The left wheel speed
+  /// \brief The left wheel speed
   double left;
 
-  /// @brief The right wheel speed
+  /// \brief The right wheel speed
   double right;
 };
 
-/// @brief The DiffDrive class to represent a diffdrive mobile robot
+/// \brief The DiffDrive class to represent a diffdrive mobile robot
 class DiffDrive
 {
 private:
@@ -47,34 +47,35 @@ public:
   /// \return The wheel velocity that follows the command
   WheelSpeed compute_ik(Twist2D body_twist);
 
-  /// @brief
-  /// @param x
-  /// @param y
-  /// @param theta
-  /// @param phi_left
-  /// @param phi_right
+  /// \brief Update the robot configuration
+  /// \param x The new x configuration
+  /// \param y The new y configuration
+  /// \param theta The new theta configuration
   void update_config(double x, double y, double theta);
 
+  /// \brief Update the new wheel configuration
+  /// \param left New left wheel configuration
+  /// \param right New right configuration
   void update_wheel(double left, double right);
 
-  /// \brief
-  /// \return
+  /// \brief Get left wheel configuration
+  /// \return [double] Left wheel angle
   double left_wheel();
 
-  /// \brief
-  /// \return
+  /// \brief Get right wheel configuration
+  /// \return [double] right wheel angle
   double right_wheel();
 
-  /// \brief
-  /// \return
+  /// \brief Get x configuration
+  /// \return [double] x configuration
   double config_x();
 
-  /// \brief
-  /// \return
+  /// \brief Get y configuration
+  /// \return [double] y configuration
   double config_y();
 
-  /// \brief
-  /// \return
+  /// \brief Get theta configuration
+  /// \return [double] theta configuration
   double config_theta();
 };
 

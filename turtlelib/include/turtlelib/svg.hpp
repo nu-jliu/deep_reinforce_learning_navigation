@@ -1,7 +1,7 @@
 ///
 /// \file svg.hpp
-/// \author your name (you\domain.com)
-/// \brief
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief The svg class used for display points and lines in svg file
 /// \version 0.1
 /// \date 2024-01-22
 ///
@@ -19,11 +19,6 @@
 
 namespace turtlelib
 {
-/// \brief Normalize a vector
-/// \param v The vector to be normalize
-/// \return The normalized vector
-Vector2D normalize(Vector2D v);
-
 /// @brief The class for displaying svg on a file
 class Svg
 {

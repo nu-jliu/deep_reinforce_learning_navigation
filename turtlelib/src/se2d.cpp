@@ -15,6 +15,12 @@
 
 namespace turtlelib
 {
+Vector2D normalize(Vector2D v)
+{
+  double mag = sqrt(pow(v.x, 2.0) + pow(v.y, 2.0));
+  return Vector2D{v.x / mag, v.y / mag};
+}
+
 std::ostream & operator<<(std::ostream & os, const Twist2D & tw)
 {
   os << "[" << tw.omega << " " << tw.x << " " << tw.y << "]";
