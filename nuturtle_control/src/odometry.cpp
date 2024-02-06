@@ -1,3 +1,13 @@
+///
+/// \file odometry.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief
+/// \version 0.1
+/// \date 2024-02-03
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <chrono>
 
 #include <rclcpp/rclcpp.hpp>
@@ -37,8 +47,9 @@ private:
     broadcast_tf__();
   }
 
-  /// @brief
-  /// @param msg
+  /// @brief Update the turtlebot configuration based on new joint states,
+  ///        then publish new odom
+  /// @param msg The subscibed joint_states message.
   void sub_joint_states_callback__(JointState::SharedPtr msg)
   {
 
@@ -49,8 +60,10 @@ private:
       for (size_t i = 0; i < msg->name.size(); i++) {
         if (msg->name.at(i) == wheel_left__) {
           index_left__ = i;
+          left_init__ = msg->position.at(i);
         } else if (msg->name.at(i) == wheel_right__) {
           index_right__ = i;
+          right_init__ = msg->position.at(i);
         }
       }
 
@@ -76,12 +89,10 @@ private:
     double x = request->x;
     double y = request->y;
     double theta = request->theta;
-    double left_wheel = request->left_wheel;
-    double right_wheel = request->right_wheel;
 
-    turtlebot__.update_config(x, y, theta, left_wheel, right_wheel);
+    turtlebot__.update_config(x, y, theta);
 
-    respose->success;
+    respose->success = true;
   }
 
   /// @brief
@@ -92,7 +103,10 @@ private:
     double phi_left = joint_states_curr__.position.at(index_left__);
     double phi_right = joint_states_curr__.position.at(index_right__);
 
-    turtlelib::Twist2D twist_turtle = turtlebot__.compute_fk(phi_left, phi_right);
+    turtlelib::Twist2D twist_turtle = turtlebot__.compute_fk(
+      phi_left - left_init__,
+      phi_right - right_init__
+    );
 
     msg_odom.header.stamp = this->get_clock()->now();
     msg_odom.header.frame_id = odom_id__;
@@ -171,6 +185,8 @@ private:
   bool joint_states_available__;
   size_t index_left__;
   size_t index_right__;
+  double left_init__;
+  double right_init__;
 
 public:
   /// @brief

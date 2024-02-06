@@ -44,3 +44,4 @@
  - E.3 Circle
  - E.4 ROS API Tesing
  - E.5 Launchfile
+ - E.6 Remote Launch (optional)

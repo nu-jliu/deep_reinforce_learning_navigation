@@ -220,6 +220,17 @@ Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
 
 Transform2D integrate_twist(Twist2D tw)
 {
-  return Transform2D(Vector2D{tw.x, tw.y}, tw.omega);
+  // return Transform2D(Vector2D{tw.x, tw.y}, tw.omega);
+  if (almost_equal(tw.omega, 0.0)) {
+    return Transform2D(Vector2D{tw.x, tw.y});
+  } else {
+    double xs = tw.y / tw.omega;
+    double ys = -tw.x / tw.omega;
+    Transform2D Tsb(Vector2D{xs, ys});
+    Transform2D Tbs = Tsb.inv();
+    Transform2D Tssp(tw.omega);
+
+    return Tbs * Tssp * Tsb;
+  }
 }
 }  // namespace turtlelib

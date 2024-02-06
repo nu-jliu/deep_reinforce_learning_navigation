@@ -187,7 +187,7 @@ public:
 
     turtlebot__ = turtlelib::DiffDrive(turtlebot_track_width__, turtlebot_wheel_radius__);
 
-    timer__ = this->create_wall_timer(100ms, std::bind(&TurtleControl::timer_callback__, this));
+    timer__ = this->create_wall_timer(10ms, std::bind(&TurtleControl::timer_callback__, this));
 
     sub_cmd_vel__ = this->create_subscription<Twist>(
       "cmd_vel", 10,

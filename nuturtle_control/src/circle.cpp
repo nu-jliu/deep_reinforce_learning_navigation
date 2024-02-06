@@ -26,15 +26,7 @@ private:
   {
     Twist msg_twist;
 
-    if (is_stopped__) {
-      msg_twist.linear.x = 0.0;
-      msg_twist.linear.y = 0.0;
-      msg_twist.linear.z = 0.0;
-
-      msg_twist.angular.x = 0.0;
-      msg_twist.angular.y = 0.0;
-      msg_twist.angular.z = 0.0;
-    } else {
+    if (!is_stopped__) {
       msg_twist.linear.x = velocity__;
       msg_twist.linear.y = 0.0;
       msg_twist.linear.z = 0.0;
@@ -42,9 +34,9 @@ private:
       msg_twist.angular.x = 0.0;
       msg_twist.angular.y = 0.0;
       msg_twist.angular.z = velocity__ / radius__;
+      pub_twist__->publish(msg_twist);
     }
 
-    pub_twist__->publish(msg_twist);
   }
 
   void srv_reserse_callback__(

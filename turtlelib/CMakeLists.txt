@@ -14,7 +14,6 @@ project(turtlelib)
 # here: we find the eigen library as per the instruction
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 # find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(Doxygen)
 
 # Create a library.  Can specify if it is shared or static but usually
 # you don't need or want to.
@@ -93,44 +92,48 @@ install(
     DESTINATION lib/cmake/${PROJECT_NAME}
 )
 
-include(CTest)
+if(NOT CMAKE_CROSSCOMPILING)
+    include(CTest)
 
-# CTest sets BUILD_TESTING to on. To disable tests add -DBUILD_TESTING=OFF when invoking cmake
-if(BUILD_TESTING)
-    # Find the Unit testing framework. In this example, Catch2
-    find_package(Catch2 3 REQUIRED)
+    # CTest sets BUILD_TESTING to on. To disable tests add -DBUILD_TESTING=OFF when invoking cmake
+    if(BUILD_TESTING)
+        # Find the Unit testing framework. In this example, Catch2
+        find_package(Catch2 3 REQUIRED)
 
-    file(GLOB TEST_SRC_FILES
-        CMAKE_CONFIGURE_DEPENDS
-        "tests/test_*.cpp"
-    )
+        file(GLOB TEST_SRC_FILES
+            CMAKE_CONFIGURE_DEPENDS
+            "tests/test_*.cpp"
+        )
 
-    # A test is just an executable that is linked against the unit testing library
-    add_executable(test_${PROJECT_NAME} ${TEST_SRC_FILES})
-    
-    target_link_libraries(test_${PROJECT_NAME} 
-        ${PROJECT_NAME} 
-        Catch2::Catch2WithMain
-    )
+        # A test is just an executable that is linked against the unit testing library
+        add_executable(test_${PROJECT_NAME} ${TEST_SRC_FILES})
+        
+        target_link_libraries(test_${PROJECT_NAME} 
+            ${PROJECT_NAME} 
+            Catch2::Catch2WithMain
+        )
 
-    # register the test with CTest, telling it what executable to run
-    add_test(NAME ${PROJECT_NAME}_test COMMAND test_${PROJECT_NAME})
-    # add_test(NAME se2d COMMAND test_se2d)
-    # add_test(NAME ${PROJECT_NAME} COMMAND test_se2d)
-endif()
+        # register the test with CTest, telling it what executable to run
+        add_test(NAME ${PROJECT_NAME}_test COMMAND test_${PROJECT_NAME})
+        # add_test(NAME se2d COMMAND test_se2d)
+        # add_test(NAME ${PROJECT_NAME} COMMAND test_se2d)
+    endif()
 
-# Building documentation should be optional.
-# To build documentation pass -DBUILD_DOCS=ON when generating the build system
-option(BUILD_DOCS "Build the documentation" OFF)
+    # Building documentation should be optional.
+    # To build documentation pass -DBUILD_DOCS=ON when generating the build system
+    option(BUILD_DOCS "Build the documentation" OFF)
 
-# build just because Doxygen is missing
-if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
-    # Turn the README.md into the homepage of the doxygen docs
-    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+    find_package(Doxygen)
+    # build just because Doxygen is missing
+    if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
 
-    # Tell Doxygen where to find the documentation
-    doxygen_add_docs(doxygen include/ src/ README.md ALL)
+        # Turn the README.md into the homepage of the doxygen docs
+        set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
 
-    # The documentation will be in the build/html directory
-    # The main page is build/html/index.html
+        # Tell Doxygen where to find the documentation
+        doxygen_add_docs(doxygen include/ src/ README.md ALL)
+
+        # The documentation will be in the build/html directory
+        # The main page is build/html/index.html
+    endif()
 endif()

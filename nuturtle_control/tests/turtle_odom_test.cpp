@@ -40,7 +40,6 @@ TEST_CASE("Initial Pose service", "[odometry]") // Allen Liu
 
   rclcpp::Time start = rclcpp::Clock().now();
 
-
   while (rclcpp::ok() &&
     (rclcpp::Clock().now() - start) < rclcpp::Duration::from_seconds(TEST_DURATION))
   {
@@ -59,8 +58,6 @@ TEST_CASE("Initial Pose service", "[odometry]") // Allen Liu
   request->x = 0.0;
   request->y = 0.0;
   request->theta = 0.0;
-  request->left_wheel = 0.0;
-  request->right_wheel = 0.0;
 
   cli_init_pose->async_send_request(request);
 

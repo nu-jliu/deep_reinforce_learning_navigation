@@ -1,12 +1,17 @@
 <?xml version="1.0"?>
-<launch-remote-ssh
-    user="numsr"
-    machine="leonard"
-    pkg="nuturtle_control"
-    file="star_robot.launch.xml"
->
-    <source-path path="/home/numsr/ws/install/setup.bash" />
-    <arg name="use_rviz" value="false" />
-    <arg name="robot" value="localhost" />
-    <arg name="cmd_src" value="none" />
-</launch-remote-ssh>
+<launch>
+
+    <launch-remote-ssh
+        user="numsr"
+        machine="leonard"
+        pkg="nuturtle_control"
+        file="start_robot.launch.xml"
+    >
+        <source-path path="/home/numsr/ws/install/setup.bash" />
+        <arg name="use_rviz" value="false" />
+        <arg name="robot" value="localhost" />
+        <arg name="cmd_src" value="none" />
+    </launch-remote-ssh>
+
+
+</launch>

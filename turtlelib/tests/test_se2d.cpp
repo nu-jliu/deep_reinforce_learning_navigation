@@ -319,88 +319,132 @@ TEST_CASE("Transform *", "[transform]") // Allen Liu
   REQUIRE_THAT(tf56.translation().y, WithinAbs(5.8, 1e-4));
 }
 
-TEST_CASE("Pure Translation", "[int_twist]")   // Allen Liu
+// TEST_CASE("Pure Translation", "[int_twist]")   // Allen Liu
+// {
+//   Twist2D tw1{0.0, 1.0, 1.2};
+//   Twist2D tw2{0.0, 2.3, 4.4};
+
+//   Point2D p1{1.2, 3.4};
+//   Point2D p2{3.4, 5.5};
+
+//   Transform2D tf1 = integrate_twist(tw1);
+//   Transform2D tf2 = integrate_twist(tw2);
+
+//   Point2D p1_tf1 = tf1(p1);
+//   Point2D p2_tf1 = tf1(p2);
+//   Point2D p1_tf2 = tf2(p1);
+//   Point2D p2_tf2 = tf2(p2);
+
+//   REQUIRE_THAT(p1_tf1.x, WithinAbs(2.2, TOLERANCE));
+//   REQUIRE_THAT(p1_tf1.y, WithinAbs(4.6, TOLERANCE));
+//   REQUIRE_THAT(p1_tf2.x, WithinAbs(3.5, TOLERANCE));
+//   REQUIRE_THAT(p1_tf2.y, WithinAbs(7.8, TOLERANCE));
+
+//   REQUIRE_THAT(p2_tf1.x, WithinAbs(4.4, TOLERANCE));
+//   REQUIRE_THAT(p2_tf1.y, WithinAbs(6.7, TOLERANCE));
+//   REQUIRE_THAT(p2_tf2.x, WithinAbs(5.7, TOLERANCE));
+//   REQUIRE_THAT(p2_tf2.y, WithinAbs(9.9, TOLERANCE));
+// }
+
+// TEST_CASE("Pure Rotation", "[int_twist]")
+// {
+//   Twist2D tw1{deg2rad(90.0), 0, 0};
+//   Twist2D tw2{deg2rad(-180.0), 0, 0};
+
+//   Point2D p1{1.2, 4.5};
+//   Point2D p2{4.2, 5.5};
+
+//   Transform2D tf1 = integrate_twist(tw1);
+//   Transform2D tf2 = integrate_twist(tw2);
+
+//   Point2D p1_tf1 = tf1(p1);
+//   Point2D p2_tf1 = tf1(p2);
+//   Point2D p1_tf2 = tf2(p1);
+//   Point2D p2_tf2 = tf2(p2);
+
+//   REQUIRE_THAT(p1_tf1.x, WithinAbs(-4.5, TOLERANCE));
+//   REQUIRE_THAT(p1_tf1.y, WithinAbs(1.2, TOLERANCE));
+
+//   REQUIRE_THAT(p1_tf2.x, WithinAbs(-1.2, TOLERANCE));
+//   REQUIRE_THAT(p1_tf2.y, WithinAbs(-4.5, TOLERANCE));
+
+//   REQUIRE_THAT(p2_tf1.x, WithinAbs(-5.5, TOLERANCE));
+//   REQUIRE_THAT(p2_tf1.y, WithinAbs(4.2, TOLERANCE));
+
+//   REQUIRE_THAT(p2_tf2.x, WithinAbs(-4.2, TOLERANCE));
+//   REQUIRE_THAT(p2_tf2.y, WithinAbs(-5.5, TOLERANCE));
+// }
+
+// TEST_CASE("Translation and rotation", "[int_twist]")
+// {
+//   Twist2D tw1{deg2rad(90.0), 4.5, 2.1};
+//   Twist2D tw2{deg2rad(-180.0), -3.4, 2.3};
+
+//   Point2D p1{1.2, 4.5};
+//   Point2D p2{4.2, 5.5};
+
+//   Transform2D tf1 = integrate_twist(tw1);
+//   Transform2D tf2 = integrate_twist(tw2);
+
+//   Point2D p1_tf1 = tf1(p1);
+//   Point2D p2_tf1 = tf1(p2);
+//   Point2D p1_tf2 = tf2(p1);
+//   Point2D p2_tf2 = tf2(p2);
+
+//   REQUIRE_THAT(p1_tf1.x, WithinAbs(0.0, TOLERANCE));
+//   REQUIRE_THAT(p1_tf1.y, WithinAbs(3.3, TOLERANCE));
+
+//   REQUIRE_THAT(p1_tf2.x, WithinAbs(-4.6, TOLERANCE));
+//   REQUIRE_THAT(p1_tf2.y, WithinAbs(-2.2, TOLERANCE));
+
+//   REQUIRE_THAT(p2_tf1.x, WithinAbs(-1.0, TOLERANCE));
+//   REQUIRE_THAT(p2_tf1.y, WithinAbs(6.3, TOLERANCE));
+
+//   REQUIRE_THAT(p2_tf2.x, WithinAbs(-7.6, TOLERANCE));
+//   REQUIRE_THAT(p2_tf2.y, WithinAbs(-3.2, TOLERANCE));
+// }
+TEST_CASE("Integrate Twist Pure Translation", "[integrate_twist]")
 {
-  Twist2D tw1{0.0, 1.0, 1.2};
-  Twist2D tw2{0.0, 2.3, 4.4};
+  Transform2D tf1 = integrate_twist(Twist2D{0, 1.0, 2.0});
 
-  Point2D p1{1.2, 3.4};
-  Point2D p2{3.4, 5.5};
+  REQUIRE_THAT(tf1.rotation(), WithinAbs(0.0, TOLERANCE));
+  REQUIRE_THAT(tf1.translation().x, WithinAbs(1.0, TOLERANCE));
+  REQUIRE_THAT(tf1.translation().y, WithinAbs(2.0, TOLERANCE));
 
-  Transform2D tf1 = integrate_twist(tw1);
-  Transform2D tf2 = integrate_twist(tw2);
+  Transform2D tf2 = integrate_twist(Twist2D{0, 3.4, 4.2});
 
-  Point2D p1_tf1 = tf1(p1);
-  Point2D p2_tf1 = tf1(p2);
-  Point2D p1_tf2 = tf2(p1);
-  Point2D p2_tf2 = tf2(p2);
-
-  REQUIRE_THAT(p1_tf1.x, WithinAbs(2.2, TOLERANCE));
-  REQUIRE_THAT(p1_tf1.y, WithinAbs(4.6, TOLERANCE));
-  REQUIRE_THAT(p1_tf2.x, WithinAbs(3.5, TOLERANCE));
-  REQUIRE_THAT(p1_tf2.y, WithinAbs(7.8, TOLERANCE));
-
-  REQUIRE_THAT(p2_tf1.x, WithinAbs(4.4, TOLERANCE));
-  REQUIRE_THAT(p2_tf1.y, WithinAbs(6.7, TOLERANCE));
-  REQUIRE_THAT(p2_tf2.x, WithinAbs(5.7, TOLERANCE));
-  REQUIRE_THAT(p2_tf2.y, WithinAbs(9.9, TOLERANCE));
+  REQUIRE_THAT(tf2.rotation(), WithinAbs(0.0, TOLERANCE));
+  REQUIRE_THAT(tf2.translation().x, WithinAbs(3.4, TOLERANCE));
+  REQUIRE_THAT(tf2.translation().y, WithinAbs(4.2, TOLERANCE));
 }
 
-TEST_CASE("Pure Rotation", "[int_twist]")
+TEST_CASE("Integrate Twist Pure Rotation", "[integrate_twist]")
 {
-  Twist2D tw1{deg2rad(90.0), 0, 0};
-  Twist2D tw2{deg2rad(-180.0), 0, 0};
+  Transform2D tf1 = integrate_twist(Twist2D{PI, 0.0, 0.0});
 
-  Point2D p1{1.2, 4.5};
-  Point2D p2{4.2, 5.5};
+  REQUIRE_THAT(tf1.rotation(), WithinAbs(PI, TOLERANCE));
+  REQUIRE_THAT(tf1.translation().x, WithinAbs(0.0, TOLERANCE));
+  REQUIRE_THAT(tf1.translation().y, WithinAbs(0.0, TOLERANCE));
 
-  Transform2D tf1 = integrate_twist(tw1);
-  Transform2D tf2 = integrate_twist(tw2);
+  Transform2D tf2 = integrate_twist(Twist2D{-PI / 2.0, 0.0, 0.0});
 
-  Point2D p1_tf1 = tf1(p1);
-  Point2D p2_tf1 = tf1(p2);
-  Point2D p1_tf2 = tf2(p1);
-  Point2D p2_tf2 = tf2(p2);
-
-  REQUIRE_THAT(p1_tf1.x, WithinAbs(-4.5, TOLERANCE));
-  REQUIRE_THAT(p1_tf1.y, WithinAbs(1.2, TOLERANCE));
-
-  REQUIRE_THAT(p1_tf2.x, WithinAbs(-1.2, TOLERANCE));
-  REQUIRE_THAT(p1_tf2.y, WithinAbs(-4.5, TOLERANCE));
-
-  REQUIRE_THAT(p2_tf1.x, WithinAbs(-5.5, TOLERANCE));
-  REQUIRE_THAT(p2_tf1.y, WithinAbs(4.2, TOLERANCE));
-
-  REQUIRE_THAT(p2_tf2.x, WithinAbs(-4.2, TOLERANCE));
-  REQUIRE_THAT(p2_tf2.y, WithinAbs(-5.5, TOLERANCE));
+  REQUIRE_THAT(tf2.rotation(), WithinAbs(-PI / 2.0, TOLERANCE));
+  REQUIRE_THAT(tf2.translation().x, WithinAbs(0.0, TOLERANCE));
+  REQUIRE_THAT(tf2.translation().y, WithinAbs(0.0, TOLERANCE));
 }
 
-TEST_CASE("Translation and rotation", "[int_twist]")
+TEST_CASE("Integrate Twist Rotation and Translation", "[integrate_twist]")
 {
-  Twist2D tw1{deg2rad(90.0), 4.5, 2.1};
-  Twist2D tw2{deg2rad(-180.0), -3.4, 2.3};
+  Transform2D tf1 = integrate_twist(Twist2D{PI, 1.2, 4.6});
 
-  Point2D p1{1.2, 4.5};
-  Point2D p2{4.2, 5.5};
+  REQUIRE_THAT(tf1.rotation(), WithinAbs(PI, TOLERANCE));
+  REQUIRE_THAT(tf1.translation().x, WithinAbs(-2.9285, 1e-4));
+  REQUIRE_THAT(tf1.translation().y, WithinAbs(0.7639, 1e-4));
 
-  Transform2D tf1 = integrate_twist(tw1);
-  Transform2D tf2 = integrate_twist(tw2);
+  Transform2D tf2 = integrate_twist(Twist2D{0.6480, 0.1555, 0.0});
 
-  Point2D p1_tf1 = tf1(p1);
-  Point2D p2_tf1 = tf1(p2);
-  Point2D p1_tf2 = tf2(p1);
-  Point2D p2_tf2 = tf2(p2);
-
-  REQUIRE_THAT(p1_tf1.x, WithinAbs(0.0, TOLERANCE));
-  REQUIRE_THAT(p1_tf1.y, WithinAbs(3.3, TOLERANCE));
-
-  REQUIRE_THAT(p1_tf2.x, WithinAbs(-4.6, TOLERANCE));
-  REQUIRE_THAT(p1_tf2.y, WithinAbs(-2.2, TOLERANCE));
-
-  REQUIRE_THAT(p2_tf1.x, WithinAbs(-1.0, TOLERANCE));
-  REQUIRE_THAT(p2_tf1.y, WithinAbs(6.3, TOLERANCE));
-
-  REQUIRE_THAT(p2_tf2.x, WithinAbs(-7.6, TOLERANCE));
-  REQUIRE_THAT(p2_tf2.y, WithinAbs(-3.2, TOLERANCE));
+  REQUIRE_THAT(tf2.rotation(), WithinAbs(0.6480, 1e-4));
+  REQUIRE_THAT(tf2.translation().x, WithinAbs(0.1448, 1e-4));
+  REQUIRE_THAT(tf2.translation().y, WithinAbs(0.0486, 1e-4));
 }
 }

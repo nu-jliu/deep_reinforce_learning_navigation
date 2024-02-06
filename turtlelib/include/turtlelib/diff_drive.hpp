@@ -53,7 +53,7 @@ public:
   /// @param theta
   /// @param phi_left
   /// @param phi_right
-  void update_config(double x, double y, double theta, double phi_left, double phi_right);
+  void update_config(double x, double y, double theta);
 
   /// \brief
   /// \return

@@ -23,7 +23,7 @@ find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-find_package(Doxygen REQUIRED)
+
 
 rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
     "srv/InitialPose.srv"
@@ -94,79 +94,83 @@ install(
 # To build documentation pass -DBUILD_DOCS=ON when generating the build system
 option(BUILD_DOCS "Build the documentation" OFF)
 
-# build just because Doxygen is missing
-if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
-    # Turn the README.md into the homepage of the doxygen docs
-    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+if(NOT CMAKE_CROSSCOMPILING)
+    find_package(Doxygen REQUIRED)
+    # build just because Doxygen is missing
+    if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
 
-    # Tell Doxygen where to find the documentation
-    doxygen_add_docs(doxygen include/ src/ README.md ALL)
+        # Turn the README.md into the homepage of the doxygen docs
+        set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
 
-    # The documentation will be in the build/html directory
-    # The main page is build/html/index.html
-endif()
+        # Tell Doxygen where to find the documentation
+        doxygen_add_docs(doxygen include/ src/ README.md ALL)
 
-if(BUILD_TESTING)
-    find_package(catch_ros2 REQUIRED)
+        # The documentation will be in the build/html directory
+        # The main page is build/html/index.html
+    endif()
 
-    include(CTest)
+    if(BUILD_TESTING)
+        find_package(catch_ros2 REQUIRED)
 
-    add_executable(turtle_control_test
-        tests/turtle_control_test.cpp
-    )
-    add_executable(turtle_odom_test
-        tests/turtle_odom_test.cpp
-    )
+        include(CTest)
 
-    target_link_libraries(turtle_control_test
-        catch_ros2::catch_ros2_with_node_main
-    )
-    ament_target_dependencies(turtle_control_test
-        geometry_msgs
-        sensor_msgs
-        nuturtlebot_msgs
-    )
+        add_executable(turtle_control_test
+            tests/turtle_control_test.cpp
+        )
+        add_executable(turtle_odom_test
+            tests/turtle_odom_test.cpp
+        )
 
-    target_link_libraries(turtle_odom_test
-        catch_ros2::catch_ros2_with_node_main
-        "${cpp_typesupport_target}"
-    )
-    ament_target_dependencies(turtle_odom_test
-        tf2_ros
-        tf2
-        geometry_msgs
-        nav_msgs
-    )
+        target_link_libraries(turtle_control_test
+            catch_ros2::catch_ros2_with_node_main
+        )
+        ament_target_dependencies(turtle_control_test
+            geometry_msgs
+            sensor_msgs
+            nuturtlebot_msgs
+        )
 
-    install(TARGETS
-        turtle_control_test
-        turtle_odom_test
-        DESTINATION lib/${PROJECT_NAME}
-    )
+        target_link_libraries(turtle_odom_test
+            catch_ros2::catch_ros2_with_node_main
+            "${cpp_typesupport_target}"
+        )
+        ament_target_dependencies(turtle_odom_test
+            tf2_ros
+            tf2
+            geometry_msgs
+            nav_msgs
+        )
 
-    install(FILES
-        tests/turtle_control_test.launch.xml
-        tests/turtle_odom_test.launch.xml
-        DESTINATION share/${PROJECT_NAME}
-    )
+        install(TARGETS
+            turtle_control_test
+            turtle_odom_test
+            DESTINATION lib/${PROJECT_NAME}
+        )
 
-    catch_ros2_add_integration_test(Turtle_Control_Test
-        LAUNCH_FILE turtle_control_test.launch.xml
-    )
+        install(FILES
+            tests/turtle_control_test.launch.xml
+            tests/turtle_odom_test.launch.xml
+            DESTINATION share/${PROJECT_NAME}
+        )
 
-    catch_ros2_add_integration_test(Turtle_Odom_Test
-        LAUNCH_FILE turtle_odom_test.launch.xml
-    )
+        catch_ros2_add_integration_test(Turtle_Control_Test
+            LAUNCH_FILE turtle_control_test.launch.xml
+        )
 
-    find_package(ament_lint_auto REQUIRED)
-    # the following line skips the linter which checks for copyrights
-    # comment the line when a copyright and license is added to all source files
-    set(ament_cmake_copyright_FOUND TRUE)
-    # the following line skips cpplint (only works in a git repo)
-    # comment the line when this package is in a git repo and when
-    # a copyright and license is added to all source files
-    set(ament_cmake_cpplint_FOUND TRUE)
-    ament_lint_auto_find_test_dependencies()
+        catch_ros2_add_integration_test(Turtle_Odom_Test
+            LAUNCH_FILE turtle_odom_test.launch.xml
+        )
+
+        find_package(ament_lint_auto REQUIRED)
+        # the following line skips the linter which checks for copyrights
+        # comment the line when a copyright and license is added to all source files
+        set(ament_cmake_copyright_FOUND TRUE)
+        # the following line skips cpplint (only works in a git repo)
+        # comment the line when this package is in a git repo and when
+        # a copyright and license is added to all source files
+        set(ament_cmake_cpplint_FOUND TRUE)
+        ament_lint_auto_find_test_dependencies()
+    endif()
 endif()
 
 ament_package()
