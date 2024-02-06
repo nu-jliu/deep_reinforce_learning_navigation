@@ -8,31 +8,31 @@
     <group if="$(var use_rviz)">
         <node pkg="rviz2" exec="rviz2"
             args="-d $(find-pkg-share nuturtle_control)/config/turtlebot_$(var robot).rviz" />
-    </group>
 
-    <!-- load blue robot -->
-    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
-        <arg name="use_rviz" value="false" />
-        <arg name="color" value="blue" />
-        <!-- <arg name="use_jsp" value="false" /> -->
-    </include>
-    <node
-        pkg="tf2_ros"
-        exec="static_transform_publisher"
-        name="static_tranform_publisher"
-        args="--frame-id nusim/world 
-              --child-frame-id odom
-              --x 0.0
-              --y 0.0
-              --z 0.0" />
+        <!-- load blue robot -->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+            <arg name="use_rviz" value="false" />
+            <arg name="color" value="blue" />
+            <!-- <arg name="use_jsp" value="false" /> -->
+        </include>
+
+        <node
+            pkg="tf2_ros"
+            exec="static_transform_publisher"
+            name="static_tranform_publisher"
+            args="--frame-id nusim/world 
+                  --child-frame-id odom
+                  --x 0.0
+                  --y 0.0
+                  --z 0.0" />
+    </group>
 
 
     <!-- cmd_src argument -->
     <group if="$(eval '\'$(var cmd_src)\' == \'circle\'')">
         <!-- <push-ros-namespace namespace="red" /> -->
         <node pkg="nuturtle_control" exec="circle" name="circle">
-            <param name="velocity" value="0.15" />
-            <param name="radius" value="0.3" />
+            <param from="$(find-pkg-share nuturtle_control)/config/circle.yaml" />
         </node>
     </group>
 
@@ -83,7 +83,7 @@
 
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-            <remap from="joint_states" to="blue/joint_states" />
+            <remap from="joint_states" to="red/joint_states" />
         </node>
 
         <node pkg="nuturtle_control" exec="odometry" name="odometry">
@@ -91,7 +91,7 @@
             <param name="odom_id" value="odom" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
-            <remap from="joint_states" to="blue/joint_states" />
+            <remap from="joint_states" to="red/joint_states" />
         </node>
 
         <!-- <arg name="use_rviz" value="false" /> -->

@@ -71,6 +71,8 @@ private:
         RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid wheel joint name");
         exit(EXIT_FAILURE);
       }
+
+      turtlebot__.update_wheel(left_init__, right_init__);
     }
 
     joint_states_prev__ = joint_states_curr__;
@@ -103,10 +105,7 @@ private:
     double phi_left = joint_states_curr__.position.at(index_left__);
     double phi_right = joint_states_curr__.position.at(index_right__);
 
-    turtlelib::Twist2D twist_turtle = turtlebot__.compute_fk(
-      phi_left - left_init__,
-      phi_right - right_init__
-    );
+    turtlelib::Twist2D twist_turtle = turtlebot__.compute_fk(phi_left, phi_right);
 
     msg_odom.header.stamp = this->get_clock()->now();
     msg_odom.header.frame_id = odom_id__;
@@ -241,7 +240,7 @@ public:
 
     tf_broadcater__ = std::make_unique<TransformBroadcaster>(*this);
 
-    timer__ = this->create_wall_timer(10ms, std::bind(&Odom::timer_callback__, this));
+    timer__ = this->create_wall_timer(4e-3s, std::bind(&Odom::timer_callback__, this));
 
     sub_joint_states__ =
       this->create_subscription<JointState>(

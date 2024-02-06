@@ -43,33 +43,6 @@ Twist2D DiffDrive::compute_fk(double left_wheel, double right_wheel)
   left_wheel__ = left_wheel;
   right_wheel__ = right_wheel;
 
-  // double delta_theta_b = Tbbp.rotation();
-  // double delta_x_b = Tbbp.translation().x;
-  // double delta_y_b = Tbbp.translation().y;
-
-  // if (almost_equal(omega_z, 0.0)) {
-  //   delta_theta_b = 0.0;
-  //   delta_x_b = v_x;
-  //   delta_y_b = v_y;
-  // } else {
-  //   delta_theta_b = omega_z;
-  //   delta_x_b = (v_x * sin(omega_z) + v_y * (cos(omega_z) - 1.0)) / omega_z;
-  //   delta_y_b = (v_y * sin(omega_z) + v_x * (1.0 - cos(omega_z))) / omega_z;
-  // }
-
-  // double sin_theta = sin(robot_theta__);
-  // double cos_theta = cos(robot_theta__);
-
-  // double delta_theta = delta_theta_b;
-  // double delta_x = cos_theta * delta_x_b - sin_theta * delta_y_b;
-  // double delta_y = sin_theta * delta_x_b + cos_theta * delta_y_b;
-
-  // robot_theta__ = normalize_angle(robot_theta__ + delta_theta);
-  // robot_x__ += delta_x;
-  // robot_y__ += delta_y;
-  // left_wheel__ = left_wheel;
-  // right_wheel__ = right_wheel;
-
   return {omega_z, v_x, v_y};
 }
 
@@ -97,6 +70,12 @@ void DiffDrive::update_config(double x, double y, double theta)
   robot_x__ = x;
   robot_y__ = y;
   robot_theta__ = theta;
+}
+
+void DiffDrive::update_wheel(double left, double right)
+{
+  left_wheel__ = left;
+  right_wheel__ = right;
 }
 
 double DiffDrive::left_wheel()

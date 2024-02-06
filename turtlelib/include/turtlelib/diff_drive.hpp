@@ -55,6 +55,8 @@ public:
   /// @param phi_right
   void update_config(double x, double y, double theta);
 
+  void update_wheel(double left, double right);
+
   /// \brief
   /// \return
   double left_wheel();
