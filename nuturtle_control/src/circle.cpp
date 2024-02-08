@@ -44,24 +44,24 @@ class Circle : public Node
 {
 private:
   /// \brief Timer callback
-  void timer_callback__()
+  void timer_callback_()
   {
-    publish_twist__();
+    publish_twist_();
   }
 
   /// \brief publish a twist
-  void publish_twist__()
+  void publish_twist_()
   {
     Twist msg_twist;
 
-    if (!is_stopped__) {
-      msg_twist.linear.x = velocity__;
+    if (!is_stopped_) {
+      msg_twist.linear.x = velocity_;
       msg_twist.linear.y = 0.0;
       msg_twist.linear.z = 0.0;
 
       msg_twist.angular.x = 0.0;
       msg_twist.angular.y = 0.0;
-      msg_twist.angular.z = velocity__ / radius__;
+      msg_twist.angular.z = velocity_ / radius_;
     } else {
       msg_twist.linear.x = 0.0;
       msg_twist.linear.y = 0.0;
@@ -72,19 +72,19 @@ private:
       msg_twist.angular.z = 0.0;
     }
 
-    pub_twist__->publish(msg_twist);
+    pub_twist_->publish(msg_twist);
   }
 
   /// \brief Control service callback function
   /// \param request Control service request
   /// \param response Control service response
-  void srv_control_callback__(
+  void srv_control_callback_(
     std::shared_ptr<Control::Request> request,
     std::shared_ptr<Control::Response> response)
   {
-    velocity__ = request->velocity;
-    radius__ = request->radius;
-    is_stopped__ = false;
+    velocity_ = request->velocity;
+    radius_ = request->radius;
+    is_stopped_ = false;
 
     response->success = true;
   }
@@ -92,79 +92,79 @@ private:
   /// \brief Reverse service callback function
   /// \param request Reverse service request
   /// \param response Reverse service response
-  void srv_reserse_callback__(
+  void srv_reserse_callback_(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
   {
     (void) request;
     (void) response;
 
-    velocity__ *= -1.0;
+    velocity_ *= -1.0;
   }
 
   /// \brief Stop service callback function
   /// \param request Stop service request
   /// \param response Stop sercuce response
-  void srv_stop_callback__(
+  void srv_stop_callback_(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
   {
     (void) request;
     (void) response;
 
-    is_stopped__ = true;
+    is_stopped_ = true;
   }
 
-  rclcpp::TimerBase::SharedPtr timer__;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  rclcpp::Service<Empty>::SharedPtr srv_reserve__;
-  rclcpp::Service<Empty>::SharedPtr srv_stop__;
-  rclcpp::Service<Control>::SharedPtr srv_control__;
+  rclcpp::Service<Empty>::SharedPtr srv_reserve_;
+  rclcpp::Service<Empty>::SharedPtr srv_stop_;
+  rclcpp::Service<Control>::SharedPtr srv_control_;
 
-  rclcpp::Publisher<Twist>::SharedPtr pub_twist__;
+  rclcpp::Publisher<Twist>::SharedPtr pub_twist_;
 
-  double frequency__;
+  double frequency_;
 
-  double velocity__;
-  double radius__;
-  bool is_stopped__;
+  double velocity_;
+  double radius_;
+  bool is_stopped_;
 
 public:
   /// @brief
   Circle()
-  : Node("circle"), velocity__(0.0), radius__(0.0), is_stopped__(true)
+  : Node("circle"), velocity_(0.0), radius_(0.0), is_stopped_(true)
   {
     ParameterDescriptor frequency_des;
 
     frequency_des.description = "Frequency of the circle node.";
 
-    this->declare_parameter<double>("frequency", 100.0, frequency_des);
+    declare_parameter<double>("frequency", 100.0, frequency_des);
 
-    frequency__ = this->get_parameter("frequency").as_double();
+    frequency_ = get_parameter("frequency").as_double();
 
-    timer__ =
-      this->create_wall_timer(
-      std::chrono::duration<long double>{1.0 / frequency__},
-      std::bind(&Circle::timer_callback__, this));
+    timer_ =
+      create_wall_timer(
+      std::chrono::duration<long double>{1.0 / frequency_},
+      std::bind(&Circle::timer_callback_, this));
 
-    srv_reserve__ =
-      this->create_service<Empty>(
+    srv_reserve_ =
+      create_service<Empty>(
       "reverse",
       std::bind(
-        &Circle::srv_reserse_callback__, this, std::placeholders::_1,
+        &Circle::srv_reserse_callback_, this, std::placeholders::_1,
         std::placeholders::_2));
-    srv_stop__ =
-      this->create_service<Empty>(
+    srv_stop_ =
+      create_service<Empty>(
       "stop",
-      std::bind(&Circle::srv_stop_callback__, this, std::placeholders::_1, std::placeholders::_2));
-    srv_control__ =
-      this->create_service<Control>(
+      std::bind(&Circle::srv_stop_callback_, this, std::placeholders::_1, std::placeholders::_2));
+    srv_control_ =
+      create_service<Control>(
       "control",
       std::bind(
-        &Circle::srv_control_callback__, this, std::placeholders::_1,
+        &Circle::srv_control_callback_, this, std::placeholders::_1,
         std::placeholders::_2));
 
-    pub_twist__ = this->create_publisher<Twist>("cmd_vel", 10);
+    pub_twist_ = create_publisher<Twist>("cmd_vel", 10);
 
   }
 };

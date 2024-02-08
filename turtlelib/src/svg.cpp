@@ -19,13 +19,13 @@ namespace turtlelib
 {
 Svg::Svg()
 {
-  __ofs.open("default.svg");
+  ofs_.open("default.svg");
   init_svg();
 }
 
 Svg::Svg(const std::string filename)
 {
-  __ofs.open(filename);
+  ofs_.open(filename);
   init_svg();
 }
 
@@ -35,31 +35,31 @@ void Svg::draw_line(Transform2D frame, Point2D tail, Vector2D v, std::string col
   v = frame(v);
   Point2D head = tail + v;
 
-  Point2D head_tf = __point_tf(head);
-  Point2D tail_tf = __point_tf(tail);
+  Point2D head_tf = point_tf_(head);
+  Point2D tail_tf = point_tf_(tail);
 
-  if (__ofs.is_open()) {
-    __ofs << "<line x1=\"" << head_tf.x << "\" x2=\"" << tail_tf.x << "\" ";
-    __ofs << "y1=\"" << head_tf.y << "\" y2=\"" << tail_tf.y << "\" ";
-    __ofs << "stroke=\"" << color;
-    __ofs << "\" stroke-width=\"5\" marker-start=\"url(#Arrow1Sstart)\" />";
-    __ofs << std::endl;
+  if (ofs_.is_open()) {
+    ofs_ << "<line x1=\"" << head_tf.x << "\" x2=\"" << tail_tf.x << "\" ";
+    ofs_ << "y1=\"" << head_tf.y << "\" y2=\"" << tail_tf.y << "\" ";
+    ofs_ << "stroke=\"" << color;
+    ofs_ << "\" stroke-width=\"5\" marker-start=\"url(#Arrow1Sstart)\" />";
+    ofs_ << std::endl;
   }
 }
 
 void Svg::draw_point(Transform2D frame, Point2D p, int radius, std::string color)
 {
   p = frame(p);
-  Point2D p_tf = __point_tf(p);
+  Point2D p_tf = point_tf_(p);
 
-  if (__ofs.is_open()) {
-    __ofs << "<circle cx=\"";
-    __ofs << p_tf.x << "\" ";
-    __ofs << "cy=\"" << p_tf.y << "\" ";
-    __ofs << "r=\"" << radius << "\" ";
-    __ofs << "stroke=\"" << color << "\" fill=\"" << color
-          << "\" stroke-width=\"1\" />";
-    __ofs << std::endl;
+  if (ofs_.is_open()) {
+    ofs_ << "<circle cx=\"";
+    ofs_ << p_tf.x << "\" ";
+    ofs_ << "cy=\"" << p_tf.y << "\" ";
+    ofs_ << "r=\"" << radius << "\" ";
+    ofs_ << "stroke=\"" << color << "\" fill=\"" << color
+         << "\" stroke-width=\"1\" />";
+    ofs_ << std::endl;
   }
 }
 
@@ -70,24 +70,24 @@ void Svg::draw_frame(Transform2D tf, std::string name)
   Vector2D v_y = {0.0, 1.0};
 
   Point2D origin{tf.translation().x, tf.translation().y};
-  Point2D origin_tf = __point_tf(origin);
+  Point2D origin_tf = point_tf_(origin);
 
   Svg::draw_line(tf, Point2D{0.0, 0.0}, v_x, "red");
   Svg::draw_line(tf, Point2D{0.0, 0.0}, v_y, "green");
 //   Svg::draw_line(tf, Point2D{0.0, 0.0}, v_z, "blue");
 
-  if (__ofs.is_open()) {
-    __ofs << "<text x=\"" << origin_tf.x << "\" ";
-    __ofs << "y=\"" << origin_tf.y << "\"";
-    __ofs << ">" << name << "</text>";
-    __ofs << std::endl;
+  if (ofs_.is_open()) {
+    ofs_ << "<text x=\"" << origin_tf.x << "\" ";
+    ofs_ << "y=\"" << origin_tf.y << "\"";
+    ofs_ << ">" << name << "</text>";
+    ofs_ << std::endl;
   }
 }
 
 void Svg::finish()
 {
-  __ofs << "</svg>";
-  __ofs.close();
+  ofs_ << "</svg>";
+  ofs_.close();
 }
 
 }  // namespace turtlelib

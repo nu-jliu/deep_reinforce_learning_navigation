@@ -30,13 +30,13 @@ struct WheelSpeed
 class DiffDrive
 {
 private:
-  double track_width__;
-  double wheel_radius__;
-  double left_wheel__;
-  double right_wheel__;
-  double robot_x__;
-  double robot_y__;
-  double robot_theta__;
+  double track_width_;
+  double wheel_radius_;
+  double left_wheel_;
+  double right_wheel_;
+  double robot_x_;
+  double robot_y_;
+  double robot_theta_;
 
 public:
   /// \brief Creates a default diffdrive robot using turtlebot3 specs

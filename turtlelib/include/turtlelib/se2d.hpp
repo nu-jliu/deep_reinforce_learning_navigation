@@ -43,7 +43,7 @@ std::istream & operator>>(std::istream & is, Twist2D & tw);
 class Transform2D
 {
 private:
-  Twist2D twist__;
+  Twist2D twist_;
 
 public:
   /// \brief Create an identity transformation

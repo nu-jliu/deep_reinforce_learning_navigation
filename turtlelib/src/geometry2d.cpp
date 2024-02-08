@@ -57,16 +57,16 @@ std::istream & operator>>(std::istream & is, Point2D & p)
 
 Vector2D operator-(const Point2D & head, const Point2D & tail)
 {
-  double result_x = head.x - tail.x;
-  double result_y = head.y - tail.y;
+  const auto result_x = head.x - tail.x;
+  const auto result_y = head.y - tail.y;
 
   return {result_x, result_y};
 }
 
 Point2D operator+(const Point2D & tail, const Vector2D & disp)
 {
-  double result_x = tail.x + disp.x;
-  double result_y = tail.y + disp.y;
+  const auto result_x = tail.x + disp.x;
+  const auto result_y = tail.y + disp.y;
 
   return {result_x, result_y};
 }
@@ -83,8 +83,8 @@ std::istream & operator>>(std::istream & is, Vector2D & v)
   std::string x_str;
   std::string y_str;
 
-  char first = is.peek();
-  bool has_brk = (first == '[');
+  const auto first = is.peek();
+  const auto has_brk = (first == '[');
 
   is >> x_str;
   is >> y_str;
