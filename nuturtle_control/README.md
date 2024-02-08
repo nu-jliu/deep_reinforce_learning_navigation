@@ -10,7 +10,7 @@ On laptop run
 ```
 ros2 launch nuturtle_control start_robot.launch.xml cmd_src:=circle robot:=none use_rviz:=true
 ```
-<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/f2b4ca4d-b961-4905-a3fe-bb694ff66bb4" title="run on turtlebot3" controls></video>
+<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/ebca3873-0a3f-4a1b-95e1-c5c30443ebac" controls></video>
 
 The final odometry error is
 ```

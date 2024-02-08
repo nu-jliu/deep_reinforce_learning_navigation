@@ -108,8 +108,23 @@ private:
 
     turtlelib::WheelSpeed phidot = turtlebot_.compute_ik(turtlelib::Twist2D{omega_z, v_x, v_y});
 
-    msg.left_velocity = (int32_t) (phidot.left / motor_cmd_per_rad_sec_);
-    msg.right_velocity = (int32_t) (phidot.right / motor_cmd_per_rad_sec_);
+    auto left_vel = static_cast<int32_t>(phidot.left / motor_cmd_per_rad_sec_);
+    auto right_vel = static_cast<int32_t>(phidot.right / motor_cmd_per_rad_sec_);
+
+    if (left_vel > motor_cmd_max_) {
+      left_vel = motor_cmd_max_;
+    } else if (left_vel < -motor_cmd_max_) {
+      left_vel = -motor_cmd_max_;
+    }
+
+    if (right_vel > motor_cmd_max_) {
+      right_vel = motor_cmd_max_;
+    } else if (right_vel < -motor_cmd_max_) {
+      right_vel = -motor_cmd_max_;
+    }
+
+    msg.left_velocity = left_vel;
+    msg.right_velocity = right_vel;
 
     pub_wheel_cmd_->publish(msg);
   }
@@ -166,6 +181,7 @@ private:
   double turtlebot_wheel_radius_;
   double encoder_tick_per_rad_;
   double motor_cmd_per_rad_sec_;
+  int32_t motor_cmd_max_;
 
   /// Other attributes
   turtlelib::DiffDrive turtlebot_;
@@ -181,21 +197,25 @@ public:
     ParameterDescriptor wheel_radius_des;
     ParameterDescriptor encoder_ticks_des;
     ParameterDescriptor mcu_per_vel_des;
+    ParameterDescriptor motor_cmd_max_des;
 
     track_witdth_des.description = "Track width of the turtlebot";
     wheel_radius_des.description = "Wheel radius of the turtlebot";
     encoder_ticks_des.description = "Encoder ticks per radian";
     mcu_per_vel_des.description = "Speed per motor mcu";
+    motor_cmd_max_des.description = "Maximum velocity";
 
     declare_parameter<double>("track_width", 160e-3, track_witdth_des);
     declare_parameter<double>("wheel_radius", 33e-3, wheel_radius_des);
     declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_des);
     declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, mcu_per_vel_des);
+    declare_parameter<int32_t>("motor_cmd_max", 265, motor_cmd_max_des);
 
     turtlebot_track_width_ = get_parameter("track_width").as_double();
     turtlebot_wheel_radius_ = get_parameter("wheel_radius").as_double();
     encoder_tick_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
     motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
+    motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
 
     turtlebot_ = turtlelib::DiffDrive(turtlebot_track_width_, turtlebot_wheel_radius_);
 

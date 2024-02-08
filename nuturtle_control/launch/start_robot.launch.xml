@@ -62,7 +62,7 @@
     </group>
 
     <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
-        <node pkg="numsr_turtlebot" exec="numsr_turtlebot" />
+        <!-- <node pkg="numsr_turtlebot" exec="numsr_turtlebot" /> -->
 
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
