@@ -69,7 +69,13 @@ private:
       cmd_twist_available__ = true;
     }
 
-    cmd_twist__ = *msg;
+    cmd_twist__.linear.x = msg->linear.x;
+    cmd_twist__.linear.y = msg->linear.y;
+    cmd_twist__.linear.z = msg->linear.z;
+
+    cmd_twist__.angular.x = msg->angular.x;
+    cmd_twist__.angular.y = msg->angular.y;
+    cmd_twist__.angular.z = msg->angular.z;
   }
 
   /// @brief The subcriber callback of the sensor_data message
@@ -78,11 +84,17 @@ private:
   {
     if (!sensor_data_available__) {
       sensor_data_available__ = true;
-      sensor_data_curr__ = *msg;
+      // sensor_data_curr__ = *msg;
+      sensor_data_curr__.stamp = msg->stamp;
+      sensor_data_curr__.left_encoder = msg->left_encoder;
+      sensor_data_curr__.right_encoder = msg->right_encoder;
     }
 
     sensor_data_prev__ = sensor_data_curr__;
-    sensor_data_curr__ = *msg;
+    // sensor_data_curr__ = *msg;
+    sensor_data_curr__.stamp = msg->stamp;
+    sensor_data_curr__.left_encoder = msg->left_encoder;
+    sensor_data_curr__.right_encoder = msg->right_encoder;
   }
 
   /// @brief Publish wheel command message.

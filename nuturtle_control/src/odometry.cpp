@@ -75,7 +75,9 @@ private:
   {
     if (!joint_states_available__) {
       joint_states_available__ = true;
-      joint_states_curr__ = *msg;
+      joint_states_curr__.header.stamp = msg->header.stamp;
+      joint_states_curr__.name = msg->name;
+      joint_states_curr__.position = msg->position;
 
       for (size_t i = 0; i < msg->name.size(); i++) {
         if (msg->name.at(i) == wheel_left__) {
@@ -96,7 +98,10 @@ private:
     }
 
     joint_states_prev__ = joint_states_curr__;
-    joint_states_curr__ = *msg;
+    // joint_states_curr__ = *msg;
+    joint_states_curr__.header.stamp = msg->header.stamp;
+    joint_states_curr__.name = msg->name;
+    joint_states_curr__.position = msg->position;
 
     // publish_odom__();
   }
@@ -125,7 +130,19 @@ private:
     double phi_left = joint_states_curr__.position.at(index_left__);
     double phi_right = joint_states_curr__.position.at(index_right__);
 
+    const auto x_prev = turtlebot__.config_x();
+    const auto y_prev = turtlebot__.config_y();
+    const auto theta_prev = turtlebot__.config_theta();
+
     turtlelib::Twist2D twist_turtle = turtlebot__.compute_fk(phi_left, phi_right);
+
+    if (
+      turtlelib::almost_equal(turtlebot__.config_x(), 0.0) &&
+      turtlelib::almost_equal(turtlebot__.config_y(), 0.0) &&
+      turtlelib::almost_equal(turtlebot__.config_theta(), 0.0))
+    {
+      turtlebot__.update_config(x_prev, y_prev, theta_prev);
+    }
 
     msg_odom.header.stamp = this->get_clock()->now();
     msg_odom.header.frame_id = odom_id__;
