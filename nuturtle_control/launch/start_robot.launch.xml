@@ -13,7 +13,6 @@
         <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
             <arg name="use_rviz" value="false" />
             <arg name="color" value="blue" />
-            <!-- <arg name="use_jsp" value="false" /> -->
         </include>
 
         <node
@@ -30,7 +29,6 @@
 
     <!-- cmd_src argument -->
     <group if="$(eval '\'$(var cmd_src)\' == \'circle\'')">
-        <!-- <push-ros-namespace namespace="red" /> -->
         <node pkg="nuturtle_control" exec="circle" name="circle">
             <param from="$(find-pkg-share nuturtle_control)/config/circle.yaml" />
         </node>
@@ -42,17 +40,6 @@
 
     <!-- robot argument -->
     <group if="$(eval '\'$(var robot)\' == \'nusim\'')">
-        <!-- <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
-            <arg name="use_rviz" value="false" />
-            <arg name="color" value="red" />
-            <arg name="use_jsp" value="false" />
-        </include>
-
-        <node pkg="nusim" exec="nusim" name="nusim">
-            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-            <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />
-            <remap from="wheel_cmd" to="red/wheel_cmd" />
-        </node> -->
         <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
             <arg name="use_rviz" value="false" />
         </include>
@@ -68,19 +55,13 @@
 
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-            <!-- <remap from="joint_states" to="blue/joint_states" /> -->
             <remap from="joint_states" to="red/joint_states" />
             <remap from="wheel_cmd" to="red/wheel_cmd" />
             <remap from="sensor_data" to="red/sensor_data" />
         </node>
-        <!-- <group>
-                        <push-ros-namespace namespace="red" />
-                    </group> -->
     </group>
 
     <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
-        <!-- <node pkg="numsr_turtlebot" exec="numsr_turtlebot" /> -->
-
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
             <remap from="joint_states" to="red/joint_states" />
@@ -93,8 +74,6 @@
             <param name="wheel_right" value="wheel_right_joint" />
             <remap from="joint_states" to="red/joint_states" />
         </node>
-
-        <!-- <arg name="use_rviz" value="false" /> -->
     </group>
 
 
