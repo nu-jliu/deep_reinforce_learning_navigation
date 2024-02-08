@@ -3,16 +3,14 @@
 
 #include <geometry_msgs/msg/twist.hpp>
 
-int num_pubs;
-bool get_message = false;
+volatile int num_pubs = 0;
+volatile bool get_message = false;
 
-void sub_cmd_vel(geometry_msgs::msg::Twist::SharedPtr msg)
+void sub_cmd_vel_callback(geometry_msgs::msg::Twist::SharedPtr msg)
 {
   (void) msg;
 
-  if (!get_message) {
-    get_message = true;
-  }
+  get_message = true;
   ++num_pubs;
 }
 
@@ -20,10 +18,10 @@ TEST_CASE("Test cmd_vel frequency", "[circle]") // Allen Liu
 {
   auto node = rclcpp::Node::make_shared("turtle_circle_test");
 
-  node->create_subscription<geometry_msgs::msg::Twist>(
-    "cmd_vel",
+  auto sub_cmd_vel = node->create_subscription<geometry_msgs::msg::Twist>(
+    "/cmd_vel",
     10,
-    &sub_cmd_vel
+    &sub_cmd_vel_callback
   );
 
   while (node->count_publishers("cmd_vel") < 1) {
