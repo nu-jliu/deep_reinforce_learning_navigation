@@ -1,3 +1,13 @@
+///
+/// \file turtle_odom_test.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Test for odomestry node
+/// \version 0.1
+/// \date 2024-02-08
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <chrono>
 
 #include <rclcpp/rclcpp.hpp>
@@ -16,6 +26,8 @@ double odom_x;
 double odom_y;
 double odom_theta;
 
+/// @brief Callback function of the odom topic
+/// @param msg odom message
 void sub_odom_callback(nav_msgs::msg::Odometry::SharedPtr msg)
 {
   odom_x = msg->pose.pose.position.x;

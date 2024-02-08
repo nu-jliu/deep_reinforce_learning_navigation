@@ -1,3 +1,13 @@
+///
+/// @file turtle_control_test.cpp
+/// @author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// @brief Test for turtle_conrtol node
+/// @version 0.1
+/// @date 2024-02-08
+///
+/// @copyright Copyright (c) 2024
+///
+///
 #include <iostream>
 
 #include <rclcpp/rclcpp.hpp>
@@ -18,12 +28,16 @@ std::string wheel_right;
 double left_wheel_pos;
 double right_wheel_pos;
 
+/// @brief callback function of the wheel_cmd
+/// @param msg wheel_cmd message
 void sub_wheel_cmd_callback(nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
 {
   left_vel = msg->left_velocity;
   right_vel = msg->right_velocity;
 }
 
+/// @brief Callback function of the joint_states topic
+/// @param msg joint_states message
 void sub_joint_states_callback(sensor_msgs::msg::JointState::SharedPtr msg)
 {
   wheel_left = msg->name.at(0);

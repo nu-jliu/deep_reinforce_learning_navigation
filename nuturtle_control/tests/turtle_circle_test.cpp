@@ -1,3 +1,13 @@
+///
+/// \file turtle_circle_test.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Integration test for circle node
+/// \version 0.1
+/// \date 2024-02-08
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <rclcpp/rclcpp.hpp>
 #include <catch_ros2/catch_ros2.hpp>
 
@@ -6,6 +16,8 @@
 volatile int num_pubs = 0;
 volatile bool get_message = false;
 
+/// @brief Callback function of the cmd_vel subscription
+/// @param msg cmd_vel message
 void sub_cmd_vel_callback(geometry_msgs::msg::Twist::SharedPtr msg)
 {
   (void) msg;
