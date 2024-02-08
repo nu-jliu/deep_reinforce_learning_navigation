@@ -3,7 +3,7 @@
 <package format="3">
     <name>nuturtle_description</name>
     <version>0.1.1</version>
-    <description>TODO: Package description</description>
+    <description>Display the turtlebot</description>
     <maintainer email="JingkunLiu2025@u.northwestern.edu">Allen Liu</maintainer>
     <license>APLv2</license>
 
