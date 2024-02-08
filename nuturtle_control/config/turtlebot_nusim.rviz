@@ -15,6 +15,8 @@ Panels:
         - /Odometry1/Shape1
         - /Odometry1/Covariance1/Position1
         - /Odometry1/Covariance1/Orientation1
+        - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz_common/Selection
@@ -237,6 +239,77 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /odom
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        blue/base_footprint:
+          Value: true
+        blue/base_link:
+          Value: false
+        blue/base_scan:
+          Value: false
+        blue/caster_back_link:
+          Value: false
+        blue/imu_link:
+          Value: false
+        blue/wheel_left_link:
+          Value: false
+        blue/wheel_right_link:
+          Value: false
+        nusim/world:
+          Value: true
+        odom:
+          Value: true
+        red/base_footprint:
+          Value: true
+        red/base_link:
+          Value: false
+        red/base_scan:
+          Value: false
+        red/caster_back_link:
+          Value: false
+        red/imu_link:
+          Value: false
+        red/wheel_left_link:
+          Value: false
+        red/wheel_right_link:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        nusim/world:
+          odom:
+            blue/base_footprint:
+              blue/base_link:
+                blue/base_scan:
+                  {}
+                blue/caster_back_link:
+                  {}
+                blue/imu_link:
+                  {}
+                blue/wheel_left_link:
+                  {}
+                blue/wheel_right_link:
+                  {}
+          red/base_footprint:
+            red/base_link:
+              red/base_scan:
+                {}
+              red/caster_back_link:
+                {}
+              red/imu_link:
+                {}
+              red/wheel_left_link:
+                {}
+              red/wheel_right_link:
+                {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -283,7 +356,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.059672355651855
+      Distance: 3.4908506870269775
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

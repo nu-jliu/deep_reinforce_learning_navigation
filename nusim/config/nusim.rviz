@@ -10,6 +10,8 @@ Panels:
         - /Walls1/Topic1
         - /Obstacles1
         - /Obstacles1/Topic1
+        - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz_common/Selection
@@ -134,6 +136,48 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /nusim/obstacles
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        nusim/world:
+          Value: true
+        red/base_footprint:
+          Value: true
+        red/base_link:
+          Value: false
+        red/base_scan:
+          Value: false
+        red/caster_back_link:
+          Value: false
+        red/imu_link:
+          Value: false
+        red/wheel_left_link:
+          Value: false
+        red/wheel_right_link:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        nusim/world:
+          red/base_footprint:
+            red/base_link:
+              red/base_scan:
+                {}
+              red/caster_back_link:
+                {}
+              red/imu_link:
+                {}
+              red/wheel_left_link:
+                {}
+              red/wheel_right_link:
+                {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -180,7 +224,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 17.232473373413086
+      Distance: 5.537993907928467
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
