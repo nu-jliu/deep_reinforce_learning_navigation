@@ -1,3 +1,26 @@
+///
+/// @file circle.cpp
+/// @author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// @brief The node that publish command to have the robot to run in a circle
+///
+/// PARAMETERS:
+///    \param frequency The frequency that node runs
+///
+/// SERVICES:
+///    revserse  [std_srvs/srv/Empty]            Reserve the direction of the robot.
+///    stop      [std:srvs/srv/Empty]            Stop the robot.
+///    control   [nuturtle_control/srv/Control]  Start robot in a circle.
+///
+/// PUBLISHERS:
+///    cmd_vel   [geometry_msgs/msg/Twist] The speed command sent to robot.
+///
+/// @version 0.1
+/// @date 2024-02-08
+///
+/// @copyright Copyright (c) 2024
+///
+///
+
 #include <chrono>
 
 #include <rclcpp/rclcpp.hpp>
@@ -16,14 +39,17 @@ using geometry_msgs::msg::Twist;
 using std_srvs::srv::Empty;
 using nuturtle_control::srv::Control;
 
+/// @brief
 class Circle : public Node
 {
 private:
+  /// \brief Timer callback
   void timer_callback__()
   {
     publish_twist__();
   }
 
+  /// \brief publish a twist
   void publish_twist__()
   {
     Twist msg_twist;
@@ -48,6 +74,10 @@ private:
 
     pub_twist__->publish(msg_twist);
   }
+
+  /// \brief Control service callback function
+  /// \param request Control service request
+  /// \param response Control service response
   void srv_control_callback__(
     std::shared_ptr<Control::Request> request,
     std::shared_ptr<Control::Response> response)
@@ -59,6 +89,9 @@ private:
     response->success = true;
   }
 
+  /// \brief Reverse service callback function
+  /// \param request Reverse service request
+  /// \param response Reverse service response
   void srv_reserse_callback__(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
@@ -69,6 +102,9 @@ private:
     velocity__ *= -1.0;
   }
 
+  /// \brief Stop service callback function
+  /// \param request Stop service request
+  /// \param response Stop sercuce response
   void srv_stop_callback__(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
@@ -94,25 +130,17 @@ private:
   bool is_stopped__;
 
 public:
+  /// @brief
   Circle()
   : Node("circle"), velocity__(0.0), radius__(0.0), is_stopped__(true)
   {
     ParameterDescriptor frequency_des;
-    // ParameterDescriptor velocity_des;
-    // ParameterDescriptor radius_des;
 
     frequency_des.description = "Frequency of the circle node.";
-    // velocity_des.description =
-    //   "The angular velocity, positive for counter-clockwise, negative is clockwise";
-    // radius_des.description = "The radius of the arc";
 
     this->declare_parameter<double>("frequency", 100.0, frequency_des);
-    // this->declare_parameter<double>("velocity", 0.0, velocity_des);
-    // this->declare_parameter<double>("radius", 0.0, radius_des);
 
     frequency__ = this->get_parameter("frequency").as_double();
-    // velocity__ = this->get_parameter("velocity").as_double();
-    // radius__ = this->get_parameter("radius").as_double();
 
     timer__ =
       this->create_wall_timer(
@@ -138,10 +166,16 @@ public:
 
     pub_twist__ = this->create_publisher<Twist>("cmd_vel", 10);
 
-    // this->create_service()
   }
 };
 
+///
+/// @brief The main entry of the circle node
+///
+/// @param argc The number of arguments
+/// @param argv The value of arguments
+/// @return int The result code.
+///
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

@@ -1,7 +1,25 @@
 ///
 /// \file odometry.cpp
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
-/// \brief
+/// \brief Track the odometry of a robot.
+///
+/// PARAMETERS:
+///   \param body_id      [string]  The id of the body frame
+///   \param odom_id      [string]  The id of the odom frame
+///   \param wheel_left   [string]  The left wheel joint name
+///   \param wheel_right  [string]  The right wheel joint name
+///   \param wheel_radius [double]  The radius of ythe wheel
+///   \param track_width  [double]  The distance between two wheels
+///
+/// SUBSCRIPTIONS:
+///   joint_states  [sensor_msgs/msg/JointState]      The joint state of the robot.
+///
+/// PUBLISHERS:
+///   odom          [nav_msgs/msg/Odomoetry]          The odometry of the node.
+///
+/// SERVICES:
+///   initial_pose [nuturtle_control/srv/InitialPose] Reset the initial pose.
+///
 /// \version 0.1
 /// \date 2024-02-03
 ///
@@ -41,7 +59,7 @@ using nuturtle_control::srv::InitialPose;
 class Odom : public Node
 {
 private:
-  /// @brief
+  /// @brief The timer callback of the odometry node
   void timer_callback__()
   {
     if (joint_states_available__) {
@@ -83,9 +101,9 @@ private:
     // publish_odom__();
   }
 
-  /// @brief
-  /// @param request
-  /// @param respose
+  /// @brief The initial pose service
+  /// @param request The initial pose service request
+  /// @param respose The initial pose service response
   void srv_initial_pose_callback__(
     std::shared_ptr<InitialPose::Request> request,
     std::shared_ptr<InitialPose::Response> respose)
@@ -99,7 +117,7 @@ private:
     respose->success = true;
   }
 
-  /// @brief
+  /// @brief publish the odometry
   void publish_odom__()
   {
     Odometry msg_odom;
@@ -139,7 +157,7 @@ private:
     pub_odometry__->publish(msg_odom);
   }
 
-  /// @brief
+  /// @brief Broadcast the transform
   void broadcast_tf__()
   {
     TransformStamped tf_msg;
@@ -174,21 +192,28 @@ private:
     tf_broadcater__->sendTransform(tf_msg);
   }
 
+  /// Timer
   rclcpp::TimerBase::SharedPtr timer__;
 
+  /// Subscriber
   rclcpp::Subscription<JointState>::SharedPtr sub_joint_states__;
 
+  /// Publisher
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry__;
 
+  /// TF Broadcaster
   std::unique_ptr<TransformBroadcaster> tf_broadcater__;
 
+  /// Service
   rclcpp::Service<InitialPose>::SharedPtr srv_initial_pose__;
 
+  /// Subscribed messages
   JointState joint_states_curr__;
   JointState joint_states_prev__;
   Point odom_position__;
   Quaternion odom_orientation__;
 
+  /// parameters
   std::string body_id__;
   std::string odom_id__;
   std::string wheel_left__;
@@ -196,6 +221,7 @@ private:
   double track_width__;
   double wheel_radius__;
 
+  /// other attributes
   turtlelib::DiffDrive turtlebot__;
   bool joint_states_available__;
   size_t index_left__;
@@ -274,10 +300,10 @@ public:
   }
 };
 
-/// @brief
-/// @param argc
-/// @param argv
-/// @return
+/// @brief The main entry of the node
+/// @param argc The number of arguments
+/// @param argv The value of arguments
+/// @return The result code.
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
