@@ -83,6 +83,7 @@ private:
     publish_sensor_data__();
   }
 
+  /// @brief Update the position of the turtlebot
   void update_turtlebot_pos__()
   {
     double left_wheel_speed = wheel_cmd__.left_velocity * motor_cmd_per_rad_sec__;
@@ -98,7 +99,7 @@ private:
     turtle_theta__ = turtlebot__.config_theta();
   }
 
-  /// @brief
+  /// @brief broadcast the transform
   void broadcast_tf__()
   {
     TransformStamped tf;
@@ -118,6 +119,7 @@ private:
     tf_broadcaster__->sendTransform(tf);
   }
 
+  /// @brief publish the sensor data of the turtlebot
   void publish_sensor_data__()
   {
     SensorData msg_sensor;
@@ -282,6 +284,8 @@ private:
     response->result = true;
   }
 
+  /// @brief Callback function of the wheel_cmd message
+  /// @param msg the wheel_cmd message
   void sub_wheel_cmd_callback__(WheelCommands::SharedPtr msg)
   {
     wheel_cmd__ = *msg;
