@@ -45,3 +45,8 @@
  - E.4 ROS API Tesing
  - E.5 Launchfile
  - E.6 Remote Launch (optional)
+
+ # Task F The Real Robot
+  - F.1 Turtlebot Setup
+  - F.2 Cross-Compilation
+  - F.5 Physical Testing
