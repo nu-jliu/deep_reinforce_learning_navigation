@@ -2,6 +2,14 @@
 Controls the motion of the turtlebot
 
 ## Running on turtlebot3
+On turtlebot run 
+```
+ros2 launch nuturtle_control start_robot.launch.xml cmd_src:=none robot:=teleop use_rviz:=false
+```
+On laptop run
+```
+ros2 launch nuturtle_control start_robot.launch.xml cmd_src:=circle robot:=none use_rviz:=true
+```
 <video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/f2b4ca4d-b961-4905-a3fe-bb694ff66bb4" title="run on turtlebot3" controls></video>
 
 The final odometry error is
