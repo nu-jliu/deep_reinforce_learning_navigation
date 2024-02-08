@@ -15,12 +15,12 @@ ros2 launch nuturtle_control start_robot.launch.xml cmd_src:=circle robot:=none 
 The final odometry error is
 ```
 position:
-    x: 0.00286417
-    y: -0.0158253
+    x: 0.330677
+    y: 0741627
     z: 0.0
 orientation:
     x: 0.0
     y: 0.0
-    z: -0.336885
-    w: 0.999432
+    z: 0.296966
+    w: 0.954888
 ```
