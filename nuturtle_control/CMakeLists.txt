@@ -27,6 +27,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
     "srv/InitialPose.srv"
+    "srv/Control.srv"
     LIBRARY_NAME ${PROJECT_NAME}
 )
 ament_export_dependencies(rosidl_default_runtime)
@@ -120,11 +121,16 @@ if(NOT CMAKE_CROSSCOMPILING)
         add_executable(turtle_odom_test
             tests/turtle_odom_test.cpp
         )
+        add_executable(turtle_circle_test
+            tests/turtle_circle_test.cpp
+        )
 
         target_link_libraries(turtle_control_test
+            turtlelib::turtlelib
             catch_ros2::catch_ros2_with_node_main
         )
         ament_target_dependencies(turtle_control_test
+            rclcpp
             geometry_msgs
             sensor_msgs
             nuturtlebot_msgs
@@ -135,21 +141,32 @@ if(NOT CMAKE_CROSSCOMPILING)
             "${cpp_typesupport_target}"
         )
         ament_target_dependencies(turtle_odom_test
+            rclcpp
             tf2_ros
             tf2
             geometry_msgs
             nav_msgs
         )
 
+        target_link_libraries(turtle_circle_test
+            catch_ros2::catch_ros2_with_node_main
+        )
+        ament_target_dependencies(turtle_circle_test
+            rclcpp
+            geometry_msgs
+        )
+
         install(TARGETS
             turtle_control_test
             turtle_odom_test
+            turtle_circle_test
             DESTINATION lib/${PROJECT_NAME}
         )
 
         install(FILES
             tests/turtle_control_test.launch.xml
             tests/turtle_odom_test.launch.xml
+            tests/turtle_circle_test.launch.xml
             DESTINATION share/${PROJECT_NAME}
         )
 
@@ -159,6 +176,10 @@ if(NOT CMAKE_CROSSCOMPILING)
 
         catch_ros2_add_integration_test(Turtle_Odom_Test
             LAUNCH_FILE turtle_odom_test.launch.xml
+        )
+
+        catch_ros2_add_integration_test(Turtle_Circle_Test
+            LAUNCH_FILE turtle_circle_test.launch.xml
         )
 
         find_package(ament_lint_auto REQUIRED)

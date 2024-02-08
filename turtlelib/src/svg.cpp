@@ -1,9 +1,9 @@
 ///
-/// @file svg.cpp
-/// @author Allen Liu (jingkunliu2025@u.northwestern.edu.com)
-/// @brief Integrate the functions to display the points and vectors on a svg file
-/// @version 0.1
-/// @date 2024-01-23
+/// \file svg.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu.com)
+/// \brief Integrate the functions to display the points and vectors on a svg file
+/// \version 0.1
+/// \date 2024-01-23
 ///
 /// \copyright Copyright (c) 2024
 ///

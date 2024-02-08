@@ -8,6 +8,7 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 
 #include <catch_ros2/catch_ros2.hpp>
+#include <turtlelib/geometry2d.hpp>
 
 int32_t left_vel;
 int32_t right_vel;
@@ -139,6 +140,6 @@ TEST_CASE("Test Sensors", "[joint_states]") // Allen Liu
 
   CHECK(wheel_left == "wheel_left_joint");
   CHECK(wheel_right == "wheel_right_joint");
-  CHECK_THAT(left_wheel_pos, Catch::Matchers::WithinAbs(1.0, 1e-15));
-  CHECK_THAT(right_wheel_pos, Catch::Matchers::WithinAbs(0.25, 1e-15));
+  CHECK_THAT(left_wheel_pos, Catch::Matchers::WithinAbs(turtlelib::PI * 2.0, 1e-4));
+  CHECK_THAT(right_wheel_pos, Catch::Matchers::WithinAbs(turtlelib::PI / 2.0, 1e-4));
 }

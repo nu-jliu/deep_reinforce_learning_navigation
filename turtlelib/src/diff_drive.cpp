@@ -1,3 +1,13 @@
+///
+/// \file diff_drive.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief The library for computing kinematics of a differential-drive robot
+/// \version 0.1
+/// \date 2024-02-08
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <cmath>
 #include <vector>
 #include <stdexcept>

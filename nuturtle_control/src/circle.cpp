@@ -6,6 +6,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <std_srvs/srv/empty.hpp>
+#include "nuturtle_control/srv/control.hpp"
 
 using rclcpp::Node;
 
@@ -13,6 +14,7 @@ using rcl_interfaces::msg::ParameterDescriptor;
 using geometry_msgs::msg::Twist;
 
 using std_srvs::srv::Empty;
+using nuturtle_control::srv::Control;
 
 class Circle : public Node
 {
@@ -34,9 +36,27 @@ private:
       msg_twist.angular.x = 0.0;
       msg_twist.angular.y = 0.0;
       msg_twist.angular.z = velocity__ / radius__;
-      pub_twist__->publish(msg_twist);
+    } else {
+      msg_twist.linear.x = 0.0;
+      msg_twist.linear.y = 0.0;
+      msg_twist.linear.z = 0.0;
+
+      msg_twist.angular.x = 0.0;
+      msg_twist.angular.y = 0.0;
+      msg_twist.angular.z = 0.0;
     }
 
+    pub_twist__->publish(msg_twist);
+  }
+  void srv_control_callback__(
+    std::shared_ptr<Control::Request> request,
+    std::shared_ptr<Control::Response> response)
+  {
+    velocity__ = request->velocity;
+    radius__ = request->radius;
+    is_stopped__ = false;
+
+    response->success = true;
   }
 
   void srv_reserse_callback__(
@@ -63,35 +83,36 @@ private:
 
   rclcpp::Service<Empty>::SharedPtr srv_reserve__;
   rclcpp::Service<Empty>::SharedPtr srv_stop__;
+  rclcpp::Service<Control>::SharedPtr srv_control__;
 
   rclcpp::Publisher<Twist>::SharedPtr pub_twist__;
 
   double frequency__;
+
   double velocity__;
   double radius__;
-
   bool is_stopped__;
 
 public:
   Circle()
-  : Node("circle"), is_stopped__(false)
+  : Node("circle"), velocity__(0.0), radius__(0.0), is_stopped__(true)
   {
     ParameterDescriptor frequency_des;
-    ParameterDescriptor velocity_des;
-    ParameterDescriptor radius_des;
+    // ParameterDescriptor velocity_des;
+    // ParameterDescriptor radius_des;
 
     frequency_des.description = "Frequency of the circle node.";
-    velocity_des.description =
-      "The angular velocity, positive for counter-clockwise, negative is clockwise";
-    radius_des.description = "The radius of the arc";
+    // velocity_des.description =
+    //   "The angular velocity, positive for counter-clockwise, negative is clockwise";
+    // radius_des.description = "The radius of the arc";
 
     this->declare_parameter<double>("frequency", 100.0, frequency_des);
-    this->declare_parameter<double>("velocity", 0.0, velocity_des);
-    this->declare_parameter<double>("radius", 0.0, radius_des);
+    // this->declare_parameter<double>("velocity", 0.0, velocity_des);
+    // this->declare_parameter<double>("radius", 0.0, radius_des);
 
     frequency__ = this->get_parameter("frequency").as_double();
-    velocity__ = this->get_parameter("velocity").as_double();
-    radius__ = this->get_parameter("radius").as_double();
+    // velocity__ = this->get_parameter("velocity").as_double();
+    // radius__ = this->get_parameter("radius").as_double();
 
     timer__ =
       this->create_wall_timer(
@@ -108,6 +129,12 @@ public:
       this->create_service<Empty>(
       "stop",
       std::bind(&Circle::srv_stop_callback__, this, std::placeholders::_1, std::placeholders::_2));
+    srv_control__ =
+      this->create_service<Control>(
+      "control",
+      std::bind(
+        &Circle::srv_control_callback__, this, std::placeholders::_1,
+        std::placeholders::_2));
 
     pub_twist__ = this->create_publisher<Twist>("cmd_vel", 10);
 

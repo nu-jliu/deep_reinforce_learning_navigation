@@ -44,7 +44,10 @@ private:
   /// @brief
   void timer_callback__()
   {
-    broadcast_tf__();
+    if (joint_states_available__) {
+      broadcast_tf__();
+      publish_odom__();
+    }
   }
 
   /// @brief Update the turtlebot configuration based on new joint states,
@@ -52,7 +55,6 @@ private:
   /// @param msg The subscibed joint_states message.
   void sub_joint_states_callback__(JointState::SharedPtr msg)
   {
-
     if (!joint_states_available__) {
       joint_states_available__ = true;
       joint_states_curr__ = *msg;
@@ -78,7 +80,7 @@ private:
     joint_states_prev__ = joint_states_curr__;
     joint_states_curr__ = *msg;
 
-    publish_odom__();
+    // publish_odom__();
   }
 
   /// @brief
@@ -145,6 +147,20 @@ private:
     tf_msg.header.stamp = this->get_clock()->now();
     tf_msg.header.frame_id = odom_id__;
     tf_msg.child_frame_id = body_id__;
+
+    if (turtlelib::almost_equal(
+        turtlebot__.config_x(),
+        0.0) ||
+      turtlelib::almost_equal(
+        turtlebot__.config_y(),
+        0.0) || turtlelib::almost_equal(turtlebot__.config_theta(), 0.0))
+    {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Invalid tf detected");
+      RCLCPP_WARN_STREAM(
+        this->get_logger(), "Joint states: " << joint_states_curr__.position.at(
+          0) << ", " << joint_states_curr__.position.at(1));
+      // return;
+    }
 
     tf_msg.transform.translation.x = turtlebot__.config_x();
     tf_msg.transform.translation.y = turtlebot__.config_y();
@@ -240,7 +256,7 @@ public:
 
     tf_broadcater__ = std::make_unique<TransformBroadcaster>(*this);
 
-    timer__ = this->create_wall_timer(4e-3s, std::bind(&Odom::timer_callback__, this));
+    timer__ = this->create_wall_timer(4ms, std::bind(&Odom::timer_callback__, this));
 
     sub_joint_states__ =
       this->create_subscription<JointState>(
