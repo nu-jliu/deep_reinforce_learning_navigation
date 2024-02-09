@@ -13,15 +13,20 @@
 ///     ~/teleport: [nusim/srv/Teleport] Teleport the turtlebot
 ///
 /// PARAMETERS:
-///     \param rate           (double)   The rate of the simulator
-///     \param x0             (double)   Tnitial x value
-///     \param y0             (double)   Initial y value
-///     \param theta0         (double)   Initial theta value
-///     \param arena_x_length (double)   Length of arena in x direction
-///     \param arena_y_length (double)   Length of arena in y direction
-///     \param obstacles/x    (double[]) X coordinates of obstacles
-///     \param obstacles/y    (double[]) Y coordinates of obstacles
-///     \param obstacles/r    (double)   Radius of obstacles
+///     \param rate                   (double)    The rate of the simulator
+///     \param x0                     (double)    Tnitial x value
+///     \param y0                     (double)    Initial y value
+///     \param theta0                 (double)    Initial theta value
+///     \param arena_x_length         (double)    Length of arena in x direction
+///     \param arena_y_length         (double)    Length of arena in y direction
+///     \param obstacles/x            (double[])  X coordinates of obstacles
+///     \param obstacles/y            (double[])  Y coordinates of obstacles
+///     \param obstacles/r            (double)    Radius of obstacles
+///     \param wheel_radius           (double)    Radius of the wheel
+///     \param track_width            (double)    Distance between two wheels
+///     \param motor_cmd_max          (int)       Maximum motor command velocity
+///     \param motor_cmd_per_rad_sec  (double)    motor command per rad/s
+///     \param encoder_ticks_per_rad  (double)    Encoder ticks per radian of rotation
 ///
 /// \version 0.1
 /// \date 2024-01-22
