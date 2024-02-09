@@ -31,39 +31,7 @@ private:
   double scale_;
 
   /// \brief Initialize the environment for the frame
-  void init_svg()
-  {
-    scale_ = 96.0;
-    origin_x_ = 408.0;
-    origin_y_ = 528.0;
-
-    tf_origin_ = Transform2D(Vector2D{origin_x_, origin_y_}, 0.0);
-
-    ofs_ <<
-      "<svg width=\"8.500000in\" height=\"11.000000in\" viewBox=\"0 0 816.000000 1056.000000\" xmlns=\"http://www.w3.org/2000/svg\">"
-         << std::endl;
-    ofs_ << "<defs>" << std::endl;
-    ofs_ << "<marker" << std::endl;
-    ofs_ << "\tstyle=\"overflow:visible\"" << std::endl;
-    ofs_ << "\tid=\"Arrow1Sstart\"" << std::endl;
-    ofs_ << "\trefX=\"0.0\"" << std::endl;
-    ofs_ << "\trefY=\"0.0\"" << std::endl;
-    ofs_ << "\torient=\"auto\">" << std::endl;
-    ofs_ << "<path" << std::endl;
-    ofs_ << "\ttransform=\"scale(0.2) translate(6,0)\"" << std::endl;
-    ofs_ <<
-      "\tstyle=\"fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt\""
-         << std::endl;
-    ofs_ << "\td=\"M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z \"" << std::endl;
-    ofs_ << "/>" << std::endl;
-    ofs_ << "</marker>" << std::endl;
-    ofs_ << "</defs>" << std::endl;
-
-    ofs_ << "<circle cx=\"" << origin_x_;
-    ofs_ << "\" cy=\"" << origin_y_;
-    ofs_ << "\" r=\"5\" stroke=\"black\" fill=\"black\" stroke-width=\"1\" />";
-    ofs_ << std::endl;
-  }
+  void init_svg();
 
   /// \brief Calculate the transform from turtlelib frame to svg frame
   /// \param p The point to transform
@@ -78,6 +46,7 @@ public:
 
   /// \brief Opens the svg file with specified filename
   /// \param filename the name of the svg file.
+  /// \throws IOException when filename is invalid.
   explicit Svg(std::string filename);
 
   /// \brief Draw a line for the specified vector

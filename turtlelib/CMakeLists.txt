@@ -115,8 +115,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 
         # register the test with CTest, telling it what executable to run
         add_test(NAME ${PROJECT_NAME}_test COMMAND test_${PROJECT_NAME})
-        # add_test(NAME se2d COMMAND test_se2d)
-        # add_test(NAME ${PROJECT_NAME} COMMAND test_se2d)
     endif()
 
     # Building documentation should be optional.

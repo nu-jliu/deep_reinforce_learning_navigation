@@ -77,67 +77,67 @@ class NuSim : public Node
 {
 private:
   /// \brief Timer callback funcrion of the nusim node, calls at every cycle
-  void timer_callback__()
+  void timer_callback_()
   {
     UInt64 msg_timestep;
-    msg_timestep.data = timestep__++;
-    pub_timestep__->publish(msg_timestep);
+    msg_timestep.data = timestep_++;
+    pub_timestep_->publish(msg_timestep);
 
-    broadcast_tf__();
-    update_turtlebot_pos__();
-    publish_sensor_data__();
+    broadcast_tf_();
+    update_turtlebot_pos_();
+    publish_sensor_data_();
   }
 
   /// @brief Update the position of the turtlebot
-  void update_turtlebot_pos__()
+  void update_turtlebot_pos_()
   {
-    double left_wheel_speed = wheel_cmd__.left_velocity * motor_cmd_per_rad_sec__;
-    double right_wheel_speed = wheel_cmd__.right_velocity * motor_cmd_per_rad_sec__;
+    double left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
+    double right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
 
-    double phi_left_new = turtlebot__.left_wheel() + left_wheel_speed * period__;
-    double phi_right_new = turtlebot__.right_wheel() + right_wheel_speed * period__;
+    double phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
+    double phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
 
-    turtlebot__.compute_fk(phi_left_new, phi_right_new);
+    turtlebot_.compute_fk(phi_left_new, phi_right_new);
 
-    turtle_x__ = turtlebot__.config_x();
-    turtle_y__ = turtlebot__.config_y();
-    turtle_theta__ = turtlebot__.config_theta();
+    turtle_x_ = turtlebot_.config_x();
+    turtle_y_ = turtlebot_.config_y();
+    turtle_theta_ = turtlebot_.config_theta();
   }
 
   /// @brief broadcast the transform
-  void broadcast_tf__()
+  void broadcast_tf_()
   {
     TransformStamped tf;
-    tf.header.stamp = this->get_clock()->now();
+    tf.header.stamp = get_clock()->now();
     tf.header.frame_id = "nusim/world";
     tf.child_frame_id = "red/base_footprint";
 
-    tf.transform.translation.x = turtle_x__;
-    tf.transform.translation.y = turtle_y__;
+    tf.transform.translation.x = turtle_x_;
+    tf.transform.translation.y = turtle_y_;
     tf.transform.translation.z = 0.0;
 
     tf.transform.rotation.x = 0.0;
     tf.transform.rotation.y = 0.0;
-    tf.transform.rotation.z = sin(turtle_theta__ / 2.0);
-    tf.transform.rotation.w = cos(turtle_theta__ / 2.0);
+    tf.transform.rotation.z = sin(turtle_theta_ / 2.0);
+    tf.transform.rotation.w = cos(turtle_theta_ / 2.0);
 
-    tf_broadcaster__->sendTransform(tf);
+    tf_broadcaster_->sendTransform(tf);
   }
 
   /// @brief publish the sensor data of the turtlebot
-  void publish_sensor_data__()
+  void publish_sensor_data_()
   {
     SensorData msg_sensor;
 
-    msg_sensor.stamp = this->get_clock()->now();
-    msg_sensor.left_encoder = (int32_t) (turtlebot__.left_wheel() * encoder_ticks_per_rad__);
-    msg_sensor.right_encoder = (int32_t) (turtlebot__.right_wheel() * encoder_ticks_per_rad__);
+    msg_sensor.stamp = get_clock()->now();
+    msg_sensor.left_encoder = (int32_t) (turtlebot_.left_wheel() * encoder_ticks_per_rad_);
+    msg_sensor.right_encoder = (int32_t) (turtlebot_.right_wheel() * encoder_ticks_per_rad_);
 
-    pub_sensor_data__->publish(msg_sensor);
+    pub_sensor_data_->publish(msg_sensor);
   }
 
   /// \brief publish the markers to display wall on rviz
-  void publish_wall_markers__()
+  void publish_wall_markers_()
   {
     Marker m1;
     Marker m2;
@@ -146,71 +146,71 @@ private:
     MarkerArray m_array;
 
     /// first wall
-    m1.header.stamp = this->get_clock()->now();
+    m1.header.stamp = get_clock()->now();
     m1.header.frame_id = "nusim/world";
     m1.id = 1;
     m1.type = Marker::CUBE;
     m1.action = Marker::ADD;
-    m1.pose.position.x = arena_x_length__ / 2.0 + wall_thickness__ / 2.0;
-    m1.pose.position.y = wall_thickness__ / 2.0;
-    m1.pose.position.z = wall_height__ / 2.0;
-    m1.scale.x = wall_thickness__;
-    m1.scale.y = arena_y_length__ + wall_thickness__;
-    m1.scale.z = wall_height__;
-    m1.color.r = wall_r__;
-    m1.color.g = wall_g__;
-    m1.color.b = wall_b__;
+    m1.pose.position.x = arena_x_length_ / 2.0 + wall_thickness_ / 2.0;
+    m1.pose.position.y = wall_thickness_ / 2.0;
+    m1.pose.position.z = wall_height_ / 2.0;
+    m1.scale.x = wall_thickness_;
+    m1.scale.y = arena_y_length_ + wall_thickness_;
+    m1.scale.z = wall_height_;
+    m1.color.r = wall_r_;
+    m1.color.g = wall_g_;
+    m1.color.b = wall_b_;
     m1.color.a = 1.0;
 
     /// second wall
-    m2.header.stamp = this->get_clock()->now();
+    m2.header.stamp = get_clock()->now();
     m2.header.frame_id = "nusim/world";
     m2.id = 2;
     m2.type = Marker::CUBE;
     m2.action = Marker::ADD;
-    m2.pose.position.x = -wall_thickness__ / 2.0;
-    m2.pose.position.y = arena_y_length__ / 2.0 + wall_thickness__ / 2.0;
-    m2.pose.position.z = wall_height__ / 2.0;
-    m2.scale.x = arena_x_length__ + wall_thickness__;
-    m2.scale.y = wall_thickness__;
-    m2.scale.z = wall_height__;
-    m2.color.r = wall_r__;
-    m2.color.g = wall_g__;
-    m2.color.b = wall_b__;
+    m2.pose.position.x = -wall_thickness_ / 2.0;
+    m2.pose.position.y = arena_y_length_ / 2.0 + wall_thickness_ / 2.0;
+    m2.pose.position.z = wall_height_ / 2.0;
+    m2.scale.x = arena_x_length_ + wall_thickness_;
+    m2.scale.y = wall_thickness_;
+    m2.scale.z = wall_height_;
+    m2.color.r = wall_r_;
+    m2.color.g = wall_g_;
+    m2.color.b = wall_b_;
     m2.color.a = 1.0;
 
     /// third wall
-    m3.header.stamp = this->get_clock()->now();
+    m3.header.stamp = get_clock()->now();
     m3.header.frame_id = "nusim/world";
     m3.id = 3;
     m3.type = Marker::CUBE;
     m3.action = Marker::ADD;
-    m3.pose.position.x = -arena_x_length__ / 2.0 - wall_thickness__ / 2.0;
-    m3.pose.position.y = -wall_thickness__ / 2.0;
-    m3.pose.position.z = wall_height__ / 2.0;
-    m3.scale.x = wall_thickness__;
-    m3.scale.y = arena_y_length__ + wall_thickness__;
-    m3.scale.z = wall_height__;
-    m3.color.r = wall_r__;
-    m3.color.g = wall_g__;
-    m3.color.b = wall_b__;
+    m3.pose.position.x = -arena_x_length_ / 2.0 - wall_thickness_ / 2.0;
+    m3.pose.position.y = -wall_thickness_ / 2.0;
+    m3.pose.position.z = wall_height_ / 2.0;
+    m3.scale.x = wall_thickness_;
+    m3.scale.y = arena_y_length_ + wall_thickness_;
+    m3.scale.z = wall_height_;
+    m3.color.r = wall_r_;
+    m3.color.g = wall_g_;
+    m3.color.b = wall_b_;
     m3.color.a = 1.0;
 
     /// fourth wall
-    m4.header.stamp = this->get_clock()->now();
+    m4.header.stamp = get_clock()->now();
     m4.header.frame_id = "nusim/world";
     m4.id = 4;
     m4.type = Marker::CUBE;
     m4.action = Marker::ADD;
-    m4.pose.position.x = wall_thickness__ / 2.0;
-    m4.pose.position.y = -arena_y_length__ / 2.0 - wall_thickness__ / 2.0;
-    m4.pose.position.z = wall_height__ / 2.0;
-    m4.scale.x = arena_x_length__ + wall_thickness__;
-    m4.scale.y = wall_thickness__;
-    m4.scale.z = wall_height__;
-    m4.color.r = wall_r__;
-    m4.color.g = wall_g__;
-    m4.color.b = wall_b__;
+    m4.pose.position.x = wall_thickness_ / 2.0;
+    m4.pose.position.y = -arena_y_length_ / 2.0 - wall_thickness_ / 2.0;
+    m4.pose.position.z = wall_height_ / 2.0;
+    m4.scale.x = arena_x_length_ + wall_thickness_;
+    m4.scale.y = wall_thickness_;
+    m4.scale.z = wall_height_;
+    m4.color.r = wall_r_;
+    m4.color.g = wall_g_;
+    m4.color.b = wall_b_;
     m4.color.a = 1.0;
 
     m_array.markers.push_back(m1);
@@ -218,28 +218,28 @@ private:
     m_array.markers.push_back(m3);
     m_array.markers.push_back(m4);
 
-    pub_wall_markers__->publish(m_array);
+    pub_wall_markers_->publish(m_array);
   }
 
   /// \brief publish marker to display obstacle on rviz
-  void publish_obstacle_markers__()
+  void publish_obstacle_markers_()
   {
     MarkerArray m_array_obs;
 
-    for (std::size_t i = 0; i < obstacles_x__.size(); i++) {
+    for (std::size_t i = 0; i < obstacles_x_.size(); i++) {
       Marker m_obs;
 
-      m_obs.header.stamp = this->get_clock()->now();
+      m_obs.header.stamp = get_clock()->now();
       m_obs.header.frame_id = "nusim/world";
       m_obs.id = i + 10;
       m_obs.type = Marker::CYLINDER;
       m_obs.action = Marker::ADD;
-      m_obs.pose.position.x = obstacles_x__.at(i);
-      m_obs.pose.position.y = obstacles_y__.at(i);
-      m_obs.pose.position.z = obstacle_height__ / 2.0;
-      m_obs.scale.x = 2.0 * obstacle_radius__;
-      m_obs.scale.y = 2.0 * obstacle_radius__;
-      m_obs.scale.z = obstacle_height__;
+      m_obs.pose.position.x = obstacles_x_.at(i);
+      m_obs.pose.position.y = obstacles_y_.at(i);
+      m_obs.pose.position.z = obstacle_height_ / 2.0;
+      m_obs.scale.x = 2.0 * obstacle_radius_;
+      m_obs.scale.y = 2.0 * obstacle_radius_;
+      m_obs.scale.z = obstacle_height_;
       m_obs.color.r = 1.0;
       m_obs.color.g = 0.0;
       m_obs.color.b = 0.0;
@@ -248,114 +248,114 @@ private:
       m_array_obs.markers.push_back(m_obs);
     }
 
-    pub_obstacle_markers__->publish(m_array_obs);
+    pub_obstacle_markers_->publish(m_array_obs);
   }
 
   /// \brief reset the position of the turtlebot.
-  void reset_turtle_pose__()
+  void reset_turtle_pose_()
   {
-    period__ = 1.0 / rate__;
-    turtle_x__ = x_0__;
-    turtle_y__ = y_0__;
-    turtle_theta__ = theta_0__;
-    turtlebot__ = turtlelib::DiffDrive(track_width__, wheel_radius__);
+    period_ = 1.0 / rate_;
+    turtle_x_ = x_0_;
+    turtle_y_ = y_0_;
+    turtle_theta_ = theta_0_;
+    turtlebot_ = turtlelib::DiffDrive(track_width_, wheel_radius_);
   }
 
   /// \brief Callback function for reset service, reset the position of turtlebot and timestep
   /// \param request The request object
   /// \param response The response object
-  void srv_reset_callback__(
+  void srv_reset_callback_(
     std::shared_ptr<Empty::Request> request,
     std::shared_ptr<Empty::Response> response)
   {
     (void) request;
     (void) response;
 
-    reset_turtle_pose__();
-    timestep__ = 0;
+    reset_turtle_pose_();
+    timestep_ = 0;
   }
 
   /// \brief Callback function of the teleport service, teleport the turtlebot to a place
   /// \param request The request object
   /// \param response The response object
-  void srv_teleport_callback__(
+  void srv_teleport_callback_(
     std::shared_ptr<Teleport::Request> request,
     std::shared_ptr<Teleport::Response> response)
   {
-    turtle_x__ = request->x;
-    turtle_y__ = request->y;
-    turtle_theta__ = request->theta;
+    turtle_x_ = request->x;
+    turtle_y_ = request->y;
+    turtle_theta_ = request->theta;
 
     response->result = true;
   }
 
   /// @brief Callback function of the wheel_cmd message
   /// @param msg the wheel_cmd message
-  void sub_wheel_cmd_callback__(WheelCommands::SharedPtr msg)
+  void sub_wheel_cmd_callback_(WheelCommands::SharedPtr msg)
   {
-    wheel_cmd__ = *msg;
+    wheel_cmd_ = *msg;
   }
 
   /// timer
-  rclcpp::TimerBase::SharedPtr timer__;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   /// services
-  rclcpp::Service<Empty>::SharedPtr srv_reset__;
-  rclcpp::Service<Teleport>::SharedPtr srv_teleport__;
+  rclcpp::Service<Empty>::SharedPtr srv_reset_;
+  rclcpp::Service<Teleport>::SharedPtr srv_teleport_;
 
   /// subscribers
-  rclcpp::Subscription<WheelCommands>::SharedPtr sub_wheel_cmd__;
+  rclcpp::Subscription<WheelCommands>::SharedPtr sub_wheel_cmd_;
 
   /// publishers
-  rclcpp::Publisher<UInt64>::SharedPtr pub_timestep__;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers__;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers__;
-  rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data__;
+  rclcpp::Publisher<UInt64>::SharedPtr pub_timestep_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers_;
+  rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
 
   /// transform broadcasters
-  std::unique_ptr<TransformBroadcaster> tf_broadcaster__;
+  std::unique_ptr<TransformBroadcaster> tf_broadcaster_;
 
   /// qos profile
-  rclcpp::QoS marker_qos__;
+  rclcpp::QoS marker_qos_;
 
   /// subscribed messages
-  WheelCommands wheel_cmd__;
+  WheelCommands wheel_cmd_;
 
   /// parameters
-  double rate__;
-  double x_0__;
-  double y_0__;
-  double theta_0__;
-  double arena_x_length__;
-  double arena_y_length__;
-  std::vector<double> obstacles_x__;
-  std::vector<double> obstacles_y__;
-  double obstacle_radius__;
-  double wheel_radius__;
-  double track_width__;
-  int64_t motor_cmd_max__;
-  double motor_cmd_per_rad_sec__;
-  double encoder_ticks_per_rad__;
+  double rate_;
+  double x_0_;
+  double y_0_;
+  double theta_0_;
+  double arena_x_length_;
+  double arena_y_length_;
+  std::vector<double> obstacles_x_;
+  std::vector<double> obstacles_y_;
+  double obstacle_radius_;
+  double wheel_radius_;
+  double track_width_;
+  int64_t motor_cmd_max_;
+  double motor_cmd_per_rad_sec_;
+  double encoder_ticks_per_rad_;
 
   /// other attributes
-  double period__;
-  uint64_t timestep__;
-  double turtle_x__;
-  double turtle_y__;
-  double turtle_theta__;
-  double wall_r__;
-  double wall_g__;
-  double wall_b__;
-  double wall_height__;
-  double wall_thickness__;
-  double obstacle_height__;
-  turtlelib::DiffDrive turtlebot__;
+  double period_;
+  uint64_t timestep_;
+  double turtle_x_;
+  double turtle_y_;
+  double turtle_theta_;
+  double wall_r_;
+  double wall_g_;
+  double wall_b_;
+  double wall_height_;
+  double wall_thickness_;
+  double obstacle_height_;
+  turtlelib::DiffDrive turtlebot_;
 
 public:
   /// \brief Initialize the nusim node
   NuSim()
-  : Node("nusim"), marker_qos__(10), timestep__(0), wall_r__(1.0), wall_g__(0.0), wall_b__(0.0),
-    wall_height__(0.25), wall_thickness__(0.1), obstacle_height__(0.25)
+  : Node("nusim"), marker_qos_(10), timestep_(0), wall_r_(1.0), wall_g_(0.0), wall_b_(0.0),
+    wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25)
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -388,49 +388,49 @@ public:
     encoder_ticks_per_rad_des.description = "Number of encoder ticks per radian";
 
     /// declare parameters
-    this->declare_parameter<double>("rate", 100.0, rate_des);
-    this->declare_parameter<double>("x0", 0.0, x0_des);
-    this->declare_parameter<double>("y0", 0.0, y0_des);
-    this->declare_parameter<double>("theta0", 0.0, theta0_des);
-    this->declare_parameter<double>("arena_x_length", 10.0, arena_x_des);
-    this->declare_parameter<double>("arena_y_length", 10.0, arena_y_des);
-    this->declare_parameter<std::vector<double>>(
+    declare_parameter<double>("rate", 100.0, rate_des);
+    declare_parameter<double>("x0", 0.0, x0_des);
+    declare_parameter<double>("y0", 0.0, y0_des);
+    declare_parameter<double>("theta0", 0.0, theta0_des);
+    declare_parameter<double>("arena_x_length", 10.0, arena_x_des);
+    declare_parameter<double>("arena_y_length", 10.0, arena_y_des);
+    declare_parameter<std::vector<double>>(
       "obstacles/x",
       std::vector<double>{1.2, 2.3},
       obs_x_des
     );
-    this->declare_parameter<std::vector<double>>(
+    declare_parameter<std::vector<double>>(
       "obstacles/y",
       std::vector<double>{2.3, 4.5},
       obs_y_des
     );
-    this->declare_parameter<double>("obstacles/r", 0.05, obs_r_des);
-    this->declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
-    this->declare_parameter<double>("track_width", 0.16, track_width_des);
-    this->declare_parameter<int64_t>("motor_cmd_max", 265, motor_cmd_max_des);
-    this->declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, motor_cmd_max_des);
-    this->declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_per_rad_des);
+    declare_parameter<double>("obstacles/r", 0.05, obs_r_des);
+    declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
+    declare_parameter<double>("track_width", 0.16, track_width_des);
+    declare_parameter<int64_t>("motor_cmd_max", 265, motor_cmd_max_des);
+    declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, motor_cmd_max_des);
+    declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_per_rad_des);
 
     /// get parameter values
-    rate__ = this->get_parameter("rate").as_double();
-    x_0__ = this->get_parameter("x0").as_double();
-    y_0__ = this->get_parameter("y0").as_double();
-    theta_0__ = this->get_parameter("theta0").as_double();
-    arena_x_length__ = this->get_parameter("arena_x_length").as_double();
-    arena_y_length__ = this->get_parameter("arena_y_length").as_double();
-    obstacles_x__ = this->get_parameter("obstacles/x").as_double_array();
-    obstacles_y__ = this->get_parameter("obstacles/y").as_double_array();
-    obstacle_radius__ = this->get_parameter("obstacles/r").as_double();
-    wheel_radius__ = this->get_parameter("wheel_radius").as_double();
-    track_width__ = this->get_parameter("track_width").as_double();
-    motor_cmd_max__ = this->get_parameter("motor_cmd_max").as_int();
-    motor_cmd_per_rad_sec__ = this->get_parameter("motor_cmd_per_rad_sec").as_double();
-    encoder_ticks_per_rad__ = this->get_parameter("encoder_ticks_per_rad").as_double();
+    rate_ = get_parameter("rate").as_double();
+    x_0_ = get_parameter("x0").as_double();
+    y_0_ = get_parameter("y0").as_double();
+    theta_0_ = get_parameter("theta0").as_double();
+    arena_x_length_ = get_parameter("arena_x_length").as_double();
+    arena_y_length_ = get_parameter("arena_y_length").as_double();
+    obstacles_x_ = get_parameter("obstacles/x").as_double_array();
+    obstacles_y_ = get_parameter("obstacles/y").as_double_array();
+    obstacle_radius_ = get_parameter("obstacles/r").as_double();
+    wheel_radius_ = get_parameter("wheel_radius").as_double();
+    track_width_ = get_parameter("track_width").as_double();
+    motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
+    motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
+    encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
 
     /// check for x y length
-    if (obstacles_x__.size() != obstacles_y__.size()) {
+    if (obstacles_x_.size() != obstacles_y_.size()) {
       RCLCPP_ERROR_STREAM(
-        this->get_logger(),
+        get_logger(),
         "The x and y coordinates should have the same length"
       );
       throw std::invalid_argument("The x and y coordinate should have same length");
@@ -438,46 +438,46 @@ public:
     }
 
     /// initialize attributes
-    reset_turtle_pose__();
+    reset_turtle_pose_();
 
     // set marker qos policy
-    marker_qos__.transient_local();
+    marker_qos_.transient_local();
 
     /// timer
-    timer__ = this->create_wall_timer(
-      std::chrono::duration<long double>{period__},
-      std::bind(&NuSim::timer_callback__, this));
+    timer_ = create_wall_timer(
+      std::chrono::duration<long double>{period_},
+      std::bind(&NuSim::timer_callback_, this));
 
     /// services
-    srv_reset__ = this->create_service<Empty>(
+    srv_reset_ = create_service<Empty>(
       "~/reset",
       std::bind(
-        &NuSim::srv_reset_callback__, this, std::placeholders::_1,
+        &NuSim::srv_reset_callback_, this, std::placeholders::_1,
         std::placeholders::_2));
-    srv_teleport__ =
-      this->create_service<Teleport>(
+    srv_teleport_ =
+      create_service<Teleport>(
       "~/teleport",
       std::bind(
-        &NuSim::srv_teleport_callback__, this, std::placeholders::_1,
+        &NuSim::srv_teleport_callback_, this, std::placeholders::_1,
         std::placeholders::_2));
 
     // subscribers
-    sub_wheel_cmd__ =
-      this->create_subscription<WheelCommands>(
+    sub_wheel_cmd_ =
+      create_subscription<WheelCommands>(
       "red/wheel_cmd", 10,
-      std::bind(&NuSim::sub_wheel_cmd_callback__, this, std::placeholders::_1));
+      std::bind(&NuSim::sub_wheel_cmd_callback_, this, std::placeholders::_1));
 
     // publishers
-    pub_timestep__ = this->create_publisher<UInt64>("~/timestep", 10);
-    pub_sensor_data__ = this->create_publisher<SensorData>("red/sensor_data", 10);
-    pub_wall_markers__ = this->create_publisher<MarkerArray>("~/walls", marker_qos__);
-    pub_obstacle_markers__ = this->create_publisher<MarkerArray>("~/obstacles", marker_qos__);
+    pub_timestep_ = create_publisher<UInt64>("~/timestep", 10);
+    pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
+    pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
+    pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
 
     /// transform broadcasters
-    tf_broadcaster__ = std::make_unique<TransformBroadcaster>(*this);
+    tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
 
-    publish_wall_markers__();
-    publish_obstacle_markers__();
+    publish_wall_markers_();
+    publish_obstacle_markers_();
   }
 };
 
