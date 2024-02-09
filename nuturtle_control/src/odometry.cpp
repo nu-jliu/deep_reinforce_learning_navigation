@@ -335,7 +335,7 @@ public:
       std::bind(&Odom::sub_joint_states_callback_, this, std::placeholders::_1));
 
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
-    pub_path_ = create_publisher<Path>("path", 10);
+    pub_path_ = create_publisher<Path>("~/path", 10);
 
     srv_initial_pose_ =
       create_service<InitialPose>(

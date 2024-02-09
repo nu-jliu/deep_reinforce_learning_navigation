@@ -85,6 +85,7 @@ private:
     msg_timestep.data = timestep_++;
     pub_timestep_->publish(msg_timestep);
 
+    publish_obstacle_markers_();
     broadcast_tf_();
     update_turtlebot_pos_();
     publish_sensor_data_();
@@ -97,12 +98,17 @@ private:
     double left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
     double right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
     /// ##### Generating gaussian noice CITE: https://stackoverflow.com/questions/32889309/adding-gaussian-noise
-    const auto left_wheel_noice = distribution_(generator_);
-    const auto right_wheel_noice = distribution_(generator_);
+    const auto left_wheel_noice = distribution_input_(generator_);
+    const auto right_wheel_noice = distribution_input_(generator_);
 
-    RCLCPP_INFO_STREAM(get_logger(), "noice: " << left_wheel_noice);
-    left_wheel_speed += left_wheel_noice;
-    right_wheel_speed += right_wheel_noice;
+    RCLCPP_DEBUG_STREAM(get_logger(), "noice: " << left_wheel_noice);
+    if (
+      !turtlelib::almost_equal(left_wheel_speed, 0.0, 1e-2) ||
+      !turtlelib::almost_equal(right_wheel_speed, 0.0, 1e-2))
+    {
+      left_wheel_speed += left_wheel_noice;
+      right_wheel_speed += right_wheel_noice;
+    }
     /// ##### END CITATION
     const auto phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
     const auto phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
@@ -118,11 +124,37 @@ private:
       (1.0 + ita_right);
 
     turtlebot_.compute_fk(phi_left_new, phi_right_new);
-    // turtlebot__.update_wheel(phi_left_slip, phi_right_slip);
+    turtlebot_.update_wheel(phi_left_slip, phi_right_slip);
+
+    check_collision_(turtle_x_, turtle_y_);
 
     turtle_x_ = turtlebot_.config_x();
     turtle_y_ = turtlebot_.config_y();
     turtle_theta_ = turtlebot_.config_theta();
+  }
+
+  /// @brief Check if turtlebot has collided with one of the obstacles
+  /// @param pre_x previous x position
+  /// @param pre_y previous y position
+  void check_collision_(double pre_x, double pre_y)
+  {
+    const auto robot_x = turtlebot_.config_x();
+    const auto robot_y = turtlebot_.config_y();
+
+    for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
+      const auto obs_x = obstacles_x_.at(i);
+      const auto obs_y = obstacles_y_.at(i);
+      const auto dist = sqrt(pow(obs_x - robot_x, 2.0) + pow(obs_y - robot_y, 2.0));
+
+      if (dist < collision_radius_ + obstacle_radius_) {
+        const auto dx = obs_x - robot_x;
+        const auto dy = obs_y - robot_y;
+
+        const auto theta_new = atan2(dy, dx);
+        turtlebot_.update_config(pre_x, pre_y, theta_new);
+        break;
+      }
+    }
   }
 
   /// @brief broadcast the transform
@@ -145,6 +177,7 @@ private:
     tf_broadcaster_->sendTransform(tf);
   }
 
+  /// @brief publish a path message that displays the of the robot on rviz
   void publish_path_()
   {
     PoseStamped pose_curr;
@@ -273,17 +306,24 @@ private:
   void publish_obstacle_markers_()
   {
     MarkerArray m_array_obs;
+    MarkerArray m_array_sensor;
 
-    for (std::size_t i = 0; i < obstacles_x_.size(); i++) {
+    for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
+      const auto x_pos = obstacles_x_.at(i);
+      const auto y_pos = obstacles_y_.at(i);
+      const auto dist = sqrt(pow(x_pos - turtle_x_, 2.0) + pow(y_pos - turtle_y_, 2.0));
+
       Marker m_obs;
+      Marker m_sensor;
 
+      /// Obstacle marker
       m_obs.header.stamp = get_clock()->now();
       m_obs.header.frame_id = "nusim/world";
       m_obs.id = i + 10;
       m_obs.type = Marker::CYLINDER;
       m_obs.action = Marker::ADD;
-      m_obs.pose.position.x = obstacles_x_.at(i);
-      m_obs.pose.position.y = obstacles_y_.at(i);
+      m_obs.pose.position.x = x_pos;
+      m_obs.pose.position.y = y_pos;
       m_obs.pose.position.z = obstacle_height_ / 2.0;
       m_obs.scale.x = 2.0 * obstacle_radius_;
       m_obs.scale.y = 2.0 * obstacle_radius_;
@@ -293,19 +333,41 @@ private:
       m_obs.color.b = 0.0;
       m_obs.color.a = 1.0;
 
+      /// Sensor marker
+      m_sensor.header.stamp = get_clock()->now();
+      m_sensor.header.frame_id = "nusim/world";
+      m_sensor.id = i + 20;
+      m_sensor.type = Marker::CYLINDER;
+      m_sensor.pose.position.x = x_pos + distribution_sensor_(generator_);
+      m_sensor.pose.position.y = y_pos + distribution_sensor_(generator_);
+      m_sensor.pose.position.z = obstacle_height_ / 2.0;
+      m_sensor.scale.x = 2.0 * obstacle_radius_;
+      m_sensor.scale.y = 2.0 * obstacle_radius_;
+      m_sensor.scale.z = obstacle_height_;
+      m_sensor.color.r = 1.0;
+      m_sensor.color.g = 1.0;
+      m_sensor.color.b = 0.0;
+      m_sensor.color.a = 1.0;
+
+      if (dist < max_range_) {
+        m_sensor.action = Marker::ADD;
+      } else {
+        m_sensor.action = Marker::DELETE;
+      }
+
       m_array_obs.markers.push_back(m_obs);
+      m_array_sensor.markers.push_back(m_sensor);
     }
 
     pub_obstacle_markers_->publish(m_array_obs);
+    pub_fake_sensor_markers_->publish(m_array_sensor);
   }
 
   /// \brief reset the position of the turtlebot.
   void reset_turtle_pose_()
   {
     period_ = 1.0 / rate_;
-    turtle_x_ = x_0_;
-    turtle_y_ = y_0_;
-    turtle_theta_ = theta_0_;
+    turtlebot_.update_config(x0_, y0_, theta0_);
     turtlebot_ = turtlelib::DiffDrive(track_width_, wheel_radius_);
   }
 
@@ -360,6 +422,7 @@ private:
   rclcpp::Publisher<UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_fake_sensor_markers_;
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
 
@@ -374,9 +437,9 @@ private:
 
   /// parameters
   double rate_;
-  double x_0_;
-  double y_0_;
-  double theta_0_;
+  double x0_;
+  double y0_;
+  double theta0_;
   double arena_x_length_;
   double arena_y_length_;
   std::vector<double> obstacles_x_;
@@ -387,8 +450,11 @@ private:
   int64_t motor_cmd_max_;
   double motor_cmd_per_rad_sec_;
   double encoder_ticks_per_rad_;
+  double collision_radius_;
   double input_noice_;
   double slip_fraction_;
+  double basic_sensor_variance_;
+  double max_range_;
 
   /// other attributes
   double period_;
@@ -405,7 +471,8 @@ private:
   turtlelib::DiffDrive turtlebot_;
   std::vector<PoseStamped> poses_;
   std::default_random_engine generator_;
-  std::normal_distribution<double> distribution_;
+  std::normal_distribution<double> distribution_input_;
+  std::normal_distribution<double> distribution_sensor_;
 
 public:
   /// \brief Initialize the nusim node
@@ -428,8 +495,11 @@ public:
     ParameterDescriptor motor_cmd_max_des;
     ParameterDescriptor motor_cmd_per_rad_sec_des;
     ParameterDescriptor encoder_ticks_per_rad_des;
+    ParameterDescriptor collision_radius_des;
     ParameterDescriptor input_noice_des;
     ParameterDescriptor slip_fraction_des;
+    ParameterDescriptor basic_sensor_variance_des;
+    ParameterDescriptor max_range_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -444,8 +514,11 @@ public:
     motor_cmd_max_des.description = "The maximum motor command";
     motor_cmd_per_rad_sec_des.description = "The motor command per rad/s speed";
     encoder_ticks_per_rad_des.description = "Number of encoder ticks per radian";
+    collision_radius_des.description = "The collision radois of the robot";
     input_noice_des.description = "Gaussian noice variance";
     slip_fraction_des.description = "Fraction of the slip";
+    basic_sensor_variance_des.description = "The variance of the sensor";
+    max_range_des.description = "The maximum range of the sensor";
 
     /// declare parameters
     declare_parameter<double>("rate", 100.0, rate_des);
@@ -470,14 +543,17 @@ public:
     declare_parameter<int64_t>("motor_cmd_max", 265, motor_cmd_max_des);
     declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, motor_cmd_max_des);
     declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_per_rad_des);
+    declare_parameter<double>("collision_radius", 0.2, collision_radius_des);
     declare_parameter<double>("input_noice", 0.0, input_noice_des);
     declare_parameter<double>("slip_fraction", 0.0, slip_fraction_des);
+    declare_parameter<double>("basic_sensor_variance", 0.02, basic_sensor_variance_des);
+    declare_parameter<double>("max_range", 2.0, max_range_des);
 
     /// get parameter values
     rate_ = get_parameter("rate").as_double();
-    x_0_ = get_parameter("x0").as_double();
-    y_0_ = get_parameter("y0").as_double();
-    theta_0_ = get_parameter("theta0").as_double();
+    x0_ = get_parameter("x0").as_double();
+    y0_ = get_parameter("y0").as_double();
+    theta0_ = get_parameter("theta0").as_double();
     arena_x_length_ = get_parameter("arena_x_length").as_double();
     arena_y_length_ = get_parameter("arena_y_length").as_double();
     obstacles_x_ = get_parameter("obstacles/x").as_double_array();
@@ -488,8 +564,11 @@ public:
     motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
     motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
     encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
+    collision_radius_ = get_parameter("collision_radius").as_double();
     input_noice_ = get_parameter("input_noice").as_double();
     slip_fraction_ = get_parameter("slip_fraction").as_double();
+    basic_sensor_variance_ = get_parameter("basic_sensor_variance").as_double();
+    max_range_ = get_parameter("max_range").as_double();
 
 
     /// check for x y length
@@ -503,7 +582,8 @@ public:
     }
 
     /// initialize attributes
-    distribution_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
+    distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
+    distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
     reset_turtle_pose_();
 
     // set marker qos policy
@@ -538,13 +618,14 @@ public:
     pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
     pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
     pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
+    pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
     pub_path_ = this->create_publisher<Path>("~/path", 10);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
 
     publish_wall_markers_();
-    publish_obstacle_markers_();
+    // publish_obstacle_markers_();
   }
 };
 
