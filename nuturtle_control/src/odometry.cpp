@@ -133,15 +133,18 @@ private:
     const auto x_prev = turtlebot_.config_x();
     const auto y_prev = turtlebot_.config_y();
     const auto theta_prev = turtlebot_.config_theta();
+    const auto left_prev = turtlebot_.left_wheel();
+    const auto right_prev = turtlebot_.right_wheel();
 
     turtlelib::Twist2D twist_turtle = turtlebot_.compute_fk(phi_left, phi_right);
 
     if (
-      turtlelib::almost_equal(turtlebot_.config_x(), 0.0) &&
-      turtlelib::almost_equal(turtlebot_.config_y(), 0.0) &&
-      turtlelib::almost_equal(turtlebot_.config_theta(), 0.0))
+      turtlelib::almost_equal(turtlebot_.config_x(), 0.0, 2e-2) ||
+      turtlelib::almost_equal(turtlebot_.config_y(), 0.0, 2e-2) ||
+      turtlelib::almost_equal(turtlebot_.config_theta(), 0.0, 2e-2))
     {
       turtlebot_.update_config(x_prev, y_prev, theta_prev);
+      turtlebot_.update_wheel(left_prev, right_prev);
     }
 
     msg_odom.header.stamp = get_clock()->now();
