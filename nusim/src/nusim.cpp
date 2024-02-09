@@ -43,8 +43,10 @@
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <std_msgs/msg/u_int64.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 
@@ -63,8 +65,10 @@ using tf2_ros::TransformBroadcaster;
 using rcl_interfaces::msg::ParameterDescriptor;
 using std_msgs::msg::UInt64;
 using geometry_msgs::msg::TransformStamped;
+using geometry_msgs::msg::PoseStamped;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using nav_msgs::msg::Path;
 using nuturtlebot_msgs::msg::WheelCommands;
 using nuturtlebot_msgs::msg::SensorData;
 
@@ -86,6 +90,7 @@ private:
     broadcast_tf_();
     update_turtlebot_pos_();
     publish_sensor_data_();
+    publish_path_();
   }
 
   /// @brief Update the position of the turtlebot
@@ -122,6 +127,33 @@ private:
     tf.transform.rotation.w = cos(turtle_theta_ / 2.0);
 
     tf_broadcaster_->sendTransform(tf);
+  }
+
+  void publish_path_()
+  {
+    PoseStamped pose_curr;
+
+    pose_curr.header.stamp = this->get_clock()->now();
+    pose_curr.header.frame_id = "nusim/world";
+
+    pose_curr.pose.position.x = turtle_x_;
+    pose_curr.pose.position.y = turtle_y_;
+    pose_curr.pose.position.z = 0.0;
+
+    pose_curr.pose.orientation.x = 0.0;
+    pose_curr.pose.orientation.y = 0.0;
+    pose_curr.pose.orientation.z = sin(turtle_theta_ / 2.0);
+    pose_curr.pose.orientation.w = cos(turtle_theta_ / 2.0);
+
+    poses_.push_back(pose_curr);
+
+    Path msg_path;
+
+    msg_path.header.stamp = this->get_clock()->now();
+    msg_path.header.frame_id = "nusim/world";
+    msg_path.poses = poses_;
+
+    pub_path_->publish(msg_path);
   }
 
   /// @brief publish the sensor data of the turtlebot
@@ -282,9 +314,11 @@ private:
     std::shared_ptr<Teleport::Request> request,
     std::shared_ptr<Teleport::Response> response)
   {
-    turtle_x_ = request->x;
-    turtle_y_ = request->y;
-    turtle_theta_ = request->theta;
+    const auto x = request->x;
+    const auto y = request->y;
+    const auto theta = request->theta;
+
+    turtlebot_.update_config(x, y, theta);
 
     response->result = true;
   }
@@ -311,6 +345,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers_;
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
+  rclcpp::Publisher<Path>::SharedPtr pub_path_;
 
   /// transform broadcasters
   std::unique_ptr<TransformBroadcaster> tf_broadcaster_;
@@ -350,6 +385,7 @@ private:
   double wall_thickness_;
   double obstacle_height_;
   turtlelib::DiffDrive turtlebot_;
+  std::vector<PoseStamped> poses_;
 
 public:
   /// \brief Initialize the nusim node
@@ -472,6 +508,7 @@ public:
     pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
     pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
     pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
+    pub_path_ = this->create_publisher<Path>("~/path", 10);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);

@@ -62,8 +62,14 @@
     </group>
 
     <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
-        <!-- <node pkg="numsr_turtlebot" exec="numsr_turtlebot" /> -->
+        <!-- turtlebot drivers -->
+        <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
+            <arg name="port" value="/dev/ttyUSB0" />
+            <arg name="frame_id" value="laser" />
+        </include>
+        <node pkg="numsr_turtlebot" exec="numsr_turtlebot" />
 
+        <!-- control nodes -->
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
             <remap from="joint_states" to="red/joint_states" />

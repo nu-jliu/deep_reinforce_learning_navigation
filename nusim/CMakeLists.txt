@@ -10,12 +10,13 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
@@ -31,6 +32,7 @@ set(NUSIM_DEPENDENCIES
     visualization_msgs
     std_msgs
     nuturtlebot_msgs
+    nav_msgs
     std_srvs
     tf2_ros
     tf2_geometry_msgs
