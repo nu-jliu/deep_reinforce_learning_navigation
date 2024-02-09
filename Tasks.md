@@ -50,3 +50,7 @@
   - F.1 Turtlebot Setup
   - F.2 Cross-Compilation
   - F.5 Physical Testing
+
+# Task V Visualization
+ - V.1 Simulatino Standalone
+ - V.2 Simulation with Odometry

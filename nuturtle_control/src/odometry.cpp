@@ -34,9 +34,11 @@
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include "turtlelib/diff_drive.hpp"
 #include "nuturtle_control/srv/initial_pose.hpp"
@@ -49,9 +51,11 @@ using tf2_ros::TransformBroadcaster;
 using rcl_interfaces::msg::ParameterDescriptor;
 using sensor_msgs::msg::JointState;
 using nav_msgs::msg::Odometry;
+using nav_msgs::msg::Path;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
+using geometry_msgs::msg::PoseStamped;
 
 using nuturtle_control::srv::InitialPose;
 
@@ -62,9 +66,15 @@ private:
   /// @brief The timer callback of the odometry node
   void timer_callback_()
   {
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      "x: " << turtlebot_.config_x() << ", y: " << turtlebot_.config_x() << " theta: " <<
+        turtlebot_.config_theta());
+
     if (joint_states_available_) {
       broadcast_tf_();
       publish_odom_();
+      publish_path_();
     }
   }
 
@@ -122,6 +132,33 @@ private:
     respose->success = true;
   }
 
+  void publish_path_()
+  {
+    Path msg_path;
+
+    msg_path.header.stamp = get_clock()->now();
+    msg_path.header.frame_id = "nusim/world";
+
+    PoseStamped pose;
+
+    pose.header.stamp = get_clock()->now();
+    pose.header.frame_id = "nusim/world";
+
+    pose.pose.position.x = turtlebot_.config_x();
+    pose.pose.position.y = turtlebot_.config_y();
+    pose.pose.position.z = 0.0;
+
+    pose.pose.orientation.x = 0.0;
+    pose.pose.orientation.y = 0.0;
+    pose.pose.orientation.z = sin(turtlebot_.config_theta() / 2.0);
+    pose.pose.orientation.w = cos(turtlebot_.config_theta() / 2.0);
+
+    poses_.push_back(pose);
+    msg_path.poses = poses_;
+
+    pub_path_->publish(msg_path);
+  }
+
   /// @brief publish the odometry
   void publish_odom_()
   {
@@ -133,8 +170,8 @@ private:
     const auto x_prev = turtlebot_.config_x();
     const auto y_prev = turtlebot_.config_y();
     const auto theta_prev = turtlebot_.config_theta();
-    const auto left_prev = turtlebot_.left_wheel();
-    const auto right_prev = turtlebot_.right_wheel();
+    const auto left_wheel_pre = turtlebot_.left_wheel();
+    const auto right_wheel_pre = turtlebot_.right_wheel();
 
     turtlelib::Twist2D twist_turtle = turtlebot_.compute_fk(phi_left, phi_right);
 
@@ -144,7 +181,7 @@ private:
       turtlelib::almost_equal(turtlebot_.config_theta(), 0.0, 1.5e-2))
     {
       turtlebot_.update_config(x_prev, y_prev, theta_prev);
-      turtlebot_.update_wheel(left_prev, right_prev);
+      turtlebot_.update_wheel(left_wheel_pre, right_wheel_pre);
     }
 
     msg_odom.header.stamp = get_clock()->now();
@@ -206,6 +243,7 @@ private:
 
   /// Publisher
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry_;
+  rclcpp::Publisher<Path>::SharedPtr pub_path_;
 
   /// TF Broadcaster
   std::unique_ptr<TransformBroadcaster> tf_broadcater_;
@@ -234,6 +272,7 @@ private:
   size_t index_right_;
   double left_init_;
   double right_init_;
+  std::vector<PoseStamped> poses_;
 
 public:
   /// @brief
@@ -296,6 +335,7 @@ public:
       std::bind(&Odom::sub_joint_states_callback_, this, std::placeholders::_1));
 
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
+    pub_path_ = create_publisher<Path>("path", 10);
 
     srv_initial_pose_ =
       create_service<InitialPose>(
