@@ -139,9 +139,9 @@ private:
     turtlelib::Twist2D twist_turtle = turtlebot_.compute_fk(phi_left, phi_right);
 
     if (
-      turtlelib::almost_equal(turtlebot_.config_x(), 0.0, 2e-2) ||
-      turtlelib::almost_equal(turtlebot_.config_y(), 0.0, 2e-2) ||
-      turtlelib::almost_equal(turtlebot_.config_theta(), 0.0, 2e-2))
+      turtlelib::almost_equal(turtlebot_.config_x(), 0.0, 1.5e-2) ||
+      turtlelib::almost_equal(turtlebot_.config_y(), 0.0, 1.5e-2) ||
+      turtlelib::almost_equal(turtlebot_.config_theta(), 0.0, 1.5e-2))
     {
       turtlebot_.update_config(x_prev, y_prev, theta_prev);
       turtlebot_.update_wheel(left_prev, right_prev);
@@ -185,20 +185,6 @@ private:
     tf_msg.header.stamp = get_clock()->now();
     tf_msg.header.frame_id = odom_id_;
     tf_msg.child_frame_id = body_id_;
-
-    if (turtlelib::almost_equal(
-        turtlebot_.config_x(),
-        0.0) ||
-      turtlelib::almost_equal(
-        turtlebot_.config_y(),
-        0.0) || turtlelib::almost_equal(turtlebot_.config_theta(), 0.0))
-    {
-      RCLCPP_WARN_STREAM(get_logger(), "Invalid tf detected");
-      RCLCPP_WARN_STREAM(
-        get_logger(), "Joint states: " << joint_states_curr_.position.at(
-          0) << ", " << joint_states_curr_.position.at(1));
-      // return;
-    }
 
     tf_msg.transform.translation.x = turtlebot_.config_x();
     tf_msg.transform.translation.y = turtlebot_.config_y();
