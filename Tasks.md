@@ -32,6 +32,9 @@
  - C.6 `nusim` launch 
  - C.7 README
  - C.8 Simulator
+ - C.9 Robot Position
+ - C.10 Basci Sensor
+ - C.11 Collision Detection
 
 ## Task D. Kinematics
  - D.1 `DiffDrive` class

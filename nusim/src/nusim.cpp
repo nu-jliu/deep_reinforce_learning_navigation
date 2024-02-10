@@ -47,6 +47,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <nav_msgs/msg/path.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 
@@ -67,6 +68,7 @@ using geometry_msgs::msg::PoseStamped;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using nav_msgs::msg::Path;
+using sensor_msgs::msg::LaserScan;
 using nuturtlebot_msgs::msg::WheelCommands;
 using nuturtlebot_msgs::msg::SensorData;
 
@@ -175,6 +177,21 @@ private:
     tf.transform.rotation.w = cos(turtle_theta_ / 2.0);
 
     tf_broadcaster_->sendTransform(tf);
+  }
+
+  void publish_laser_scan_()
+  {
+    LaserScan msg;
+    msg.header.stamp = get_clock()->now();
+    msg.header.frame_id = "nusim/world";
+
+    msg.angle_min = 0.0;
+    msg.angle_max = turtlelib::PI * 2.0;
+    msg.angle_increment = 0.01;
+
+    for (int i = 0; i < static_cast<double>(turtlelib::PI * 2.0 / 0.01); i++) {
+
+    }
   }
 
   /// @brief publish a path message that displays the of the robot on rviz
@@ -425,6 +442,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_fake_sensor_markers_;
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
+  rclcpp::Publisher<LaserScan>::SharedPtr pub_laser_scan_;
 
   /// transform broadcasters
   std::unique_ptr<TransformBroadcaster> tf_broadcaster_;
@@ -619,7 +637,8 @@ public:
     pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
     pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
     pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
-    pub_path_ = this->create_publisher<Path>("~/path", 10);
+    pub_path_ = create_publisher<Path>("~/path", 10);
+    pub_laser_scan_ = create_publisher<LaserScan>("scan", 10);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
