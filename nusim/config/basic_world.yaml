@@ -9,3 +9,5 @@ nusim:
     obstacles/x: [-0.5, 0.8, 0.4]
     obstacles/y: [-0.7, -0.8, 0.8]
     obstacles/r: 0.038
+    input_noice: 0.5
+    slip_fraction: 0.1

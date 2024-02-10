@@ -66,10 +66,10 @@ private:
   /// @brief The timer callback of the odometry node
   void timer_callback_()
   {
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "x: " << turtlebot_.config_x() << ", y: " << turtlebot_.config_x() << " theta: " <<
-        turtlebot_.config_theta());
+    // RCLCPP_INFO_STREAM(
+    //   get_logger(),
+    //   "x: " << turtlebot_.config_x() << ", y: " << turtlebot_.config_x() << " theta: " <<
+    //     turtlebot_.config_theta());
 
     if (joint_states_available_) {
       broadcast_tf_();

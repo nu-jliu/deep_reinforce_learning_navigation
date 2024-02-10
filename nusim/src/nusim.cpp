@@ -35,6 +35,7 @@
 ///
 ///
 #include <chrono>
+#include <random>
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
@@ -93,13 +94,31 @@ private:
   /// @brief Update the position of the turtlebot
   void update_turtlebot_pos_()
   {
-    const auto left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
-    const auto right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
+    double left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
+    double right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
+    /// ##### Generating gaussian noice CITE: https://stackoverflow.com/questions/32889309/adding-gaussian-noise
+    const auto left_wheel_noice = distribution_(generator_);
+    const auto right_wheel_noice = distribution_(generator_);
 
+    RCLCPP_INFO_STREAM(get_logger(), "noice: " << left_wheel_noice);
+    left_wheel_speed += left_wheel_noice;
+    right_wheel_speed += right_wheel_noice;
+    /// ##### END CITATION
     const auto phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
     const auto phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
 
+    const auto ita_left = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
+      slip_fraction_ - slip_fraction_;
+    const auto ita_right = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
+      slip_fraction_ - slip_fraction_;
+
+    const auto phi_left_slip = turtlebot_.left_wheel() + left_wheel_speed * period_ *
+      (1.0 + ita_left);
+    const auto phi_right_slip = turtlebot_.right_wheel() + right_wheel_speed * period_ *
+      (1.0 + ita_right);
+
     turtlebot_.compute_fk(phi_left_new, phi_right_new);
+    // turtlebot__.update_wheel(phi_left_slip, phi_right_slip);
 
     turtle_x_ = turtlebot_.config_x();
     turtle_y_ = turtlebot_.config_y();
@@ -368,6 +387,8 @@ private:
   int64_t motor_cmd_max_;
   double motor_cmd_per_rad_sec_;
   double encoder_ticks_per_rad_;
+  double input_noice_;
+  double slip_fraction_;
 
   /// other attributes
   double period_;
@@ -383,6 +404,8 @@ private:
   double obstacle_height_;
   turtlelib::DiffDrive turtlebot_;
   std::vector<PoseStamped> poses_;
+  std::default_random_engine generator_;
+  std::normal_distribution<double> distribution_;
 
 public:
   /// \brief Initialize the nusim node
@@ -405,6 +428,8 @@ public:
     ParameterDescriptor motor_cmd_max_des;
     ParameterDescriptor motor_cmd_per_rad_sec_des;
     ParameterDescriptor encoder_ticks_per_rad_des;
+    ParameterDescriptor input_noice_des;
+    ParameterDescriptor slip_fraction_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -419,6 +444,8 @@ public:
     motor_cmd_max_des.description = "The maximum motor command";
     motor_cmd_per_rad_sec_des.description = "The motor command per rad/s speed";
     encoder_ticks_per_rad_des.description = "Number of encoder ticks per radian";
+    input_noice_des.description = "Gaussian noice variance";
+    slip_fraction_des.description = "Fraction of the slip";
 
     /// declare parameters
     declare_parameter<double>("rate", 100.0, rate_des);
@@ -443,6 +470,8 @@ public:
     declare_parameter<int64_t>("motor_cmd_max", 265, motor_cmd_max_des);
     declare_parameter<double>("motor_cmd_per_rad_sec", 0.024, motor_cmd_max_des);
     declare_parameter<double>("encoder_ticks_per_rad", 651.9, encoder_ticks_per_rad_des);
+    declare_parameter<double>("input_noice", 0.0, input_noice_des);
+    declare_parameter<double>("slip_fraction", 0.0, slip_fraction_des);
 
     /// get parameter values
     rate_ = get_parameter("rate").as_double();
@@ -459,6 +488,9 @@ public:
     motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
     motor_cmd_per_rad_sec_ = get_parameter("motor_cmd_per_rad_sec").as_double();
     encoder_ticks_per_rad_ = get_parameter("encoder_ticks_per_rad").as_double();
+    input_noice_ = get_parameter("input_noice").as_double();
+    slip_fraction_ = get_parameter("slip_fraction").as_double();
+
 
     /// check for x y length
     if (obstacles_x_.size() != obstacles_y_.size()) {
@@ -471,6 +503,7 @@ public:
     }
 
     /// initialize attributes
+    distribution_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
     reset_turtle_pose_();
 
     // set marker qos policy
