@@ -102,9 +102,9 @@ private:
   {
     WheelCommands msg;
 
-    double omega_z = cmd_twist_.angular.z;
-    double v_x = cmd_twist_.linear.x;
-    double v_y = cmd_twist_.linear.y;
+    const auto omega_z = cmd_twist_.angular.z;
+    const auto v_x = cmd_twist_.linear.x;
+    const auto v_y = cmd_twist_.linear.y;
 
     turtlelib::WheelSpeed phidot = turtlebot_.compute_ik(turtlelib::Twist2D{omega_z, v_x, v_y});
 
@@ -132,19 +132,23 @@ private:
   /// @brief Publish joint state message.
   void publish_joint_states_()
   {
-    double phi_left = (double) sensor_data_curr_.left_encoder / encoder_tick_per_rad_;
-    double phi_right = (double) sensor_data_curr_.right_encoder / encoder_tick_per_rad_;
-    double phi_left_prev = (double) sensor_data_prev_.left_encoder / encoder_tick_per_rad_;
-    double phi_right_prev = (double) sensor_data_prev_.right_encoder / encoder_tick_per_rad_;
+    const auto phi_left = static_cast<double>(sensor_data_curr_.left_encoder) /
+      encoder_tick_per_rad_;
+    const auto phi_right = static_cast<double>(sensor_data_curr_.right_encoder) /
+      encoder_tick_per_rad_;
+    const auto phi_left_prev = static_cast<double>(sensor_data_prev_.left_encoder) /
+      encoder_tick_per_rad_;
+    const auto phi_right_prev = static_cast<double>(sensor_data_prev_.right_encoder) /
+      encoder_tick_per_rad_;
 
-    double t_curr = (double) sensor_data_curr_.stamp.sec +
-      (double) sensor_data_curr_.stamp.nanosec * 1e-9;
-    double t_prev = (double) sensor_data_prev_.stamp.sec +
-      (double) sensor_data_prev_.stamp.nanosec * 1e-9;
-    double dt = t_curr - t_prev;
+    const auto t_curr = static_cast<double>(sensor_data_curr_.stamp.sec) +
+      static_cast<double>(sensor_data_curr_.stamp.nanosec) * 1e-9;
+    const auto t_prev = static_cast<double>(sensor_data_prev_.stamp.sec) +
+      static_cast<double>(sensor_data_prev_.stamp.nanosec) * 1e-9;
+    const auto dt = t_curr - t_prev;
 
-    double phidot_left = (phi_left - phi_left_prev) / dt;
-    double phidot_right = (phi_right - phi_right_prev) / dt;
+    const auto phidot_left = (phi_left - phi_left_prev) / dt;
+    const auto phidot_right = (phi_right - phi_right_prev) / dt;
 
 
     turtlebot_.compute_fk(phi_left, phi_right);

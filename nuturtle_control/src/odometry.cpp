@@ -127,8 +127,8 @@ private:
   {
     Odometry msg_odom;
 
-    double phi_left = joint_states_curr_.position.at(index_left_);
-    double phi_right = joint_states_curr_.position.at(index_right_);
+    const auto phi_left = joint_states_curr_.position.at(index_left_);
+    const auto phi_right = joint_states_curr_.position.at(index_right_);
 
     const auto x_prev = turtlebot_.config_x();
     const auto y_prev = turtlebot_.config_y();
@@ -160,11 +160,11 @@ private:
     msg_odom.pose.pose.orientation.z = sin(turtlebot_.config_theta() / 2.0);
     msg_odom.pose.pose.orientation.w = cos(turtlebot_.config_theta() / 2.0);
 
-    double t_prev = (double) joint_states_prev_.header.stamp.sec +
-      (double) joint_states_prev_.header.stamp.nanosec * 1e-9;
-    double t_curr = (double) joint_states_curr_.header.stamp.sec +
-      (double) joint_states_curr_.header.stamp.nanosec * 1e-9;
-    double dt = t_curr - t_prev;
+    const auto t_prev = static_cast<double>(joint_states_prev_.header.stamp.sec) +
+      static_cast<double>(joint_states_prev_.header.stamp.nanosec) * 1e-9;
+    const auto t_curr = static_cast<double>(joint_states_curr_.header.stamp.sec) +
+      static_cast<double>(joint_states_curr_.header.stamp.nanosec) * 1e-9;
+    const auto dt = t_curr - t_prev;
 
     msg_odom.twist.twist.linear.x = twist_turtle.x / dt;
     msg_odom.twist.twist.linear.y = twist_turtle.y / dt;

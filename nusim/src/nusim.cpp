@@ -91,11 +91,11 @@ private:
   /// @brief Update the position of the turtlebot
   void update_turtlebot_pos_()
   {
-    double left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
-    double right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
+    const auto left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
+    const auto right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
 
-    double phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
-    double phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
+    const auto phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
+    const auto phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
 
     turtlebot_.compute_fk(phi_left_new, phi_right_new);
 
