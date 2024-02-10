@@ -38,7 +38,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
-// #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <std_msgs/msg/u_int64.hpp>
@@ -58,8 +57,6 @@
 using rclcpp::QoS;
 using rclcpp::Node;
 using tf2_ros::TransformBroadcaster;
-// using tf2::Quaternion;
-// using tf2::Vector3;
 
 /// messages
 using rcl_interfaces::msg::ParameterDescriptor;
