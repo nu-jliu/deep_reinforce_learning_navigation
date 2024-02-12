@@ -42,6 +42,7 @@
     <group if="$(eval '\'$(var robot)\' == \'nusim\'')">
         <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
             <arg name="use_rviz" value="false" />
+            <arg name="use_jsp" value="false" />
         </include>
 
         <node pkg="nuturtle_control" exec="odometry" name="odometry">

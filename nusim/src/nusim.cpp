@@ -87,6 +87,11 @@ private:
     msg_timestep.data = timestep_++;
     pub_timestep_->publish(msg_timestep);
 
+    if (++count_ >= static_cast<int>(0.2 / period_)) {
+      publish_laser_scan_();
+      count_ = 0;
+    }
+
     publish_obstacle_markers_();
     broadcast_tf_();
     update_turtlebot_pos_();
@@ -185,13 +190,34 @@ private:
     msg.header.stamp = get_clock()->now();
     msg.header.frame_id = "nusim/world";
 
-    msg.angle_min = 0.0;
+    msg.angle_min = 0;
     msg.angle_max = turtlelib::PI * 2.0;
-    msg.angle_increment = 0.01;
+    msg.angle_increment = lidar_resolution_;
 
-    for (int i = 0; i < static_cast<double>(turtlelib::PI * 2.0 / 0.01); i++) {
+    msg.range_max = lidar_range_max_;
+    msg.range_min = lidar_range_min_;
 
+    msg.time_increment = 0.2;
+    msg.scan_time = 0.2;
+
+    for (int i = 0; i < 4; ++i) {
+
+      for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
+        msg.ranges.push_back(3.0 / cos(j * lidar_resolution_) + distribution_laser_(generator_));
+        // msg.intensities.push_back(2.0);
+      }
+
+      for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
+        msg.ranges.push_back(
+          3.0 / cos(
+            turtlelib::PI / 4.0 - j * lidar_resolution_
+          ) + distribution_laser_(generator_));
+        // msg.intensities.push_back(2.0);
+      }
     }
+
+    pub_laser_scan_->publish(msg);
+    // RCLCPP_INFO(get_logger(), "laser published");
   }
 
   /// @brief publish a path message that displays the of the robot on rviz
@@ -473,8 +499,13 @@ private:
   double slip_fraction_;
   double basic_sensor_variance_;
   double max_range_;
+  double lidar_range_min_;
+  double lidar_range_max_;
+  double lidar_accuracy_;
+  double lidar_resolution_;
 
   /// other attributes
+  int count_;
   double period_;
   uint64_t timestep_;
   double turtle_x_;
@@ -491,12 +522,13 @@ private:
   std::default_random_engine generator_;
   std::normal_distribution<double> distribution_input_;
   std::normal_distribution<double> distribution_sensor_;
+  std::normal_distribution<double> distribution_laser_;
 
 public:
   /// \brief Initialize the nusim node
   NuSim()
-  : Node("nusim"), marker_qos_(10), timestep_(0), wall_r_(1.0), wall_g_(0.0), wall_b_(0.0),
-    wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25)
+  : Node("nusim"), marker_qos_(10), count_(0), timestep_(0), wall_r_(1.0), wall_g_(0.0),
+    wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25)
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -518,6 +550,10 @@ public:
     ParameterDescriptor slip_fraction_des;
     ParameterDescriptor basic_sensor_variance_des;
     ParameterDescriptor max_range_des;
+    ParameterDescriptor lidar_range_min_des;
+    ParameterDescriptor lidar_range_max_des;
+    ParameterDescriptor lidar_accuracy_des;
+    ParameterDescriptor lidar_resolution_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -537,6 +573,10 @@ public:
     slip_fraction_des.description = "Fraction of the slip";
     basic_sensor_variance_des.description = "The variance of the sensor";
     max_range_des.description = "The maximum range of the sensor";
+    lidar_range_min_des.description = "The minimum range of the lidar";
+    lidar_range_max_des.description = "The maximum range of the lidar";
+    lidar_accuracy_des.description = "The accuracy of the lidar";
+    lidar_resolution_des.description = "The angular resolution of the lidar";
 
     /// declare parameters
     declare_parameter<double>("rate", 100.0, rate_des);
@@ -566,6 +606,10 @@ public:
     declare_parameter<double>("slip_fraction", 0.0, slip_fraction_des);
     declare_parameter<double>("basic_sensor_variance", 0.02, basic_sensor_variance_des);
     declare_parameter<double>("max_range", 2.0, max_range_des);
+    declare_parameter<double>("lidar_range_min", 0.12, lidar_range_min_des);
+    declare_parameter<double>("lidar_range_max", 3.5, lidar_range_max_des);
+    declare_parameter<double>("lidar_accuracy", 0.015, lidar_accuracy_des);
+    declare_parameter<double>("lidar_resolution", 0.02, lidar_resolution_des);
 
     /// get parameter values
     rate_ = get_parameter("rate").as_double();
@@ -587,6 +631,10 @@ public:
     slip_fraction_ = get_parameter("slip_fraction").as_double();
     basic_sensor_variance_ = get_parameter("basic_sensor_variance").as_double();
     max_range_ = get_parameter("max_range").as_double();
+    lidar_range_min_ = get_parameter("lidar_range_min").as_double();
+    lidar_range_max_ = get_parameter("lidar_range_max").as_double();
+    lidar_accuracy_ = get_parameter("lidar_accuracy").as_double();
+    lidar_resolution_ = get_parameter("lidar_resolution").as_double();
 
 
     /// check for x y length
@@ -602,6 +650,7 @@ public:
     /// initialize attributes
     distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
     distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
+    distribution_laser_ = std::normal_distribution<double>(0.0, lidar_accuracy_ / 6.0);
     reset_turtle_pose_();
 
     // set marker qos policy

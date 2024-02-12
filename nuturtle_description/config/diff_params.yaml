@@ -6,3 +6,7 @@
     motor_cmd_per_rad_sec: 0.024
     encoder_ticks_per_rad: 651.898646904
     collision_radius: 0.11
+    lidar_rangle_min: 0.12
+    lidar_rangle_max: 3.5
+    lidar_accuracy: 0.015
+    lidar_resolution: 0.01745329251

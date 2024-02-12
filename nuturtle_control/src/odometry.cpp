@@ -167,22 +167,7 @@ private:
     const auto phi_left = joint_states_curr_.position.at(index_left_);
     const auto phi_right = joint_states_curr_.position.at(index_right_);
 
-    const auto x_prev = turtlebot_.config_x();
-    const auto y_prev = turtlebot_.config_y();
-    const auto theta_prev = turtlebot_.config_theta();
-    const auto left_wheel_pre = turtlebot_.left_wheel();
-    const auto right_wheel_pre = turtlebot_.right_wheel();
-
     turtlelib::Twist2D twist_turtle = turtlebot_.compute_fk(phi_left, phi_right);
-
-    if (
-      turtlelib::almost_equal(turtlebot_.config_x(), 0.0, 1.5e-2) ||
-      turtlelib::almost_equal(turtlebot_.config_y(), 0.0, 1.5e-2) ||
-      turtlelib::almost_equal(turtlebot_.config_theta(), 0.0, 1.5e-2))
-    {
-      turtlebot_.update_config(x_prev, y_prev, theta_prev);
-      turtlebot_.update_wheel(left_wheel_pre, right_wheel_pre);
-    }
 
     msg_odom.header.stamp = get_clock()->now();
     msg_odom.header.frame_id = odom_id_;

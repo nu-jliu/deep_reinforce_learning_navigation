@@ -79,6 +79,7 @@ def generate_launch_description():
                         package="joint_state_publisher",
                         executable="joint_state_publisher",
                         name="joint_state_publisher",
+                        parameters=[{"rate": 100}],
                         condition=IfCondition(LaunchConfiguration("use_jsp")),
                         on_exit=Shutdown(),
                     ),
