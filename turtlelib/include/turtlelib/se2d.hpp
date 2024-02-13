@@ -14,6 +14,11 @@ namespace turtlelib
 /// \return The normalized vector
 Vector2D normalize(Vector2D v);
 
+/// @brief
+/// @param v
+/// @return
+double magnitude(Vector2D v);
+
 /// \brief represent a 2-Dimensional twist
 struct Twist2D
 {

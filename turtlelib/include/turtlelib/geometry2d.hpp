@@ -47,7 +47,7 @@ constexpr double rad2deg(double rad)
 /// \brief wrap an angle to (-PI, PI]
 /// \param rad (angle in radians)
 /// \return an angle equivalent to rad but in the range (-PI, PI]
-double           normalize_angle(double rad);
+double normalize_angle(double rad);
 
 /// static_assertions test compile time assumptions.
 /// You should write at least one more test for each function

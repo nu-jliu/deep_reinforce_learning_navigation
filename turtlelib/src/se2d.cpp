@@ -17,8 +17,13 @@ namespace turtlelib
 {
 Vector2D normalize(Vector2D v)
 {
-  const auto mag = sqrt(pow(v.x, 2.0) + pow(v.y, 2.0));
+  const auto mag = magnitude(v);
   return Vector2D{v.x / mag, v.y / mag};
+}
+
+double magnitude(Vector2D v)
+{
+  return sqrt(pow(v.x, 2.0) + pow(v.y, 2.0));
 }
 
 std::ostream & operator<<(std::ostream & os, const Twist2D & tw)

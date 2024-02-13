@@ -36,6 +36,7 @@
 ///
 #include <chrono>
 #include <random>
+#include <limits>
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
@@ -55,6 +56,7 @@
 #include "nusim/srv/teleport.hpp"
 
 #include "turtlelib/diff_drive.hpp"
+#include "turtlelib/trig2d.hpp"
 
 using rclcpp::QoS;
 using rclcpp::Node;
@@ -75,6 +77,22 @@ using nuturtlebot_msgs::msg::SensorData;
 /// services
 using std_srvs::srv::Empty;
 using nusim::srv::Teleport;
+
+/// @brief
+enum WallState
+{
+  /// @brief The up side of the wall
+  up,
+
+  /// @brief The down side of the wall
+  down,
+
+  /// @brief The left side of the wall
+  left,
+
+  /// @brief The right side of the wall
+  right
+};
 
 /// @brief Simulate the turtlebot in a rviz world.
 class NuSim : public Node
@@ -169,8 +187,8 @@ private:
   {
     TransformStamped tf;
     tf.header.stamp = get_clock()->now();
-    tf.header.frame_id = "nusim/world";
-    tf.child_frame_id = "red/base_footprint";
+    tf.header.frame_id = world_frame_id_;
+    tf.child_frame_id = body_frame_id_;
 
     tf.transform.translation.x = turtle_x_;
     tf.transform.translation.y = turtle_y_;
@@ -188,31 +206,167 @@ private:
   {
     LaserScan msg;
     msg.header.stamp = get_clock()->now();
-    msg.header.frame_id = "nusim/world";
+    msg.header.frame_id = body_frame_id_;
 
-    msg.angle_min = 0;
-    msg.angle_max = turtlelib::PI * 2.0;
+    msg.angle_min = -turtlelib::PI;
+    msg.angle_max = turtlelib::PI;
     msg.angle_increment = lidar_resolution_;
 
     msg.range_max = lidar_range_max_;
     msg.range_min = lidar_range_min_;
 
-    msg.time_increment = 0.2;
-    msg.scan_time = 0.2;
+    // msg.time_increment = 0.2;
+    // msg.scan_time = 0.2;
 
-    for (int i = 0; i < 4; ++i) {
+    WallState wall = right;
 
-      for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
-        msg.ranges.push_back(3.0 / cos(j * lidar_resolution_) + distribution_laser_(generator_));
-        // msg.intensities.push_back(2.0);
+    if (turtle_theta_ >= -turtlelib::PI / 4.0 && turtle_theta_ < turtlelib::PI / 4.0) {
+      wall = left;
+    } else if (turtle_theta_ >= turtlelib::PI / 4.0 && turtle_theta_ < turtlelib::PI * 0.75) {
+      wall = down;
+    } else if (turtle_theta_ >= turtlelib::PI * 0.75 || turtle_theta_ < -turtlelib::PI * 0.75) {
+      wall = right;
+    } else {
+      wall = up;
+    }
+
+    std::vector<turtlelib::Obstacle> obstacles;
+    turtlelib::Transform2D T_sb(turtlelib::Vector2D{turtle_x_, turtle_y_}, turtle_theta_);
+    turtlelib::Transform2D T_bs = T_sb.inv();
+    // RCLCPP_INFO_STREAM(get_logger(), "T_bs: " << T_bs);
+    // const auto head = turtlelib::Point2D{0, 0};
+
+
+    for (size_t i = 0; i < obstacles_x_.size(); ++i) {
+      turtlelib::Point2D ps{obstacles_x_.at(i), obstacles_y_.at(i)};
+      turtlelib::Point2D pb = T_bs(ps);
+      obstacles.push_back({pb.x, pb.y, obstacle_radius_});
+      // RCLCPP_INFO_STREAM(get_logger(), "Pb: " << pb);
+    }
+
+    // TransformStamped tf;
+    // tf.header.stamp = get_clock()->now();
+    // tf.header.frame_id = body_frame_id_;
+    // tf.child_frame_id = "obs_2";
+
+    // tf.transform.translation.x = obstacles.at(2).x;
+    // tf.transform.translation.y = obstacles.at(2).y;
+
+    // tf_broadcaster_->sendTransform(tf);
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "theta: " << turtle_theta_);
+    for (int i = 0; i < static_cast<int>(turtlelib::PI * 2.0 / lidar_resolution_); ++i) {
+
+      // for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
+      //   msg.ranges.push_back(3.0 / cos(j * lidar_resolution_) + distribution_laser_(generator_));
+      //   // msg.intensities.push_back(2.0);
+      // }
+
+      // for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
+      //   msg.ranges.push_back(
+      //     3.0 / cos(
+      //       turtlelib::PI / 4.0 - j * lidar_resolution_
+      //     ) + distribution_laser_(generator_));
+      //   // msg.intensities.push_back(2.0);
+      // }
+      const auto alpha = lidar_resolution_ * i - turtlelib::PI;
+
+      // turtlelib::Vector2D v_AB{cos(alpha), sin(alpha)};
+      // if (turtlelib::can_intersect())
+      std::vector<double> obs_dists;
+
+      for (size_t j = 0; j < obstacles.size(); ++j) {
+        const auto obs = obstacles.at(j);
+
+        if (turtlelib::can_intersect(alpha, obs)) {
+          const auto obs_dist = turtlelib::find_distance(alpha, obs);
+          // RCLCPP_INFO_STREAM(get_logger(), "distance: " << obs_dist);
+          obs_dists.push_back(obs_dist + distribution_laser_(generator_));
+        }
       }
 
-      for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
-        msg.ranges.push_back(
-          3.0 / cos(
-            turtlelib::PI / 4.0 - j * lidar_resolution_
-          ) + distribution_laser_(generator_));
-        // msg.intensities.push_back(2.0);
+      if (!obs_dists.empty()) {
+        double min_dist = std::numeric_limits<double>::max();
+
+        for (size_t j = 0; j < obs_dists.size(); ++j) {
+          const auto dist = obs_dists.at(j);
+
+          if (dist < min_dist) {
+            min_dist = dist;
+          }
+        }
+
+        msg.ranges.push_back(min_dist);
+      } else {
+        switch (wall) {
+          case right:
+            {
+              const auto d = arena_x_length_ / 2.0 - turtle_x_;
+              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_);
+              const auto range = d / cos(beta) + distribution_laser_(generator_);
+              msg.ranges.push_back(range);
+
+              const auto py = turtle_y_ + d * tan(beta);
+              if (py > arena_y_length_ / 2.0) {
+                wall = up;
+                // RCLCPP_INFO(get_logger(), "switching to state up");
+              }
+              break;
+            }
+
+          case up:
+            {
+              const auto d = arena_y_length_ / 2.0 - turtle_y_;
+              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) -
+                turtlelib::PI / 2.0;
+              const auto range = d / cos(beta) + distribution_laser_(generator_);
+              msg.ranges.push_back(range);
+
+              const auto px = turtle_x_ - d * tan(beta);
+              if (px < -arena_x_length_ / 2.0) {
+                wall = left;
+              }
+              break;
+            }
+
+          case left:
+            {
+              // msg.ranges.push_back(1.0);
+              const auto d = arena_x_length_ / 2.0 + turtle_x_;
+              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) - turtlelib::PI;
+              const auto range = d / cos(beta) + distribution_laser_(generator_);
+              msg.ranges.push_back(range);
+
+              const auto py = turtle_y_ - d * tan(beta);
+              if (py < -arena_y_length_ / 2.0) {
+                wall = down;
+              }
+              break;
+            }
+
+          case down:
+            {
+              // msg.ranges.push_back(1.0);
+              const auto d = arena_y_length_ / 2.0 + turtle_y_;
+              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) +
+                turtlelib::PI / 2.0;
+              const auto range = d / cos(beta) + distribution_laser_(generator_);
+              msg.ranges.push_back(range);
+
+              const auto px = turtle_x_ + d * tan(beta);
+              if (px > arena_x_length_ / 2.0) {
+                wall = right;
+              }
+              break;
+            }
+
+          default:
+            {
+              RCLCPP_ERROR_STREAM(get_logger(), "Invalid state");
+              throw std::logic_error("Invalid wall state");
+              break;
+            }
+        }
       }
     }
 
@@ -226,7 +380,7 @@ private:
     PoseStamped pose_curr;
 
     pose_curr.header.stamp = this->get_clock()->now();
-    pose_curr.header.frame_id = "nusim/world";
+    pose_curr.header.frame_id = world_frame_id_;
 
     pose_curr.pose.position.x = turtle_x_;
     pose_curr.pose.position.y = turtle_y_;
@@ -242,7 +396,7 @@ private:
     Path msg_path;
 
     msg_path.header.stamp = this->get_clock()->now();
-    msg_path.header.frame_id = "nusim/world";
+    msg_path.header.frame_id = world_frame_id_;
     msg_path.poses = poses_;
 
     pub_path_->publish(msg_path);
@@ -271,7 +425,7 @@ private:
 
     /// first wall
     m1.header.stamp = get_clock()->now();
-    m1.header.frame_id = "nusim/world";
+    m1.header.frame_id = world_frame_id_;
     m1.id = 1;
     m1.type = Marker::CUBE;
     m1.action = Marker::ADD;
@@ -288,7 +442,7 @@ private:
 
     /// second wall
     m2.header.stamp = get_clock()->now();
-    m2.header.frame_id = "nusim/world";
+    m2.header.frame_id = world_frame_id_;
     m2.id = 2;
     m2.type = Marker::CUBE;
     m2.action = Marker::ADD;
@@ -305,7 +459,7 @@ private:
 
     /// third wall
     m3.header.stamp = get_clock()->now();
-    m3.header.frame_id = "nusim/world";
+    m3.header.frame_id = world_frame_id_;
     m3.id = 3;
     m3.type = Marker::CUBE;
     m3.action = Marker::ADD;
@@ -322,7 +476,7 @@ private:
 
     /// fourth wall
     m4.header.stamp = get_clock()->now();
-    m4.header.frame_id = "nusim/world";
+    m4.header.frame_id = world_frame_id_;
     m4.id = 4;
     m4.type = Marker::CUBE;
     m4.action = Marker::ADD;
@@ -475,6 +629,7 @@ private:
 
   /// qos profile
   rclcpp::QoS marker_qos_;
+  rclcpp::QoS laser_qos_;
 
   /// subscribed messages
   WheelCommands wheel_cmd_;
@@ -517,6 +672,8 @@ private:
   double wall_height_;
   double wall_thickness_;
   double obstacle_height_;
+  std::string world_frame_id_;
+  std::string body_frame_id_;
   turtlelib::DiffDrive turtlebot_;
   std::vector<PoseStamped> poses_;
   std::default_random_engine generator_;
@@ -527,8 +684,9 @@ private:
 public:
   /// \brief Initialize the nusim node
   NuSim()
-  : Node("nusim"), marker_qos_(10), count_(0), timestep_(0), wall_r_(1.0), wall_g_(0.0),
-    wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25)
+  : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
+    wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
+    world_frame_id_("nusim/world"), body_frame_id_("red/base_footprint")
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -655,6 +813,8 @@ public:
 
     // set marker qos policy
     marker_qos_.transient_local();
+    // laser_qos_.best_effort();
+    laser_qos_.transient_local();
 
     /// timer
     timer_ = create_wall_timer(
@@ -687,7 +847,7 @@ public:
     pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
     pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
     pub_path_ = create_publisher<Path>("~/path", 10);
-    pub_laser_scan_ = create_publisher<LaserScan>("scan", 10);
+    pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);

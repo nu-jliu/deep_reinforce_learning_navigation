@@ -88,27 +88,27 @@ void DiffDrive::update_wheel(double left, double right)
   right_wheel_ = right;
 }
 
-double DiffDrive::left_wheel()
+double DiffDrive::left_wheel() const
 {
   return left_wheel_;
 }
 
-double DiffDrive::right_wheel()
+double DiffDrive::right_wheel() const
 {
   return right_wheel_;
 }
 
-double DiffDrive::config_x()
+double DiffDrive::config_x() const
 {
   return robot_x_;
 }
 
-double DiffDrive::config_y()
+double DiffDrive::config_y() const
 {
   return robot_y_;
 }
 
-double DiffDrive::config_theta()
+double DiffDrive::config_theta() const
 {
   return robot_theta_;
 }

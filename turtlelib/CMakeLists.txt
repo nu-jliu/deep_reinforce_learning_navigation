@@ -24,6 +24,7 @@ set(TURTLELIB_SRC_FILES
     src/geometry2d.cpp
     src/se2d.cpp
     src/svg.cpp
+    src/trig2d.cpp
 )
 
 add_library(${PROJECT_NAME} 

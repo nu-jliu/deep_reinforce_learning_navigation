@@ -70,23 +70,23 @@ public:
 
   /// \brief Get left wheel configuration
   /// \return [double] Left wheel angle
-  double left_wheel();
+  double left_wheel() const;
 
   /// \brief Get right wheel configuration
   /// \return [double] right wheel angle
-  double right_wheel();
+  double right_wheel() const;
 
   /// \brief Get x configuration
   /// \return [double] x configuration
-  double config_x();
+  double config_x() const;
 
   /// \brief Get y configuration
   /// \return [double] y configuration
-  double config_y();
+  double config_y() const;
 
   /// \brief Get theta configuration
   /// \return [double] theta configuration
-  double config_theta();
+  double config_theta() const;
 };
 
 }
