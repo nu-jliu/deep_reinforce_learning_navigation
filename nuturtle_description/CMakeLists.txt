@@ -34,7 +34,7 @@ if(NOT CMAKE_CROSSCOMPILING)
         # The documentation will be in the build/html directory
         # The main page is build/html/index.html
     endif()
-    
+
     if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     # the following line skips the linter which checks for copyrights

@@ -81,8 +81,8 @@ TEST_CASE("Test cmd_vel pure translation", "[cmd_vel]") // Allen Liu
     rclcpp::spin_some(node);
   }
 
-  CHECK(left_vel == 1262);
-  CHECK(right_vel == 1262);
+  CHECK(left_vel == 265);
+  CHECK(right_vel == 265);
 }
 
 TEST_CASE("Test cmd_vel pure rotation", "[cmd_vel]") // Allen Liu

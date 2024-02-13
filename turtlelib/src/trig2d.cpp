@@ -32,19 +32,25 @@ bool can_intersect(double alpha, Obstacle obs)
   Vector2D v_AB{cos(alpha), sin(alpha)};
   const auto d = fabs(cross2d(v_AO, v_AB)) / magnitude(v_AB);
   const auto alpha_prime = acos(dot2d(v_AO, v_AB) / (magnitude(v_AO) * magnitude(v_AB)));
-  return d <= obs.r && fabs(alpha_prime) < PI;
+  return d < obs.r && fabs(alpha_prime) < PI;
 }
 
 double find_distance(double alpha, Obstacle obs)
 {
   Vector2D v_AO = Vector2D{obs.x, obs.y};
+  const auto alpha_prime = fabs(alpha - atan2(obs.y, obs.x));
+  std::cout << "alpha_prime = " << alpha_prime << std::endl;
   const auto a = magnitude(v_AO);
 
-  // alpha = alpha < 0 ? alpha + 2.0 * turtlelib::PI : alpha;
-  const auto beta = turtlelib::PI - asin(a / obs.r * sin(alpha));
-  std::cout << "beta = " << beta << std::endl;
-  const auto gamma = turtlelib::PI - alpha - beta;
+  if (almost_equal(alpha_prime, 0.0)) {
+    return magnitude(v_AO) - obs.r;
+  } else {
+    // alpha = alpha < 0 ? alpha + 2.0 * turtlelib::PI : alpha;
+    const auto beta = PI - asin(a / obs.r * sin(alpha_prime));
+    std::cout << "beta = " << beta << std::endl;
+    const auto gamma = PI - alpha_prime - beta;
 
-  return obs.r * sin(gamma) / sin(alpha);
+    return obs.r * sin(gamma) / sin(alpha_prime);
+  }
 }
 }
