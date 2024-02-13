@@ -17,28 +17,28 @@ struct Obstacle
   double r;
 };
 
-/// \brief
-/// \param v1
-/// \param v2
-/// \return double
+/// \brief compute cross product between two vector
+/// \param v1 first vector
+/// \param v2 second vector
+/// \return double the result cross product value
 double cross2d(Vector2D v1, Vector2D v2);
 
-/// \brief
-/// \param v1
-/// \param v2
-/// \return double
+/// \brief compute dot product between two vector
+/// \param v1 first vector
+/// \param v2 second vector
+/// \return double the result dot product value
 double dot2d(Vector2D v1, Vector2D v2);
 
-/// \brief
-/// \param v
-/// \param obs
-/// \return bool
+/// \brief wether a vector with inclination angle can intersect with the obsatacle
+/// \param alpha the inclination angle
+/// \param obs the obstacle
+/// \return bool if it can intersect
 bool can_intersect(double alpha, Obstacle obs);
 
-/// \brief
-/// \param alpha
-/// \param obs
-/// \return double
+/// \brief find the distance from the origin to obstacle with inclination angle
+/// \param alpha the inclination angle
+/// \param obs the obstacle
+/// \return double the resulting length
 double find_distance(double alpha, Obstacle obs);
 }
 
