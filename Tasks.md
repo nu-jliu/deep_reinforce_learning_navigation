@@ -35,6 +35,7 @@
  - C.9 Robot Position
  - C.10 Basci Sensor
  - C.11 Collision Detection
+ - C.12 Lidar
 
 ## Task D. Kinematics
  - D.1 `DiffDrive` class

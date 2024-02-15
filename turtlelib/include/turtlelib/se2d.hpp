@@ -14,9 +14,9 @@ namespace turtlelib
 /// \return The normalized vector
 Vector2D normalize(Vector2D v);
 
-/// @brief
-/// @param v
-/// @return
+/// \brief Find the magnitude of a vector
+/// \param v The source vector
+/// \return The magnitude of the vector
 double magnitude(Vector2D v);
 
 /// \brief represent a 2-Dimensional twist

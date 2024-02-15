@@ -78,7 +78,7 @@ using nuturtlebot_msgs::msg::SensorData;
 using std_srvs::srv::Empty;
 using nusim::srv::Teleport;
 
-/// @brief
+/// @brief The state of the wall
 enum WallState
 {
   /// @brief The up side of the wall
@@ -122,7 +122,8 @@ private:
   {
     double left_wheel_speed = wheel_cmd_.left_velocity * motor_cmd_per_rad_sec_;
     double right_wheel_speed = wheel_cmd_.right_velocity * motor_cmd_per_rad_sec_;
-    /// ##### Generating gaussian noice CITE: https://stackoverflow.com/questions/32889309/adding-gaussian-noise
+    /// ##### Generating gaussian noice
+    /// CITE: https://stackoverflow.com/questions/32889309/adding-gaussian-noise
     const auto left_wheel_noice = distribution_input_(generator_);
     const auto right_wheel_noice = distribution_input_(generator_);
 
@@ -233,46 +234,18 @@ private:
     std::vector<turtlelib::Obstacle> obstacles;
     turtlelib::Transform2D T_sb(turtlelib::Vector2D{turtle_x_, turtle_y_}, turtle_theta_);
     turtlelib::Transform2D T_bs = T_sb.inv();
-    // RCLCPP_INFO_STREAM(get_logger(), "T_bs: " << T_bs);
-    // const auto head = turtlelib::Point2D{0, 0};
-
+    RCLCPP_DEBUG_STREAM(get_logger(), "T_bs: " << T_bs);
 
     for (size_t i = 0; i < obstacles_x_.size(); ++i) {
       turtlelib::Point2D ps{obstacles_x_.at(i), obstacles_y_.at(i)};
       turtlelib::Point2D pb = T_bs(ps);
       obstacles.push_back({pb.x, pb.y, obstacle_radius_});
-      // RCLCPP_INFO_STREAM(get_logger(), "Pb: " << pb);
+      RCLCPP_DEBUG_STREAM(get_logger(), "Pb: " << pb);
     }
-
-    // TransformStamped tf;
-    // tf.header.stamp = get_clock()->now();
-    // tf.header.frame_id = body_frame_id_;
-    // tf.child_frame_id = "obs_2";
-
-    // tf.transform.translation.x = obstacles.at(2).x;
-    // tf.transform.translation.y = obstacles.at(2).y;
-
-    // tf_broadcaster_->sendTransform(tf);
 
     RCLCPP_DEBUG_STREAM(get_logger(), "theta: " << turtle_theta_);
     for (int i = 0; i < static_cast<int>(turtlelib::PI * 2.0 / lidar_resolution_); ++i) {
-
-      // for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
-      //   msg.ranges.push_back(3.0 / cos(j * lidar_resolution_) + distribution_laser_(generator_));
-      //   // msg.intensities.push_back(2.0);
-      // }
-
-      // for (int j = 0; j < static_cast<int>(turtlelib::PI / 4.0 / lidar_resolution_); ++j) {
-      //   msg.ranges.push_back(
-      //     3.0 / cos(
-      //       turtlelib::PI / 4.0 - j * lidar_resolution_
-      //     ) + distribution_laser_(generator_));
-      //   // msg.intensities.push_back(2.0);
-      // }
       const auto alpha = lidar_resolution_ * i - turtlelib::PI;
-
-      // turtlelib::Vector2D v_AB{cos(alpha), sin(alpha)};
-      // if (turtlelib::can_intersect())
       std::vector<double> obs_dists;
 
       for (size_t j = 0; j < obstacles.size(); ++j) {
@@ -280,7 +253,7 @@ private:
 
         if (turtlelib::can_intersect(alpha, obs)) {
           const auto obs_dist = turtlelib::find_distance(alpha, obs);
-          // RCLCPP_INFO_STREAM(get_logger(), "distance: " << obs_dist);
+          RCLCPP_DEBUG_STREAM(get_logger(), "distance: " << obs_dist);
           obs_dists.push_back(obs_dist + distribution_laser_(generator_));
         }
       }
@@ -309,7 +282,6 @@ private:
               const auto py = turtle_y_ + d * tan(beta);
               if (py > arena_y_length_ / 2.0) {
                 wall = up;
-                // RCLCPP_INFO(get_logger(), "switching to state up");
               }
               break;
             }
@@ -331,7 +303,6 @@ private:
 
           case left:
             {
-              // msg.ranges.push_back(1.0);
               const auto d = arena_x_length_ / 2.0 + turtle_x_;
               const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) - turtlelib::PI;
               const auto range = d / cos(beta) + distribution_laser_(generator_);
