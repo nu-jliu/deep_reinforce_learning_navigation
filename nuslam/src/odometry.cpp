@@ -1,5 +1,5 @@
 ///
-/// \file slam.cpp
+/// \file odometry.cpp
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
 /// \brief Track the odometry of a robot.
 ///
@@ -60,7 +60,7 @@ using geometry_msgs::msg::PoseStamped;
 using nuturtle_control::srv::InitialPose;
 
 /// @brief
-class Slam : public Node
+class Odom : public Node
 {
 private:
   /// @brief The timer callback of the odometry node
@@ -256,7 +256,7 @@ private:
 
 public:
   /// @brief
-  Slam()
+  Odom()
   : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX), index_right_(
       SIZE_MAX)
   {
@@ -307,12 +307,12 @@ public:
 
     tf_broadcater_ = std::make_unique<TransformBroadcaster>(*this);
 
-    timer_ = create_wall_timer(4ms, std::bind(&Slam::timer_callback_, this));
+    timer_ = create_wall_timer(4ms, std::bind(&Odom::timer_callback_, this));
 
     sub_joint_states_ =
       create_subscription<JointState>(
       "joint_states", 10,
-      std::bind(&Slam::sub_joint_states_callback_, this, std::placeholders::_1));
+      std::bind(&Odom::sub_joint_states_callback_, this, std::placeholders::_1));
 
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
     pub_path_ = create_publisher<Path>("~/path", 10);
@@ -321,7 +321,7 @@ public:
       create_service<InitialPose>(
       "initial_pose",
       std::bind(
-        &Slam::srv_initial_pose_callback_, this, std::placeholders::_1,
+        &Odom::srv_initial_pose_callback_, this, std::placeholders::_1,
         std::placeholders::_2));
   }
 };
@@ -333,8 +333,8 @@ public:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node_slam = std::make_shared<Slam>();
-  rclcpp::spin(node_slam);
+  auto node_odom = std::make_shared<Odom>();
+  rclcpp::spin(node_odom);
 
   rclcpp::shutdown();
   return EXIT_SUCCESS;
