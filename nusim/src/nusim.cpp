@@ -139,10 +139,12 @@ private:
     const auto phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
     const auto phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
 
-    const auto ita_left = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
-      slip_fraction_ - slip_fraction_;
-    const auto ita_right = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
-      slip_fraction_ - slip_fraction_;
+    // const auto ita_left = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
+    //   slip_fraction_ - slip_fraction_;
+    // const auto ita_right = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
+    //   slip_fraction_ - slip_fraction_;
+    const auto ita_left = distribution_slip_(generator_);
+    const auto ita_right = distribution_slip_(generator_);
 
     const auto phi_left_slip = turtlebot_.left_wheel() + left_wheel_speed * period_ *
       (1.0 + ita_left);
@@ -649,6 +651,7 @@ private:
   std::vector<PoseStamped> poses_;
   std::default_random_engine generator_;
   std::normal_distribution<double> distribution_input_;
+  std::uniform_real_distribution<double> distribution_slip_;
   std::normal_distribution<double> distribution_sensor_;
   std::normal_distribution<double> distribution_laser_;
 
@@ -778,6 +781,7 @@ public:
 
     /// initialize attributes
     distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
+    distribution_slip_ = std::uniform_real_distribution<double>(-slip_fraction_, slip_fraction_);
     distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
     distribution_laser_ = std::normal_distribution<double>(0.0, lidar_accuracy_ / 6.0);
     reset_turtle_pose_();

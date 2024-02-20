@@ -42,6 +42,12 @@ add_executable(nusim src/nusim.cpp)
 ament_target_dependencies(nusim ${NUSIM_DEPENDENCIES})
 target_link_libraries(nusim turtlelib::turtlelib)
 
+rosidl_get_typesupport_target(cpp_typesupport_target
+${PROJECT_NAME}_interfaces
+rosidl_typesupport_cpp
+)
+
+target_link_libraries(nusim "${cpp_typesupport_target}")
 
 install(TARGETS
     nusim
@@ -52,13 +58,6 @@ install(
     DIRECTORY launch config
     DESTINATION share/${PROJECT_NAME}
 )
-
-rosidl_get_typesupport_target(cpp_typesupport_target
-    ${PROJECT_NAME}_interfaces
-    rosidl_typesupport_cpp
-)
-
-target_link_libraries(nusim "${cpp_typesupport_target}")
 
 
 # Building documentation should be optional.

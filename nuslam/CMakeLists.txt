@@ -59,6 +59,18 @@ target_link_libraries(odometry
     ${ARMADELLO_LIBRARIES}
 )
 
+install(TARGETS
+    slam
+    odometry
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY 
+    launch 
+    config
+    DESTINATION share/${PROJECT_NAME}
+)
+
 if (NOT CMAKE_CROSSCOMPILING)
     if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)

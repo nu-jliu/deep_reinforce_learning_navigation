@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="cmd_src" default="circle" description="The source of the cmd_vel" />
+    <arg name="robot" default="nusim" description="The robot target" />
+    <arg name="use_rviz" default="true" description="whether to use rviz" />
+
+    <!-- use_rviz argument -->
+    <group if="$(var use_rviz)">
+        <node pkg="rviz2" exec="rviz2"
+            args="-d $(find-pkg-share nuslam)/config/slam_$(var robot).rviz" />
+
+        <!-- load blue robot -->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+            <arg name="use_rviz" value="false" />
+            <arg name="color" value="blue" />
+        </include>
+
+        <!-- load green robot -->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+            <arg name="use_rviz" value="false" />
+            <arg name="color" value="green" />
+        </include>
+
+        <node
+            pkg="tf2_ros"
+            exec="static_transform_publisher"
+            name="static_tranform_publisher"
+            args="--frame-id nusim/world 
+                  --child-frame-id odom
+                  --x 0.0
+                  --y 0.0
+                  --z 0.0" />
+    </group>
+
+
+    <!-- cmd_src argument -->
+    <group if="$(eval '\'$(var cmd_src)\' == \'circle\'')">
+        <node pkg="nuturtle_control" exec="circle" name="circle">
+            <param from="$(find-pkg-share nuturtle_control)/config/circle.yaml" />
+        </node>
+    </group>
+
+    <group if="$(eval '\'$(var cmd_src)\' == \'teleop\'')">
+        <node pkg="turtlebot3_teleop" exec="teleop_keyboard" />
+    </group>
+
+    <!-- robot argument -->
+    <group if="$(eval '\'$(var robot)\' == \'nusim\'')">
+        <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
+            <arg name="use_rviz" value="false" />
+            <arg name="use_jsp" value="false" />
+        </include>
+
+        <node pkg="nuslam" exec="odometry" name="odometry">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <param name="body_id" value="blue/base_footprint" />
+            <param name="odom_id" value="odom" />
+            <param name="wheel_left" value="wheel_left_joint" />
+            <param name="wheel_right" value="wheel_right_joint" />
+            <remap from="joint_states" to="red/joint_states" />
+        </node>
+
+        <node pkg="nuslam" exec="slam" name="slam">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <param name="body_id" value="green/base_footprint" />
+            <param name="odom_id" value="odom" />
+            <param name="wheel_left" value="wheel_left_joint" />
+            <param name="wheel_right" value="wheel_right_joint" />
+            <remap from="joint_states" to="red/joint_states" />
+        </node>
+
+        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <remap from="joint_states" to="red/joint_states" />
+            <remap from="wheel_cmd" to="red/wheel_cmd" />
+            <remap from="sensor_data" to="red/sensor_data" />
+        </node>
+    </group>
+
+    <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
+        <!-- turtlebot drivers -->
+        <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
+            <arg name="port" value="/dev/ttyUSB0" />
+            <arg name="frame_id" value="laser" />
+        </include>
+        <node pkg="numsr_turtlebot" exec="numsr_turtlebot" />
+
+        <!-- control nodes -->
+        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <remap from="joint_states" to="red/joint_states" />
+        </node>
+
+        <node pkg="nuturtle_control" exec="odometry" name="odometry">
+            <param name="body_id" value="blue/base_footprint" />
+            <param name="odom_id" value="odom" />
+            <param name="wheel_left" value="wheel_left_joint" />
+            <param name="wheel_right" value="wheel_right_joint" />
+            <remap from="joint_states" to="red/joint_states" />
+        </node>
+    </group>
+
+
+</launch>
