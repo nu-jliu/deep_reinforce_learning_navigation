@@ -29,7 +29,8 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <std_srvs/srv/empty.hpp>
-#include "nuturtle_control/srv/control.hpp"
+// #include "nuturtle_control/srv/control.hpp"
+#include "nuturtle_interfaces/srv/control.hpp"
 
 using rclcpp::Node;
 
@@ -37,7 +38,8 @@ using rcl_interfaces::msg::ParameterDescriptor;
 using geometry_msgs::msg::Twist;
 
 using std_srvs::srv::Empty;
-using nuturtle_control::srv::Control;
+// using nuturtle_control::srv::Control;
+using nuturtle_interfaces::srv::Control;
 
 /// @brief
 class Circle : public Node

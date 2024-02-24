@@ -112,4 +112,4 @@ double DiffDrive::config_theta() const
 {
   return robot_theta_;
 }
-}
+} // namespace turtlelib

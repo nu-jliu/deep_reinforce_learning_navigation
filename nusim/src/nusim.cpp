@@ -45,6 +45,7 @@
 #include <std_msgs/msg/u_int64.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+// #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -53,10 +54,18 @@
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 
 #include <std_srvs/srv/empty.hpp>
-#include "nusim/srv/teleport.hpp"
+// #include "nusim/srv/teleport.hpp"
+// #include "nusim/msg/obstacle_positions.hpp"
+// #include "nusim/msg/measurement.hpp"
+// #include "nusim/msg/obstacle_measurements.hpp"
+#include "nuturtle_interfaces/srv/teleport.hpp"
+#include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
+#include "nuturtle_interfaces/msg/measurement.hpp"
 
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/trig2d.hpp"
+#include "turtlelib/se2d.hpp"
+
 
 using rclcpp::QoS;
 using rclcpp::Node;
@@ -73,10 +82,17 @@ using nav_msgs::msg::Path;
 using sensor_msgs::msg::LaserScan;
 using nuturtlebot_msgs::msg::WheelCommands;
 using nuturtlebot_msgs::msg::SensorData;
+// using geometry_msgs::msg::Point;
+// using nusim::msg::ObstaclePositions;
+// using nusim::msg::Measurement;
+// using nusim::msg::ObstacleMeasurements;
+using nuturtle_interfaces::msg::Measurement;
+using nuturtle_interfaces::msg::ObstacleMeasurements;
 
 /// services
 using std_srvs::srv::Empty;
-using nusim::srv::Teleport;
+// using nusim::srv::Teleport;
+using nuturtle_interfaces::srv::Teleport;
 
 /// @brief The state of the wall
 enum WallState
@@ -106,15 +122,30 @@ private:
     pub_timestep_->publish(msg_timestep);
 
     if (++count_ >= static_cast<int>(0.2 / period_)) {
+      generate_sensor_obs_pos_();
       publish_laser_scan_();
+      publish_obstacle_markers_();
       count_ = 0;
     }
 
-    publish_obstacle_markers_();
-    broadcast_tf_();
     update_turtlebot_pos_();
     publish_sensor_data_();
     publish_path_();
+    broadcast_tf_();
+  }
+
+  /// @brief Get the fake sensor scan data about obstacle positions
+  void generate_sensor_obs_pos_()
+  {
+    obstacle_pos_sensor_.clear();
+
+    for (size_t i = 0; i < obstacles_x_.size(); ++i) {
+      const auto obs_x = obstacles_x_.at(i) + distribution_sensor_(generator_);
+      const auto obs_y = obstacles_y_.at(i) + distribution_sensor_(generator_);
+
+      turtlelib::Point2D obs_pos{obs_x, obs_y};
+      obstacle_pos_sensor_.push_back(obs_pos);
+    }
   }
 
   /// @brief Update the position of the turtlebot
@@ -151,8 +182,8 @@ private:
     const auto phi_right_slip = turtlebot_.right_wheel() + right_wheel_speed * period_ *
       (1.0 + ita_right);
 
-    turtlebot_.compute_fk(phi_left_new, phi_right_new);
-    turtlebot_.update_wheel(phi_left_slip, phi_right_slip);
+    turtlebot_.compute_fk(phi_left_slip, phi_right_slip);
+    turtlebot_.update_wheel(phi_left_new, phi_right_new);
 
     check_collision_(turtle_x_, turtle_y_);
 
@@ -238,8 +269,8 @@ private:
     turtlelib::Transform2D T_bs = T_sb.inv();
     RCLCPP_DEBUG_STREAM(get_logger(), "T_bs: " << T_bs);
 
-    for (size_t i = 0; i < obstacles_x_.size(); ++i) {
-      turtlelib::Point2D ps{obstacles_x_.at(i), obstacles_y_.at(i)};
+    for (size_t i = 0; i < obstacle_pos_sensor_.size(); ++i) {
+      turtlelib::Point2D ps{obstacle_pos_sensor_.at(i).x, obstacle_pos_sensor_.at(i).y};
       turtlelib::Point2D pb = T_bs(ps);
       obstacles.push_back({pb.x, pb.y, obstacle_radius_});
       RCLCPP_DEBUG_STREAM(get_logger(), "Pb: " << pb);
@@ -477,18 +508,26 @@ private:
   {
     MarkerArray m_array_obs;
     MarkerArray m_array_sensor;
+    ObstacleMeasurements m_measurements;
+
+    turtlelib::Transform2D Tsb(turtlelib::Vector2D{turtle_x_, turtle_y_}, turtle_theta_);
+    turtlelib::Transform2D Tbs = Tsb.inv();
 
     for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
       const auto x_pos = obstacles_x_.at(i);
       const auto y_pos = obstacles_y_.at(i);
       const auto dist = sqrt(pow(x_pos - turtle_x_, 2.0) + pow(y_pos - turtle_y_, 2.0));
 
+      const auto ps = obstacle_pos_sensor_.at(i);
+      const auto pb = Tbs(ps);
+
       Marker m_obs;
       Marker m_sensor;
+      Measurement m_measure;
 
       /// Obstacle marker
       m_obs.header.stamp = get_clock()->now();
-      m_obs.header.frame_id = "nusim/world";
+      m_obs.header.frame_id = world_frame_id_;
       m_obs.id = i + 10;
       m_obs.type = Marker::CYLINDER;
       m_obs.action = Marker::ADD;
@@ -505,11 +544,11 @@ private:
 
       /// Sensor marker
       m_sensor.header.stamp = get_clock()->now();
-      m_sensor.header.frame_id = "nusim/world";
+      m_sensor.header.frame_id = body_frame_id_;
       m_sensor.id = i + 20;
       m_sensor.type = Marker::CYLINDER;
-      m_sensor.pose.position.x = x_pos + distribution_sensor_(generator_);
-      m_sensor.pose.position.y = y_pos + distribution_sensor_(generator_);
+      m_sensor.pose.position.x = pb.x;
+      m_sensor.pose.position.y = pb.y;
       m_sensor.pose.position.z = obstacle_height_ / 2.0;
       m_sensor.scale.x = 2.0 * obstacle_radius_;
       m_sensor.scale.y = 2.0 * obstacle_radius_;
@@ -521,9 +560,19 @@ private:
 
       if (dist < max_range_) {
         m_sensor.action = Marker::ADD;
+
+        m_measure.x = pb.x;
+        m_measure.y = pb.y;
+        m_measure.uid = i;
       } else {
         m_sensor.action = Marker::DELETE;
+
+        m_measure.x = 100.0;
+        m_measure.y = 100.0;
+        m_measure.uid = i;
       }
+
+      m_measurements.measurements.push_back(m_measure);
 
       m_array_obs.markers.push_back(m_obs);
       m_array_sensor.markers.push_back(m_sensor);
@@ -531,6 +580,7 @@ private:
 
     pub_obstacle_markers_->publish(m_array_obs);
     pub_fake_sensor_markers_->publish(m_array_sensor);
+    pub_obstacles_->publish(m_measurements);
   }
 
   /// \brief reset the position of the turtlebot.
@@ -596,6 +646,7 @@ private:
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
   rclcpp::Publisher<LaserScan>::SharedPtr pub_laser_scan_;
+  rclcpp::Publisher<ObstacleMeasurements>::SharedPtr pub_obstacles_;
 
   /// transform broadcasters
   std::unique_ptr<TransformBroadcaster> tf_broadcaster_;
@@ -654,6 +705,7 @@ private:
   std::uniform_real_distribution<double> distribution_slip_;
   std::normal_distribution<double> distribution_sensor_;
   std::normal_distribution<double> distribution_laser_;
+  std::vector<turtlelib::Point2D> obstacle_pos_sensor_;
 
 public:
   /// \brief Initialize the nusim node
@@ -823,6 +875,7 @@ public:
     pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
     pub_path_ = create_publisher<Path>("~/path", 10);
     pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
+    pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);

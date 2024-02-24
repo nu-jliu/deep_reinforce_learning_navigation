@@ -17,6 +17,7 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(nuturtle_control REQUIRED)
+find_package(nuturtle_interfaces REQUIRED)
 find_package(Armadillo REQUIRED)
 
 include_directories(${ARMADELLO_INCLUDE_DIRS})
@@ -29,6 +30,7 @@ set(SLAM_DEPENDENCIES
     nav_msgs
     geometry_msgs
     nuturtle_control
+    nuturtle_interfaces
 )
 
 set(ODOMETRY_DEPENDENCIES
@@ -39,6 +41,7 @@ set(ODOMETRY_DEPENDENCIES
     nav_msgs
     geometry_msgs
     nuturtle_control
+    nuturtle_interfaces
 )
 
 add_executable(slam src/slam.cpp)

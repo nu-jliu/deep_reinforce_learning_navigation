@@ -41,7 +41,8 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include "turtlelib/diff_drive.hpp"
-#include "nuturtle_control/srv/initial_pose.hpp"
+// #include "nuturtle_control/srv/initial_pose.hpp"
+#include "nuturtle_interfaces/srv/initial_pose.hpp"
 
 using namespace std::chrono_literals;
 
@@ -57,7 +58,8 @@ using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
 
-using nuturtle_control::srv::InitialPose;
+// using nuturtle_control::srv::InitialPose;
+using nuturtle_interfaces::srv::InitialPose;
 
 /// @brief
 class Odom : public Node

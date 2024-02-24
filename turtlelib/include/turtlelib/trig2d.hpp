@@ -41,6 +41,6 @@ bool can_intersect(double alpha, Obstacle obs);
 /// \param obs the obstacle
 /// \return double the resulting length
 double find_distance(double alpha, Obstacle obs);
-}
+} // namespace turtlelib
 
 #endif

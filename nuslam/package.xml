@@ -19,6 +19,8 @@
     <depend>nav_msgs</depend>
     <depend>geometry_msgs</depend>
     <depend>nuturtle_control</depend>
+    <depend>nuturtle_interfaces</depend>
+    <depend>nusim</depend>
 
     <export>
         <build_type>ament_cmake</build_type>

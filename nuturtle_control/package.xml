@@ -23,6 +23,7 @@
     <depend>nav_msgs</depend>
     <depend>nuturtlebot_msgs</depend>
     <depend>tf2_ros</depend>
+    <depend>nuturtle_interfaces</depend>
     <depend>turtlelib</depend>
 
     <member_of_group>rosidl_interface_packages</member_of_group>

@@ -14,6 +14,9 @@ project(turtlelib)
 # here: we find the eigen library as per the instruction
 # https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
 # find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Armadillo REQUIRED)
+
+include_directories(${ARMADILLO_INCLUDE_DIRS})
 
 # Create a library.  Can specify if it is shared or static but usually
 # you don't need or want to.
@@ -25,6 +28,7 @@ set(TURTLELIB_SRC_FILES
     src/se2d.cpp
     src/svg.cpp
     src/trig2d.cpp
+    src/ekf_slam.cpp
 )
 
 add_library(${PROJECT_NAME} 
@@ -63,7 +67,7 @@ target_include_directories(${PROJECT_NAME}
 # This will automatically add all required library files
 # that need to be linked
 # and paths to th locations of header files
-# target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 target_link_libraries(frame_main ${PROJECT_NAME})
 
 # install the include files by copying the whole include directory

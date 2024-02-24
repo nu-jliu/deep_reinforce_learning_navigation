@@ -11,6 +11,8 @@
 #ifndef DIFF_DRIVE_HPP_INCLUDE_GUARD
 #define DIFF_DRIVE_HPP_INCLUDE_GUARD
 
+#include <armadillo>
+
 #include "turtlelib/geometry2d.hpp"
 #include "turtlelib/se2d.hpp"
 

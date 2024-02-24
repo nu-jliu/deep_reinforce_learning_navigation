@@ -53,4 +53,4 @@ double find_distance(double alpha, Obstacle obs)
     return obs.r * sin(gamma) / sin(alpha_prime);
   }
 }
-}
+} // namespace turtlelib

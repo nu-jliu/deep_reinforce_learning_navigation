@@ -39,9 +39,13 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+// #include "nusim/msg/obstacle_measurements.hpp"
+#include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
+
+#include "nuturtle_control/srv/initial_pose.hpp"
 
 #include "turtlelib/diff_drive.hpp"
-#include "nuturtle_control/srv/initial_pose.hpp"
+#include "turtlelib/ekf_slam.hpp"
 
 using namespace std::chrono_literals;
 
@@ -56,6 +60,8 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
+// using nusim::msg::ObstacleMeasurements;
+using nuturtle_interfaces::msg::ObstacleMeasurements;
 
 using nuturtle_control::srv::InitialPose;
 
@@ -111,7 +117,54 @@ private:
     // publish_odom_();
   }
 
-  /// @brief The initial pose service
+  void sub_obs_measure_callback_(ObstacleMeasurements::SharedPtr msg)
+  {
+    obs_measure_ = *msg;
+
+    const auto x_est = turtlebot_.config_x();
+    const auto y_est = turtlebot_.config_y();
+    const auto theta_est = turtlebot_.config_theta();
+
+    const auto state_prev = turtle_slam_.get_robot_state();
+
+    const turtlelib::Twist2D odom_twist{
+      theta_est - state_prev.theta,
+      x_est - state_prev.x,
+      y_est - state_prev.y
+    };
+
+
+    // const auto num_obs = msg->measurements.size();
+
+    const auto A_mat = turtle_slam_.get_A_mat(odom_twist);
+    RCLCPP_DEBUG_STREAM(get_logger(), "A_mat: " << A_mat);
+
+    const auto Sigma_old = turtle_slam_.get_covariance_mat();
+    const auto Sigma_est = A_mat * Sigma_old * A_mat.t() + Q_mat_;
+
+    RCLCPP_DEBUG_STREAM(get_logger(), Sigma_est);
+
+    std::vector<turtlelib::Measurement> obstacles;
+
+    for (size_t i = 0; i < msg->measurements.size(); ++i) {
+      const auto x = msg->measurements.at(i).x;
+      const auto y = msg->measurements.at(i).y;
+      const auto uid = msg->measurements.at(i).uid;
+
+      obstacles.push_back({x, y, uid});
+    }
+
+    arma::vec state_curr = turtle_slam_.get_state_vec(obstacles);
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "State: " << std::endl << state_curr);
+
+    for (size_t i = 0; i < msg->measurements.size(); ++i) {
+      arma::vec z_vec = turtlelib::get_h_vec(obstacles.at(i));
+      RCLCPP_INFO_STREAM(get_logger(), z_vec);
+    }
+  }
+
+  /// @brief The initial pose service""
   /// @param request The initial pose service request
   /// @param respose The initial pose service response
   void srv_initial_pose_callback_(
@@ -220,6 +273,7 @@ private:
 
   /// Subscriber
   rclcpp::Subscription<JointState>::SharedPtr sub_joint_states_;
+  rclcpp::Subscription<ObstacleMeasurements>::SharedPtr sub_obs_measure_;
 
   /// Publisher
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry_;
@@ -236,6 +290,7 @@ private:
   JointState joint_states_prev_;
   Point odom_position_;
   Quaternion odom_orientation_;
+  ObstacleMeasurements obs_measure_;
 
   /// parameters
   std::string body_id_;
@@ -244,21 +299,25 @@ private:
   std::string wheel_right_;
   double track_width_;
   double wheel_radius_;
+  double input_noice_;
 
   /// other attributes
-  turtlelib::DiffDrive turtlebot_;
   bool joint_states_available_;
   size_t index_left_;
   size_t index_right_;
   double left_init_;
   double right_init_;
   std::vector<PoseStamped> poses_;
+  arma::mat Q_mat_;
+  int num_obstacles_;
+  turtlelib::DiffDrive turtlebot_;
+  turtlelib::EKF turtle_slam_;
 
 public:
   /// @brief
   Slam()
   : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX), index_right_(
-      SIZE_MAX)
+      SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;
@@ -266,6 +325,7 @@ public:
     ParameterDescriptor wheel_right_des;
     ParameterDescriptor wheel_radius_des;
     ParameterDescriptor track_width_des;
+    ParameterDescriptor input_noice_des;
 
     body_id_des.description = "The name of the body frame of the robot.";
     odom_id_des.description = "The name of the odometry frame.";
@@ -273,6 +333,7 @@ public:
     wheel_right_des.description = "The name of the right wheel joint.";
     wheel_radius_des.description = "Wheel radius of the turtlebot.";
     track_width_des.description = "Track width of the turtlebot.";
+    input_noice_des.description = "Input noice of the robot";
 
     declare_parameter<std::string>("body_id", "", body_id_des);
     declare_parameter<std::string>("odom_id", "odom", odom_id_des);
@@ -280,6 +341,7 @@ public:
     declare_parameter<std::string>("wheel_right", "", wheel_right_des);
     declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
     declare_parameter<double>("track_width", 0.16, track_width_des);
+    declare_parameter<double>("input_noice", 0.1, input_noice_des);
 
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
@@ -287,8 +349,18 @@ public:
     wheel_right_ = get_parameter("wheel_right").as_string();
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
+    input_noice_ = get_parameter("input_noice").as_double();
 
     turtlebot_ = turtlelib::DiffDrive(track_width_, wheel_radius_);
+
+    const arma::mat upper_left = arma::mat(3, 3, arma::fill::eye) * input_noice_;
+    const arma::mat upper_right(3, 2 * num_obstacles_, arma::fill::zeros);
+    const arma::mat bottom_left(2 * num_obstacles_, 3, arma::fill::zeros);
+    const arma::mat bottom_right(2 * num_obstacles_, 2 * num_obstacles_, arma::fill::zeros);
+
+    Q_mat_ = arma::join_horiz(
+      arma::join_vert(upper_left, bottom_left),
+      arma::join_vert(upper_right, bottom_right));
 
     if (body_id_.size() == 0) {
       RCLCPP_ERROR_STREAM(get_logger(), "Invalid body id: " << body_id_);
@@ -307,12 +379,16 @@ public:
 
     tf_broadcater_ = std::make_unique<TransformBroadcaster>(*this);
 
-    timer_ = create_wall_timer(4ms, std::bind(&Slam::timer_callback_, this));
+    timer_ = create_wall_timer(5ms, std::bind(&Slam::timer_callback_, this));
 
     sub_joint_states_ =
       create_subscription<JointState>(
       "joint_states", 10,
       std::bind(&Slam::sub_joint_states_callback_, this, std::placeholders::_1));
+    sub_obs_measure_ =
+      create_subscription<ObstacleMeasurements>(
+      "obs_pos", 10,
+      std::bind(&Slam::sub_obs_measure_callback_, this, std::placeholders::_1));
 
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
     pub_path_ = create_publisher<Path>("~/path", 10);

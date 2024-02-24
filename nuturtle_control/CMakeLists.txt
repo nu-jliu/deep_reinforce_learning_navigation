@@ -19,6 +19,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
+find_package(nuturtle_interfaces REQUIRED)
 
 find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -50,12 +51,14 @@ set(ODOMETRY_DEPENDENCIES
     geometry_msgs
     nav_msgs
     sensor_msgs
+    nuturtle_interfaces
 )
 
 set(CIRCLE_DEPENDENCIES
     rclcpp
     geometry_msgs
     std_srvs
+    nuturtle_interfaces
 )
 
 add_executable(turtle_control src/turtle_control.cpp)

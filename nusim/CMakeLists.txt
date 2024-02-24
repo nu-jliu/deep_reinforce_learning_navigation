@@ -13,18 +13,25 @@ find_package(rclcpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(nuturtle_interfaces REQUIRED)
 find_package(turtlelib REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
-    "srv/Teleport.srv"
-    LIBRARY_NAME ${PROJECT_NAME}
-)
+# rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
+#     "srv/Teleport.srv"
+#     # "msg/ObstaclePositions.msg"
+#     "msg/Measurement.msg"
+#     "msg/ObstacleMeasurements.msg"
+#     LIBRARY_NAME ${PROJECT_NAME}
+#     DEPENDENCIES
+#     geometry_msgs
+# )
 ament_export_dependencies(rosidl_default_runtime)
 
 set(NUSIM_DEPENDENCIES
@@ -36,18 +43,19 @@ set(NUSIM_DEPENDENCIES
     std_srvs
     tf2_ros
     tf2_geometry_msgs
+    nuturtle_interfaces
 )
 
 add_executable(nusim src/nusim.cpp)
 ament_target_dependencies(nusim ${NUSIM_DEPENDENCIES})
 target_link_libraries(nusim turtlelib::turtlelib)
 
-rosidl_get_typesupport_target(cpp_typesupport_target
-${PROJECT_NAME}_interfaces
-rosidl_typesupport_cpp
-)
+# rosidl_get_typesupport_target(cpp_typesupport_target
+#     ${PROJECT_NAME}_interfaces
+#     rosidl_typesupport_cpp
+# )
 
-target_link_libraries(nusim "${cpp_typesupport_target}")
+# target_link_libraries(nusim "${cpp_typesupport_target}")
 
 install(TARGETS
     nusim
