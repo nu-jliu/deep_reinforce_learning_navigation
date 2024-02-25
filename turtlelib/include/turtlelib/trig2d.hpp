@@ -5,7 +5,7 @@
 
 namespace turtlelib
 {
-/// @brief The obstacle struct representing a cylindar obstacle
+/// \brief The obstacle struct representing a cylindar obstacle
 struct Obstacle
 {
   /// \brief x coordinate of the obstacle

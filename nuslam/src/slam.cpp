@@ -1,7 +1,7 @@
 ///
 /// \file slam.cpp
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
-/// \brief Track the odometry of a robot.
+/// \brief Update the odometry of a robot using SLAM algorithm.
 ///
 /// PARAMETERS:
 ///   \param body_id      [string]  The id of the body frame
@@ -170,9 +170,9 @@ private:
       for (size_t i = 0; i < obstacles.size(); ++i) {
         const auto uid = obstacles.at(i).uid;
 
-        const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i)) + dist_sensor_(generator_);
+        const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i));// + dist_sensor_(generator_);
         // const arma::vec z_vec = {state_curr.at(3 + 2 * uid), state_curr.at(3 + 2 * uid + 1)};
-        RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+        RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
 
         const arma::mat H_mat = turtle_slam_.get_H_mat(obstacles.at(i), i);
         RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
@@ -181,23 +181,29 @@ private:
           arma::inv(H_mat * Sigma_curr * H_mat.t() + sensor_noice_);
         RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
 
-        const auto landmark_pos = turtle_slam_.get_landmark_pos(obstacles.at(i).uid);
+        const auto landmark_pos = turtle_slam_.get_landmark_pos(uid);
         if (turtlelib::almost_equal(landmark_pos.x, 100.0) &&
           turtlelib::almost_equal(landmark_pos.y, 100.0))
         {
           continue;
         }
 
-        // const auto dx = landmark_pos.x - x_est;
-        // const auto dy = landmark_pos.y - y_est;
-        const auto dx = landmark_pos.x - state_curr.at(1);
-        const auto dy = landmark_pos.y - state_curr.at(2);
-        // const auto uid = landmark_pos.uid;
-        const arma::vec z_hat = turtle_slam_.get_h_vec({dx, dy, uid}) + dist_sensor_(generator_);
-        RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+        turtlelib::Point2D ps{landmark_pos.x, landmark_pos.y};
+        turtlelib::Transform2D Tsb(turtlelib::Vector2D{state_curr.at(1), state_curr.at(2)},
+          state_curr.at(0));
+        turtlelib::Transform2D Tbs = Tsb.inv();
+        turtlelib::Point2D pb = Tbs(ps);
+        const auto dx = pb.x;
+        const auto dy = pb.y;
+
+        RCLCPP_DEBUG_STREAM(
+          get_logger(), "" << uid << " -> x: " << landmark_pos.x << " y: " << landmark_pos.y);
+
+        const arma::vec z_hat = turtle_slam_.get_h_vec({dx, dy, uid});// + dist_sensor_(generator_);
+        RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
 
         arma::vec update = K_mat * (z_vec - z_hat);
-        RCLCPP_INFO_STREAM(get_logger(), "state update: " << std::endl << update);
+        RCLCPP_INFO_STREAM(get_logger(), "state update: " << std::endl << z_vec - z_hat);
 
         const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
@@ -217,7 +223,7 @@ private:
     turtle_slam_.update_landmark_pos(obstacles);
   }
 
-  /// @brief The initial pose service""
+  /// @brief The initial pose service callback function
   /// @param request The initial pose service request
   /// @param respose The initial pose service response
   void srv_initial_pose_callback_(

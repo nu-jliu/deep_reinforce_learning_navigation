@@ -1,3 +1,13 @@
+///
+/// \file ekf_slam.cpp
+/// \author your Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief
+/// \version 0.1
+/// \date 2024-02-25
+///
+/// \copyright Copyright (c) 2024
+///
+///
 #include <armadillo>
 #include <limits>
 
@@ -157,7 +167,7 @@ void EKF::update_landmark_pos(std::vector<Measurement> landmarks)
     const auto uid = landmarks.at(i).uid;
 
     if (!almost_equal(x, 100.0) && !almost_equal(y, 100.0)) {
-      Point2D pb = {x, y};
+      Point2D pb{x, y};
       Transform2D Tsb{Vector2D{state_.x, state_.y}, state_.theta};
       Point2D ps = Tsb(pb);
 
