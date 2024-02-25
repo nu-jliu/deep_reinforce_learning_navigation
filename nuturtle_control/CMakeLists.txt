@@ -22,21 +22,6 @@ find_package(nuturtlebot_msgs REQUIRED)
 find_package(nuturtle_interfaces REQUIRED)
 
 find_package(turtlelib REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-
-
-rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
-    "srv/InitialPose.srv"
-    "srv/Control.srv"
-    LIBRARY_NAME ${PROJECT_NAME}
-)
-ament_export_dependencies(rosidl_default_runtime)
-
-rosidl_get_typesupport_target(cpp_typesupport_target
-    ${PROJECT_NAME}_interfaces
-    rosidl_typesupport_cpp
-)
 
 set(TURTLE_CONTROL_DEPENDENCIES
     rclcpp
@@ -71,14 +56,12 @@ add_executable(odometry src/odometry.cpp)
 ament_target_dependencies(odometry ${ODOMETRY_DEPENDENCIES})
 target_link_libraries(odometry
     turtlelib::turtlelib
-    "${cpp_typesupport_target}"
 )
 
 add_executable(circle src/circle.cpp)
 ament_target_dependencies(circle ${CIRCLE_DEPENDENCIES})
 target_link_libraries(circle
     turtlelib::turtlelib
-    "${cpp_typesupport_target}"
 )
 
 install(TARGETS
@@ -141,7 +124,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 
         target_link_libraries(turtle_odom_test
             catch_ros2::catch_ros2_with_node_main
-            "${cpp_typesupport_target}"
         )
         ament_target_dependencies(turtle_odom_test
             rclcpp
@@ -149,6 +131,7 @@ if(NOT CMAKE_CROSSCOMPILING)
             tf2
             geometry_msgs
             nav_msgs
+            nuturtle_interfaces
         )
 
         target_link_libraries(turtle_circle_test

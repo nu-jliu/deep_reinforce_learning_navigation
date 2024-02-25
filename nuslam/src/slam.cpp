@@ -42,7 +42,8 @@
 // #include "nusim/msg/obstacle_measurements.hpp"
 #include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
 
-#include "nuturtle_control/srv/initial_pose.hpp"
+// #include "nuturtle_control/srv/initial_pose.hpp"
+#include "nuturtle_interfaces/srv/initial_pose.hpp"
 
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/ekf_slam.hpp"
@@ -63,7 +64,8 @@ using geometry_msgs::msg::PoseStamped;
 // using nusim::msg::ObstacleMeasurements;
 using nuturtle_interfaces::msg::ObstacleMeasurements;
 
-using nuturtle_control::srv::InitialPose;
+// using nuturtle_control::srv::InitialPose;
+using nuturtle_interfaces::srv::InitialPose;
 
 /// @brief
 class Slam : public Node
@@ -121,30 +123,8 @@ private:
   {
     obs_measure_ = *msg;
 
-    const auto x_est = turtlebot_.config_x();
-    const auto y_est = turtlebot_.config_y();
-    const auto theta_est = turtlebot_.config_theta();
-
-    const auto state_prev = turtle_slam_.get_robot_state();
-
-    const turtlelib::Twist2D odom_twist{
-      theta_est - state_prev.theta,
-      x_est - state_prev.x,
-      y_est - state_prev.y
-    };
-
-
-    // const auto num_obs = msg->measurements.size();
-
-    const auto A_mat = turtle_slam_.get_A_mat(odom_twist);
-    RCLCPP_DEBUG_STREAM(get_logger(), "A_mat: " << A_mat);
-
-    const auto Sigma_old = turtle_slam_.get_covariance_mat();
-    const auto Sigma_est = A_mat * Sigma_old * A_mat.t() + Q_mat_;
-
-    RCLCPP_DEBUG_STREAM(get_logger(), Sigma_est);
-
     std::vector<turtlelib::Measurement> obstacles;
+    obstacles.clear();
 
     for (size_t i = 0; i < msg->measurements.size(); ++i) {
       const auto x = msg->measurements.at(i).x;
@@ -154,14 +134,87 @@ private:
       obstacles.push_back({x, y, uid});
     }
 
-    arma::vec state_curr = turtle_slam_.get_state_vec(obstacles);
+    if (turtle_slam_.is_landmark_pos_ready()) {
 
-    RCLCPP_DEBUG_STREAM(get_logger(), "State: " << std::endl << state_curr);
+      const auto x_est = turtlebot_.config_x();
+      const auto y_est = turtlebot_.config_y();
+      const auto theta_est = turtlebot_.config_theta();
 
-    for (size_t i = 0; i < msg->measurements.size(); ++i) {
-      arma::vec z_vec = turtlelib::get_h_vec(obstacles.at(i));
-      RCLCPP_INFO_STREAM(get_logger(), z_vec);
+      const auto state_prev = turtle_slam_.get_robot_state();
+
+      const turtlelib::Twist2D odom_twist{
+        turtlelib::normalize_angle(theta_est - state_prev.theta),
+        x_est - state_prev.x,
+        y_est - state_prev.y
+      };
+
+
+      // const auto num_obs = msg->measurements.size();
+
+      const auto A_mat = turtle_slam_.get_A_mat(odom_twist);
+      RCLCPP_DEBUG_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
+
+      turtle_slam_.update_state(x_est, y_est, theta_est);
+
+      const auto Sigma_old = turtle_slam_.get_covariance_mat();
+      const auto Sigma_est = A_mat * Sigma_old * A_mat.t() + Q_mat_;
+
+      RCLCPP_DEBUG_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
+
+
+      arma::vec state_curr = turtle_slam_.get_state_vec(obstacles);
+      arma::mat Sigma_curr(Sigma_est);
+
+      RCLCPP_DEBUG_STREAM(get_logger(), "State: " << std::endl << state_curr);
+
+      for (size_t i = 0; i < obstacles.size(); ++i) {
+        const auto uid = obstacles.at(i).uid;
+
+        const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i)) + dist_sensor_(generator_);
+        // const arma::vec z_vec = {state_curr.at(3 + 2 * uid), state_curr.at(3 + 2 * uid + 1)};
+        RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+
+        const arma::mat H_mat = turtle_slam_.get_H_mat(obstacles.at(i), i);
+        RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+
+        const arma::mat K_mat = Sigma_curr * H_mat.t() *
+          arma::inv(H_mat * Sigma_curr * H_mat.t() + sensor_noice_);
+        RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
+
+        const auto landmark_pos = turtle_slam_.get_landmark_pos(obstacles.at(i).uid);
+        if (turtlelib::almost_equal(landmark_pos.x, 100.0) &&
+          turtlelib::almost_equal(landmark_pos.y, 100.0))
+        {
+          continue;
+        }
+
+        // const auto dx = landmark_pos.x - x_est;
+        // const auto dy = landmark_pos.y - y_est;
+        const auto dx = landmark_pos.x - state_curr.at(1);
+        const auto dy = landmark_pos.y - state_curr.at(2);
+        // const auto uid = landmark_pos.uid;
+        const arma::vec z_hat = turtle_slam_.get_h_vec({dx, dy, uid}) + dist_sensor_(generator_);
+        RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+
+        arma::vec update = K_mat * (z_vec - z_hat);
+        RCLCPP_INFO_STREAM(get_logger(), "state update: " << std::endl << update);
+
+        const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
+
+        state_curr += update;
+        Sigma_curr = (I_mat - K_mat * H_mat) * Sigma_curr;
+      }
+
+      const auto theta_new = state_curr.at(0);
+      const auto x_new = state_curr.at(1);
+      const auto y_new = state_curr.at(2);
+
+      turtlebot_.update_config(x_new, y_new, theta_new);
+      turtle_slam_.update_state(x_new, y_new, theta_new);
+      turtle_slam_.update_covariance(Sigma_curr);
     }
+
+    turtle_slam_.update_landmark_pos(obstacles);
   }
 
   /// @brief The initial pose service""
@@ -300,6 +353,7 @@ private:
   double track_width_;
   double wheel_radius_;
   double input_noice_;
+  double sensor_noice_;
 
   /// other attributes
   bool joint_states_available_;
@@ -312,6 +366,8 @@ private:
   int num_obstacles_;
   turtlelib::DiffDrive turtlebot_;
   turtlelib::EKF turtle_slam_;
+  std::default_random_engine generator_;
+  std::normal_distribution<double> dist_sensor_;
 
 public:
   /// @brief
@@ -326,6 +382,7 @@ public:
     ParameterDescriptor wheel_radius_des;
     ParameterDescriptor track_width_des;
     ParameterDescriptor input_noice_des;
+    ParameterDescriptor sensor_noice_des;
 
     body_id_des.description = "The name of the body frame of the robot.";
     odom_id_des.description = "The name of the odometry frame.";
@@ -334,6 +391,7 @@ public:
     wheel_radius_des.description = "Wheel radius of the turtlebot.";
     track_width_des.description = "Track width of the turtlebot.";
     input_noice_des.description = "Input noice of the robot";
+    sensor_noice_des.description = "Sensor noice of the robot";
 
     declare_parameter<std::string>("body_id", "", body_id_des);
     declare_parameter<std::string>("odom_id", "odom", odom_id_des);
@@ -342,6 +400,7 @@ public:
     declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
     declare_parameter<double>("track_width", 0.16, track_width_des);
     declare_parameter<double>("input_noice", 0.1, input_noice_des);
+    declare_parameter<double>("basic_sensor_variance", 0.1, sensor_noice_des);
 
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
@@ -350,7 +409,9 @@ public:
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
     input_noice_ = get_parameter("input_noice").as_double();
+    sensor_noice_ = get_parameter("basic_sensor_variance").as_double();
 
+    dist_sensor_ = std::normal_distribution<double>(0.0, sqrt(sensor_noice_));
     turtlebot_ = turtlelib::DiffDrive(track_width_, wheel_radius_);
 
     const arma::mat upper_left = arma::mat(3, 3, arma::fill::eye) * input_noice_;

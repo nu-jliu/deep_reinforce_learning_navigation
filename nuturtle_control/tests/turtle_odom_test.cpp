@@ -18,7 +18,7 @@
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <nuturtle_control/srv/initial_pose.hpp>
+#include "nuturtle_interfaces/srv/initial_pose.hpp"
 
 using namespace std::chrono_literals;
 
@@ -92,7 +92,7 @@ TEST_CASE("Initial Pose service", "[odometry]") // Allen Liu
     10,
     &sub_odom_callback
   );
-  auto cli_init_pose = node->create_client<nuturtle_control::srv::InitialPose>("initial_pose");
+  auto cli_init_pose = node->create_client<nuturtle_interfaces::srv::InitialPose>("initial_pose");
 
   bool service_found = false;
 
@@ -112,7 +112,7 @@ TEST_CASE("Initial Pose service", "[odometry]") // Allen Liu
   CHECK(service_found);
 
 
-  auto request = std::make_shared<nuturtle_control::srv::InitialPose::Request>();
+  auto request = std::make_shared<nuturtle_interfaces::srv::InitialPose::Request>();
   request->x = 1.2;
   request->y = 0.3;
   request->theta = 2.0;

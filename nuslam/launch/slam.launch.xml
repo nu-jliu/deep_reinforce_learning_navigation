@@ -53,26 +53,32 @@
 
         <node pkg="nuslam" exec="odometry" name="odometry">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <param from="$(find-pkg-share nusim)/config/basic_yaml.yaml" />
+
             <param name="body_id" value="blue/base_footprint" />
             <param name="odom_id" value="odom" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
+
             <remap from="joint_states" to="red/joint_states" />
             <remap from="odom" to="blue/odom" />
         </node>
 
         <node pkg="nuslam" exec="slam" name="slam">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+
             <param name="body_id" value="green/base_footprint" />
             <param name="odom_id" value="odom" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
+
             <remap from="joint_states" to="red/joint_states" />
             <remap from="odom" to="green/odom" />
         </node>
 
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+
             <remap from="joint_states" to="red/joint_states" />
             <remap from="wheel_cmd" to="red/wheel_cmd" />
             <remap from="sensor_data" to="red/sensor_data" />
