@@ -12,13 +12,14 @@
 ///   \param track_width  [double]  The distance between two wheels
 ///
 /// SUBSCRIPTIONS:
-///   joint_states  [sensor_msgs/msg/JointState]      The joint state of the robot.
+///   joint_states  [sensor_msgs/msg/JointState]                    The joint state of the robot.
+///   obs_pos       [nuturtle_interfaces/msg/ObstacleMeasurements]  The measurements of the obstacles
 ///
 /// PUBLISHERS:
-///   odom          [nav_msgs/msg/Odomoetry]          The odometry of the node.
+///   odom          [nav_msgs/msg/Odomoetry]                        The odometry of the node.
 ///
 /// SERVICES:
-///   initial_pose [nuturtle_control/srv/InitialPose] Reset the initial pose.
+///   initial_pose [nuturtle_interfaces/srv/InitialPose]            Reset the initial pose.
 ///
 /// \version 0.1
 /// \date 2024-02-15
@@ -39,10 +40,8 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-// #include "nusim/msg/obstacle_measurements.hpp"
 #include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
 
-// #include "nuturtle_control/srv/initial_pose.hpp"
 #include "nuturtle_interfaces/srv/initial_pose.hpp"
 
 #include "turtlelib/diff_drive.hpp"
@@ -61,10 +60,8 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
-// using nusim::msg::ObstacleMeasurements;
 using nuturtle_interfaces::msg::ObstacleMeasurements;
 
-// using nuturtle_control::srv::InitialPose;
 using nuturtle_interfaces::srv::InitialPose;
 
 /// @brief
@@ -104,7 +101,7 @@ private:
 
       if (index_left_ == INT64_MAX || index_right_ == INT64_MAX) {
         RCLCPP_ERROR_STREAM(get_logger(), "Invalid wheel joint name");
-        exit(EXIT_FAILURE);
+        throw std::logic_error("Invalid wheel joint name");
       }
 
       turtlebot_.update_wheel(left_init_, right_init_);
@@ -119,6 +116,8 @@ private:
     // publish_odom_();
   }
 
+  /// @brief The callback function of the obstacle measurement
+  /// @param msg The subcribed message object
   void sub_obs_measure_callback_(ObstacleMeasurements::SharedPtr msg)
   {
     obs_measure_ = *msg;
@@ -148,9 +147,6 @@ private:
         y_est - state_prev.y
       };
 
-
-      // const auto num_obs = msg->measurements.size();
-
       const auto A_mat = turtle_slam_.get_A_mat(odom_twist);
       RCLCPP_DEBUG_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
 
@@ -158,20 +154,16 @@ private:
 
       const auto Sigma_old = turtle_slam_.get_covariance_mat();
       const auto Sigma_est = A_mat * Sigma_old * A_mat.t() + Q_mat_;
-
       RCLCPP_DEBUG_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
-
 
       arma::vec state_curr = turtle_slam_.get_state_vec(obstacles);
       arma::mat Sigma_curr(Sigma_est);
-
       RCLCPP_DEBUG_STREAM(get_logger(), "State: " << std::endl << state_curr);
 
       for (size_t i = 0; i < obstacles.size(); ++i) {
         const auto uid = obstacles.at(i).uid;
 
-        const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i));// + dist_sensor_(generator_);
-        // const arma::vec z_vec = {state_curr.at(3 + 2 * uid), state_curr.at(3 + 2 * uid + 1)};
+        const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i));
         RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
 
         const arma::mat H_mat = turtle_slam_.get_H_mat(obstacles.at(i), i);
@@ -189,15 +181,15 @@ private:
         }
 
         turtlelib::Point2D ps{landmark_pos.x, landmark_pos.y};
-        turtlelib::Transform2D Tsb(turtlelib::Vector2D{state_curr.at(1), state_curr.at(2)},
-          state_curr.at(0));
+        turtlelib::Transform2D Tsb(
+          turtlelib::Vector2D{state_curr.at(1), state_curr.at(2)},
+          state_curr.at(0)
+        );
         turtlelib::Transform2D Tbs = Tsb.inv();
         turtlelib::Point2D pb = Tbs(ps);
         const auto dx = pb.x;
         const auto dy = pb.y;
-
-        RCLCPP_DEBUG_STREAM(
-          get_logger(), "" << uid << " -> x: " << landmark_pos.x << " y: " << landmark_pos.y);
+        RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
 
         const arma::vec z_hat = turtle_slam_.get_h_vec({dx, dy, uid});// + dist_sensor_(generator_);
         RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
@@ -228,7 +220,8 @@ private:
   /// @param respose The initial pose service response
   void srv_initial_pose_callback_(
     std::shared_ptr<InitialPose::Request> request,
-    std::shared_ptr<InitialPose::Response> respose)
+    std::shared_ptr<InitialPose::Response> respose
+  )
   {
     double x = request->x;
     double y = request->y;
@@ -378,8 +371,8 @@ private:
 public:
   /// @brief
   Slam()
-  : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX), index_right_(
-      SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_)
+  : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX),
+    index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;
@@ -444,27 +437,42 @@ public:
       exit(EXIT_FAILURE);
     }
 
+    /// Transform broadcaster
     tf_broadcater_ = std::make_unique<TransformBroadcaster>(*this);
 
+    /// Timer
     timer_ = create_wall_timer(5ms, std::bind(&Slam::timer_callback_, this));
 
+    /// Subscriptions
     sub_joint_states_ =
       create_subscription<JointState>(
-      "joint_states", 10,
-      std::bind(&Slam::sub_joint_states_callback_, this, std::placeholders::_1));
+      "joint_states",
+      10,
+      std::bind(
+        &Slam::sub_joint_states_callback_,
+        this,
+        std::placeholders::_1));
     sub_obs_measure_ =
       create_subscription<ObstacleMeasurements>(
-      "obs_pos", 10,
-      std::bind(&Slam::sub_obs_measure_callback_, this, std::placeholders::_1));
+      "obs_pos",
+      10,
+      std::bind(
+        &Slam::sub_obs_measure_callback_,
+        this,
+        std::placeholders::_1));
 
+    /// Publishers
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
     pub_path_ = create_publisher<Path>("~/path", 10);
 
+    /// Services
     srv_initial_pose_ =
       create_service<InitialPose>(
       "initial_pose",
       std::bind(
-        &Slam::srv_initial_pose_callback_, this, std::placeholders::_1,
+        &Slam::srv_initial_pose_callback_,
+        this,
+        std::placeholders::_1,
         std::placeholders::_2));
   }
 };

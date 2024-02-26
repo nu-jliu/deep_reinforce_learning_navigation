@@ -1,7 +1,7 @@
 ///
 /// \file ekf_slam.cpp
 /// \author your Allen Liu (jingkunliu2025@u.northwestern.edu)
-/// \brief
+/// \brief The libary for all slam calculations
 /// \version 0.1
 /// \date 2024-02-25
 ///
@@ -15,8 +15,6 @@
 
 namespace turtlelib
 {
-
-
 EKF::EKF()
 {
   EKF(20);
@@ -69,9 +67,6 @@ Measurement EKF::get_landmark_pos(int uid)
   return obstacles_.at(uid);
 }
 
-// void EKF::set_num_obstacle(std::vector<Measurement> obs) {
-
-// }
 arma::vec EKF::get_h_vec(Measurement landmark)
 {
   const auto dx = landmark.x;
@@ -117,9 +112,7 @@ arma::mat EKF::get_A_mat(Twist2D body_twist)
 {
   const auto dx = body_twist.x;
   const auto dtheta = body_twist.omega;
-  // const auto num_obs = obstacles_.size();
 
-  // arma::mat A_mat(2 * num_obs + 3, 2 * num_obs + 3, arma::fill::zeros);
   arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
   const arma::mat up_right(3, 2 * num_obstacles_, arma::fill::zeros);
