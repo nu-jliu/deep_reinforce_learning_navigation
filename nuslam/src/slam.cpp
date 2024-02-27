@@ -31,6 +31,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <rclcpp/qos.hpp>
 
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
@@ -40,6 +41,8 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 #include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
 
 #include "nuturtle_interfaces/srv/initial_pose.hpp"
@@ -61,7 +64,8 @@ using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
 using nuturtle_interfaces::msg::ObstacleMeasurements;
-
+using visualization_msgs::msg::MarkerArray;
+using visualization_msgs::msg::Marker;
 using nuturtle_interfaces::srv::InitialPose;
 
 /// @brief
@@ -213,6 +217,7 @@ private:
     }
 
     turtle_slam_.update_landmark_pos(obstacles);
+    publish_map_markers();
   }
 
   /// @brief The initial pose service callback function
@@ -230,6 +235,41 @@ private:
     turtlebot_.update_config(x, y, theta);
 
     respose->success = true;
+  }
+
+  void publish_map_markers()
+  {
+    MarkerArray map_array_msg;
+    std::vector<turtlelib::Measurement> landmarks = turtle_slam_.get_all_landmarks();
+
+    for (size_t i = 0; i < landmarks.size(); ++i) {
+      const auto x = landmarks.at(i).x;
+      const auto y = landmarks.at(i).y;
+
+      if (!turtlelib::almost_equal(x, 100.0) && !turtlelib::almost_equal(y, 100.0)) {
+        Marker m;
+
+        m.header.stamp = get_clock()->now();
+        m.header.frame_id = odom_id_;
+        m.id = 30 + i;
+        m.type = Marker::CYLINDER;
+        m.action = Marker::ADD;
+        m.pose.position.x = x;
+        m.pose.position.y = y;
+        m.pose.position.z = marker_height_ / 2.0;
+        m.scale.x = 2.0 * marker_radius_;
+        m.scale.y = 2.0 * marker_radius_;
+        m.scale.z = marker_height_;
+        m.color.r = marker_r_ / 255.0;
+        m.color.g = marker_g_ / 255.0;
+        m.color.b = marker_b_ / 255.0;
+        m.color.a = 0.8;
+
+        map_array_msg.markers.push_back(m);
+      }
+    }
+
+    pub_map_array_->publish(map_array_msg);
   }
 
   void publish_path_()
@@ -330,12 +370,16 @@ private:
   /// Publisher
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_map_array_;
 
   /// TF Broadcaster
   std::unique_ptr<TransformBroadcaster> tf_broadcater_;
 
   /// Service
   rclcpp::Service<InitialPose>::SharedPtr srv_initial_pose_;
+
+  /// QoS
+  rclcpp::QoS marker_qos_;
 
   /// Subscribed messages
   JointState joint_states_curr_;
@@ -367,12 +411,19 @@ private:
   turtlelib::EKF turtle_slam_;
   std::default_random_engine generator_;
   std::normal_distribution<double> dist_sensor_;
+  double marker_radius_;
+  double marker_height_;
+  double marker_r_;
+  double marker_g_;
+  double marker_b_;
 
 public:
   /// @brief
   Slam()
-  : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX),
-    index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_)
+  : Node("odometry"), marker_qos_(10), joint_states_available_(false), index_left_(SIZE_MAX),
+    index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_),
+    marker_radius_(0.05), marker_height_(0.3), marker_r_(78.0), marker_g_(42.0),
+    marker_b_(132.0)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;
@@ -437,6 +488,9 @@ public:
       exit(EXIT_FAILURE);
     }
 
+    /// QoS
+    marker_qos_.transient_local();
+
     /// Transform broadcaster
     tf_broadcater_ = std::make_unique<TransformBroadcaster>(*this);
 
@@ -464,6 +518,7 @@ public:
     /// Publishers
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
     pub_path_ = create_publisher<Path>("~/path", 10);
+    pub_map_array_ = create_publisher<MarkerArray>("~/map", marker_qos_);
 
     /// Services
     srv_initial_pose_ =

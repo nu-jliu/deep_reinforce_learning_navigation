@@ -15,6 +15,7 @@ find_package(rcl_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(nuturtle_control REQUIRED)
 find_package(nuturtle_interfaces REQUIRED)
@@ -29,6 +30,7 @@ set(SLAM_DEPENDENCIES
     sensor_msgs
     nav_msgs
     geometry_msgs
+    visualization_msgs
     nuturtle_control
     nuturtle_interfaces
 )

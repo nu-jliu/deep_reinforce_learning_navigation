@@ -64,6 +64,8 @@ public:
   /// \return arma::vec The state vector
   arma::vec get_state_vec(std::vector<Measurement> obstacles);
 
+  std::vector<Measurement> get_all_landmarks();
+
   /// \brief Get the position of landmark for a specific id.
   /// \param uid The id of the landmark
   /// \return Measurement

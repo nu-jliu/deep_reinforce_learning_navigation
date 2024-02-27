@@ -263,6 +263,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /fake_sensor
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Map
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /slam/map
+      Value: true
     - Angle Tolerance: 0.10000000149011612
       Class: rviz_default_plugins/Odometry
       Covariance:
@@ -638,5 +650,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 132
-  Y: 191
+  X: 689
+  Y: 148

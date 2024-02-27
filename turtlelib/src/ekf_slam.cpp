@@ -62,6 +62,11 @@ arma::vec EKF::get_state_vec(std::vector<Measurement> obstacles)
   return state;
 }
 
+std::vector<Measurement> EKF::get_all_landmarks()
+{
+  return obstacles_;
+}
+
 Measurement EKF::get_landmark_pos(int uid)
 {
   return obstacles_.at(uid);
