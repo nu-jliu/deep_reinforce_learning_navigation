@@ -1,4 +1,3 @@
-///
 /// \file ekf_slam.cpp
 /// \author your Allen Liu (jingkunliu2025@u.northwestern.edu)
 /// \brief The libary for all slam calculations
@@ -6,8 +5,6 @@
 /// \date 2024-02-25
 ///
 /// \copyright Copyright (c) 2024
-///
-///
 #include <armadillo>
 #include <limits>
 
@@ -104,10 +101,6 @@ arma::mat EKF::get_H_mat(Measurement landmark, int index)
     {-1.0, dy / d, -dx / d}
   };
 
-  // arma::mat second;
-  // if (index != 0) {
-  //   second = arma::mat(2, 2 * index, arma::fill::zeros);
-  // }
   const arma::mat second(2, 2 * index, arma::fill::zeros);
 
   const arma::mat third = {
@@ -132,9 +125,6 @@ arma::mat EKF::get_H_mat(Measurement landmark, int index)
 
 arma::mat EKF::get_A_mat(double dx, double dy)
 {
-  // const auto dx = body_twist.x;
-  // const auto dtheta = body_twist.omega;
-
   arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
   const arma::mat up_right(3, 2 * num_obstacles_, arma::fill::zeros);
@@ -146,17 +136,6 @@ arma::mat EKF::get_A_mat(double dx, double dy)
     {-dy, 0, 0},
     {dx, 0, 0}
   };
-
-  // if (almost_equal(dtheta, 0.0)) {
-  //   up_left = {{0, 0, 0},
-  //     {-dx * sin(state_.theta), 0, 0},
-  //     {dx * cos(state_.theta), 0, 0}};
-
-  // } else {
-  //   up_left = {{0, 0, 0},
-  //     {-dx / dtheta * cos(state_.theta) + dx / dtheta * cos(state_.theta + dtheta), 0, 0},
-  //     {-dx / dtheta * sin(state_.theta) + dx / dtheta * sin(state_.theta + dtheta), 0, 0}};
-  // }
 
   const arma::mat A_mat = I_mat +
     arma::join_horiz(
@@ -180,20 +159,6 @@ void EKF::update_state(double x, double y, double theta)
 
 void EKF::update_landmark_pos(arma::vec state)
 {
-  // for (size_t i = 0; i < landmarks.size(); ++i) {
-  //   const auto x = landmarks.at(i).x;
-  //   const auto y = landmarks.at(i).y;
-  //   const auto uid = landmarks.at(i).uid;
-
-  //   if (!almost_equal(x, 100.0) && !almost_equal(y, 100.0)) {
-  //     Point2D pb{x, y};
-  //     Transform2D Tsb{{state_.x, state_.y}, state_.theta};
-  //     Point2D ps = Tsb(pb);
-
-  //     obstacles_.at(uid).x = ps.x;
-  //     obstacles_.at(uid).y = ps.y;
-  //     obstacles_.at(uid).uid = uid;
-  //   }
   for (int i = 0; i < num_obstacles_; ++i) {
     const auto x = state(3 + 2 * i);
     const auto y = state(3 + 2 * i + 1);
@@ -204,17 +169,8 @@ void EKF::update_landmark_pos(arma::vec state)
       obstacles_.at(i).uid = i;
     }
   }
-  // }
-
-  // if (!landmark_pos_ready_) {
-  //   landmark_pos_ready_ = true;
-  // }
 }
 
-// bool EKF::is_landmark_pos_ready() const
-// {
-//   return landmark_pos_ready_;
-// }
 
 RobotState EKF::get_robot_state() const
 {

@@ -110,12 +110,9 @@ private:
     }
 
     joint_states_prev_ = joint_states_curr_;
-    // joint_states_curr_ = *msg;
     joint_states_curr_.header.stamp = msg->header.stamp;
     joint_states_curr_.name = msg->name;
     joint_states_curr_.position = msg->position;
-
-    // publish_odom_();
   }
 
   /// \brief The callback function of the obstacle measurement
@@ -144,26 +141,14 @@ private:
     const auto Tmb = Tmo_ * Tob;
     // RCLCPP_INFO_STREAM(get_logger(), "Robot Position: " << Tmb);
 
-    // const auto x_est = turtlebot_.config_x();
-    // const auto y_est = turtlebot_.config_y();
-    // const auto theta_est = turtlebot_.config_theta();
-
     double x_est = Tmb.translation().x;
     double y_est = Tmb.translation().y;
     double theta_est = Tmb.rotation();
 
     const auto state_prev = turtle_slam_.get_robot_state();
 
-    // const turtlelib::Twist2D odom_twist{
-    //   turtlelib::normalize_angle(theta_est - state_prev.theta),
-    //   x_est - state_prev.x,
-    //   y_est - state_prev.y
-    // };
-
     const auto A_mat = turtle_slam_.get_A_mat(x_est - state_prev.x, y_est - state_prev.y);
     // RCLCPP_INFO_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
-
-    // turtle_slam_.update_state(x_est, y_est, theta_est);
 
     const auto Sigma_pre = turtle_slam_.get_covariance_mat();
     const auto Sigma_est = A_mat * Sigma_pre * A_mat.t() + Q_mat_;
@@ -203,6 +188,7 @@ private:
       turtlelib::Point2D pb_land = Tbm_land(pm_land);
       const auto dx = pb_land.x;
       const auto dy = pb_land.y;
+      // RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
 
       turtlelib::Measurement measure_est = {dx, dy, uid};
 
@@ -216,10 +202,6 @@ private:
         (H_mat * Sigma_curr * H_mat.t() + sensor_noice_).i();
       // RCLCPP_INFO_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
 
-
-      // RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
-
-
       arma::vec dz_vec = z_vec - z_hat;
       dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
       RCLCPP_INFO_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
@@ -232,11 +214,7 @@ private:
       Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
       turtle_slam_.update_landmark_pos(state_curr);
       RCLCPP_INFO_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
-
-      // break; // testing for one
     }
-
-    // for (size_t i = 0; i < obst)
 
     const auto theta_new = state_curr.at(0);
     const auto x_new = state_curr.at(1);
