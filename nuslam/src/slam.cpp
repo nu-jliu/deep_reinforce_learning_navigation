@@ -1,4 +1,3 @@
-///
 /// \file slam.cpp
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
 /// \brief Update the odometry of a robot using SLAM algorithm.
@@ -17,6 +16,7 @@
 ///
 /// PUBLISHERS:
 ///   odom          [nav_msgs/msg/Odomoetry]                        The odometry of the node.
+///   path          []
 ///
 /// SERVICES:
 ///   initial_pose [nuturtle_interfaces/srv/InitialPose]            Reset the initial pose.
@@ -25,8 +25,6 @@
 /// \date 2024-02-15
 ///
 /// \copyright Copyright (c) 2024
-///
-///
 #include <chrono>
 
 #include <rclcpp/rclcpp.hpp>
@@ -72,7 +70,7 @@ using nuturtle_interfaces::srv::InitialPose;
 class Slam : public Node
 {
 private:
-  /// @brief The timer callback of the odometry node
+  /// \brief The timer callback of the odometry node
   void timer_callback_()
   {
     if (joint_states_available_) {
@@ -82,9 +80,9 @@ private:
     }
   }
 
-  /// @brief Update the turtlebot configuration based on new joint states,
+  /// \brief Update the turtlebot configuration based on new joint states,
   ///        then publish new odom
-  /// @param msg The subscibed joint_states message.
+  /// \param msg The subscibed joint_states message.
   void sub_joint_states_callback_(JointState::SharedPtr msg)
   {
     if (!joint_states_available_) {
@@ -120,8 +118,8 @@ private:
     // publish_odom_();
   }
 
-  /// @brief The callback function of the obstacle measurement
-  /// @param msg The subcribed message object
+  /// \brief The callback function of the obstacle measurement
+  /// \param msg The subcribed message object
   void sub_obs_measure_callback_(ObstacleMeasurements::SharedPtr msg)
   {
     obs_measure_ = *msg;
@@ -137,92 +135,124 @@ private:
       obstacles.push_back({x, y, uid});
     }
 
-    if (turtle_slam_.is_landmark_pos_ready()) {
+    // if (turtle_slam_.is_landmark_pos_ready()) {
 
-      const auto x_est = turtlebot_.config_x();
-      const auto y_est = turtlebot_.config_y();
-      const auto theta_est = turtlebot_.config_theta();
+    const turtlelib::Transform2D Tob(
+      {turtlebot_.config_x(), turtlebot_.config_y()},
+      turtlebot_.config_theta()
+    );
+    const auto Tmb = Tmo_ * Tob;
+    // RCLCPP_INFO_STREAM(get_logger(), "Robot Position: " << Tmb);
 
-      const auto state_prev = turtle_slam_.get_robot_state();
+    // const auto x_est = turtlebot_.config_x();
+    // const auto y_est = turtlebot_.config_y();
+    // const auto theta_est = turtlebot_.config_theta();
 
-      const turtlelib::Twist2D odom_twist{
-        turtlelib::normalize_angle(theta_est - state_prev.theta),
-        x_est - state_prev.x,
-        y_est - state_prev.y
-      };
+    double x_est = Tmb.translation().x;
+    double y_est = Tmb.translation().y;
+    double theta_est = Tmb.rotation();
 
-      const auto A_mat = turtle_slam_.get_A_mat(odom_twist);
-      RCLCPP_DEBUG_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
+    const auto state_prev = turtle_slam_.get_robot_state();
 
-      turtle_slam_.update_state(x_est, y_est, theta_est);
+    // const turtlelib::Twist2D odom_twist{
+    //   turtlelib::normalize_angle(theta_est - state_prev.theta),
+    //   x_est - state_prev.x,
+    //   y_est - state_prev.y
+    // };
 
-      const auto Sigma_old = turtle_slam_.get_covariance_mat();
-      const auto Sigma_est = A_mat * Sigma_old * A_mat.t() + Q_mat_;
-      RCLCPP_DEBUG_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
+    const auto A_mat = turtle_slam_.get_A_mat(x_est - state_prev.x, y_est - state_prev.y);
+    // RCLCPP_INFO_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
 
-      arma::vec state_curr = turtle_slam_.get_state_vec(obstacles);
-      arma::mat Sigma_curr(Sigma_est);
-      RCLCPP_DEBUG_STREAM(get_logger(), "State: " << std::endl << state_curr);
+    // turtle_slam_.update_state(x_est, y_est, theta_est);
 
-      for (size_t i = 0; i < obstacles.size(); ++i) {
-        const auto uid = obstacles.at(i).uid;
+    const auto Sigma_pre = turtle_slam_.get_covariance_mat();
+    const auto Sigma_est = A_mat * Sigma_pre * A_mat.t() + Q_mat_;
+    // RCLCPP_INFO_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
 
-        const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i));
-        RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+    arma::vec state_curr = turtle_slam_.get_state_vec();
 
-        const arma::mat H_mat = turtle_slam_.get_H_mat(obstacles.at(i), i);
-        RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+    state_curr.at(0) = theta_est;
+    state_curr.at(1) = x_est;
+    state_curr.at(2) = y_est;
 
-        const arma::mat K_mat = Sigma_curr * H_mat.t() *
-          arma::inv(H_mat * Sigma_curr * H_mat.t() + sensor_noice_);
-        RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
+    arma::mat Sigma_curr(Sigma_est);
+    // RCLCPP_INFO_STREAM(get_logger(), "State: " << std::endl << state_curr);
 
-        const auto landmark_pos = turtle_slam_.get_landmark_pos(uid);
-        if (turtlelib::almost_equal(landmark_pos.x, 100.0) &&
-          turtlelib::almost_equal(landmark_pos.y, 100.0))
-        {
-          continue;
-        }
+    for (size_t i = 0; i < obstacles.size(); ++i) {
+      const auto uid = obstacles.at(i).uid;
+      // RCLCPP_INFO_STREAM(get_logger(), "uid: " << uid);
+      theta_est = state_curr.at(0);
+      x_est = state_curr.at(1);
+      y_est = state_curr.at(2);
 
-        turtlelib::Point2D ps{landmark_pos.x, landmark_pos.y};
-        turtlelib::Transform2D Tsb(
-          turtlelib::Vector2D{state_curr.at(1), state_curr.at(2)},
-          state_curr.at(0)
-        );
-        turtlelib::Transform2D Tbs = Tsb.inv();
-        turtlelib::Point2D pb = Tbs(ps);
-        const auto dx = pb.x;
-        const auto dy = pb.y;
-        RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
+      const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i));
+      RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
 
-        const arma::vec z_hat = turtle_slam_.get_h_vec({dx, dy, uid});// + dist_sensor_(generator_);
-        RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      auto landmark_pos = turtle_slam_.get_landmark_pos(uid);
+      if (landmark_pos.uid == -1) {
+        landmark_pos.x = x_est + z_vec.at(0) * cos(theta_est + z_vec.at(1));
+        landmark_pos.y = y_est + z_vec.at(0) * sin(theta_est + z_vec.at(1));
 
-        arma::vec update = K_mat * (z_vec - z_hat);
-        RCLCPP_INFO_STREAM(get_logger(), "state update: " << std::endl << z_vec - z_hat);
-
-        const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
-
-        state_curr += update;
-        Sigma_curr = (I_mat - K_mat * H_mat) * Sigma_curr;
+        state_curr(3 + 2 * uid) = landmark_pos.x;
+        state_curr(3 + 2 * uid + 1) = landmark_pos.y;
       }
 
-      const auto theta_new = state_curr.at(0);
-      const auto x_new = state_curr.at(1);
-      const auto y_new = state_curr.at(2);
+      turtlelib::Point2D pm_land{landmark_pos.x, landmark_pos.y};
+      turtlelib::Transform2D Tmb_land({x_est, y_est}, theta_est);
+      turtlelib::Transform2D Tbm_land = Tmb_land.inv();
+      turtlelib::Point2D pb_land = Tbm_land(pm_land);
+      const auto dx = pb_land.x;
+      const auto dy = pb_land.y;
 
-      turtlebot_.update_config(x_new, y_new, theta_new);
-      turtle_slam_.update_state(x_new, y_new, theta_new);
-      turtle_slam_.update_covariance(Sigma_curr);
+      turtlelib::Measurement measure_est = {dx, dy, uid};
+
+      const arma::vec z_hat = turtle_slam_.get_h_vec(measure_est);  // + dist_sensor_(generator_);
+      RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+
+      const arma::mat H_mat = turtle_slam_.get_H_mat(measure_est, uid);
+      // RCLCPP_INFO_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+
+      const arma::mat K_mat = Sigma_curr * H_mat.t() *
+        (H_mat * Sigma_curr * H_mat.t() + sensor_noice_).i();
+      // RCLCPP_INFO_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
+
+
+      // RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
+
+
+      arma::vec dz_vec = z_vec - z_hat;
+      dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
+      RCLCPP_INFO_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+      arma::vec update = K_mat * dz_vec;
+
+      const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
+
+      state_curr += update;
+      state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
+      Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
+      turtle_slam_.update_landmark_pos(state_curr);
+      RCLCPP_INFO_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
+
+      // break; // testing for one
     }
 
-    turtle_slam_.update_landmark_pos(obstacles);
+    // for (size_t i = 0; i < obst)
+
+    const auto theta_new = state_curr.at(0);
+    const auto x_new = state_curr.at(1);
+    const auto y_new = state_curr.at(2);
+
+
+    update_map_odom_tf_(x_new, y_new, theta_new);
     publish_map_markers();
+
+    turtle_slam_.update_covariance(Sigma_curr);
+    turtle_slam_.update_state(x_new, y_new, theta_new);
   }
 
-  /// @brief The initial pose service callback function
-  /// @param request The initial pose service request
-  /// @param respose The initial pose service response
+  /// \brief The initial pose service callback function
+  /// \param request The initial pose service request
+  /// \param respose The initial pose service response
   void srv_initial_pose_callback_(
     std::shared_ptr<InitialPose::Request> request,
     std::shared_ptr<InitialPose::Response> respose
@@ -237,6 +267,7 @@ private:
     respose->success = true;
   }
 
+  /// \brief
   void publish_map_markers()
   {
     MarkerArray map_array_msg;
@@ -246,11 +277,14 @@ private:
       const auto x = landmarks.at(i).x;
       const auto y = landmarks.at(i).y;
 
-      if (!turtlelib::almost_equal(x, 100.0) && !turtlelib::almost_equal(y, 100.0)) {
+      if (
+        !turtlelib::almost_equal(x, 1e4) &&
+        !turtlelib::almost_equal(y, 1e4))
+      {
         Marker m;
 
         m.header.stamp = get_clock()->now();
-        m.header.frame_id = odom_id_;
+        m.header.frame_id = map_id_;
         m.id = 30 + i;
         m.type = Marker::CYLINDER;
         m.action = Marker::ADD;
@@ -260,10 +294,10 @@ private:
         m.scale.x = 2.0 * marker_radius_;
         m.scale.y = 2.0 * marker_radius_;
         m.scale.z = marker_height_;
-        m.color.r = marker_r_ / 255.0;
-        m.color.g = marker_g_ / 255.0;
-        m.color.b = marker_b_ / 255.0;
-        m.color.a = 0.8;
+        m.color.r = 0.0;
+        m.color.g = 1.0;
+        m.color.b = 0.0;
+        m.color.a = 1.0;
 
         map_array_msg.markers.push_back(m);
       }
@@ -272,26 +306,34 @@ private:
     pub_map_array_->publish(map_array_msg);
   }
 
+  /// \brief
   void publish_path_()
   {
+    const auto x_turtle = turtlebot_.config_x();
+    const auto y_turtle = turtlebot_.config_y();
+    const auto theta_turtle = turtlebot_.config_theta();
+
+    turtlelib::Transform2D Tob{{x_turtle, y_turtle}, theta_turtle};
+    turtlelib::Transform2D Tmb = Tmo_ * Tob;
+
     Path msg_path;
 
     msg_path.header.stamp = get_clock()->now();
-    msg_path.header.frame_id = "nusim/world";
+    msg_path.header.frame_id = map_id_;
 
     PoseStamped pose;
 
     pose.header.stamp = get_clock()->now();
-    pose.header.frame_id = "nusim/world";
+    pose.header.frame_id = map_id_;
 
-    pose.pose.position.x = turtlebot_.config_x();
-    pose.pose.position.y = turtlebot_.config_y();
+    pose.pose.position.x = Tmb.translation().x;
+    pose.pose.position.y = Tmb.translation().y;
     pose.pose.position.z = 0.0;
 
     pose.pose.orientation.x = 0.0;
     pose.pose.orientation.y = 0.0;
-    pose.pose.orientation.z = sin(turtlebot_.config_theta() / 2.0);
-    pose.pose.orientation.w = cos(turtlebot_.config_theta() / 2.0);
+    pose.pose.orientation.z = sin(Tmb.rotation() / 2.0);
+    pose.pose.orientation.w = cos(Tmb.rotation() / 2.0);
 
     poses_.push_back(pose);
     msg_path.poses = poses_;
@@ -299,7 +341,7 @@ private:
     pub_path_->publish(msg_path);
   }
 
-  /// @brief publish the odometry
+  /// \brief publish the odometry
   void publish_odom_()
   {
     Odometry msg_odom;
@@ -339,25 +381,58 @@ private:
     pub_odometry_->publish(msg_odom);
   }
 
-  /// @brief Broadcast the transform
+  /// \brief Broadcast the transform
   void broadcast_tf_()
   {
-    TransformStamped tf_msg;
+    TransformStamped tf_map_odom;
 
-    tf_msg.header.stamp = get_clock()->now();
-    tf_msg.header.frame_id = odom_id_;
-    tf_msg.child_frame_id = body_id_;
+    tf_map_odom.header.stamp = get_clock()->now();
+    tf_map_odom.header.frame_id = map_id_;
+    tf_map_odom.child_frame_id = odom_id_;
 
-    tf_msg.transform.translation.x = turtlebot_.config_x();
-    tf_msg.transform.translation.y = turtlebot_.config_y();
-    tf_msg.transform.translation.z = 0.0;
+    tf_map_odom.transform.translation.x = Tmo_.translation().x;
+    tf_map_odom.transform.translation.y = Tmo_.translation().y;
+    tf_map_odom.transform.translation.z = 0.0;
 
-    tf_msg.transform.rotation.x = 0.0;
-    tf_msg.transform.rotation.y = 0.0;
-    tf_msg.transform.rotation.z = sin(turtlebot_.config_theta() / 2.0);
-    tf_msg.transform.rotation.w = cos(turtlebot_.config_theta() / 2.0);
+    tf_map_odom.transform.rotation.x = 0.0;
+    tf_map_odom.transform.rotation.y = 0.0;
+    tf_map_odom.transform.rotation.z = sin(Tmo_.rotation() / 2.0);
+    tf_map_odom.transform.rotation.w = cos(Tmo_.rotation() / 2.0);
 
-    tf_broadcater_->sendTransform(tf_msg);
+    TransformStamped tf_odom_body;
+
+    tf_odom_body.header.stamp = get_clock()->now();
+    tf_odom_body.header.frame_id = odom_id_;
+    tf_odom_body.child_frame_id = body_id_;
+
+    tf_odom_body.transform.translation.x = turtlebot_.config_x();
+    tf_odom_body.transform.translation.y = turtlebot_.config_y();
+    tf_odom_body.transform.translation.z = 0.0;
+
+    tf_odom_body.transform.rotation.x = 0.0;
+    tf_odom_body.transform.rotation.y = 0.0;
+    tf_odom_body.transform.rotation.z = sin(turtlebot_.config_theta() / 2.0);
+    tf_odom_body.transform.rotation.w = cos(turtlebot_.config_theta() / 2.0);
+
+    tf_broadcater_->sendTransform(tf_map_odom);
+    tf_broadcater_->sendTransform(tf_odom_body);
+  }
+
+  /// \brief Update the transform from map to odom based on new configuration
+  /// \param x_map x configuration in map frame
+  /// \param y_map y configuration in map frame
+  /// \param theta_map theta configuration in map frame
+  void update_map_odom_tf_(double x_map, double y_map, double theta_map)
+  {
+    const auto x_odom = turtlebot_.config_x();
+    const auto y_odom = turtlebot_.config_y();
+    const auto theta_odom = turtlebot_.config_theta();
+
+    const turtlelib::Transform2D Tmb{{x_map, y_map}, theta_map};
+    const turtlelib::Transform2D Tob{{x_odom, y_odom}, theta_odom};
+    const turtlelib::Transform2D Tbo = Tob.inv();
+
+    Tmo_ = Tmb * Tbo;
   }
 
   /// Timer
@@ -391,6 +466,7 @@ private:
   /// parameters
   std::string body_id_;
   std::string odom_id_;
+  std::string map_id_;
   std::string wheel_left_;
   std::string wheel_right_;
   double track_width_;
@@ -416,17 +492,18 @@ private:
   double marker_r_;
   double marker_g_;
   double marker_b_;
+  turtlelib::Transform2D Tmo_;
 
 public:
   /// @brief
   Slam()
   : Node("odometry"), marker_qos_(10), joint_states_available_(false), index_left_(SIZE_MAX),
     index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_),
-    marker_radius_(0.05), marker_height_(0.3), marker_r_(78.0), marker_g_(42.0),
-    marker_b_(132.0)
+    marker_radius_(0.038), marker_height_(0.25), Tmo_({0.0, 0.0}, 0.0)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;
+    ParameterDescriptor map_id_des;
     ParameterDescriptor wheel_left_des;
     ParameterDescriptor wheel_right_des;
     ParameterDescriptor wheel_radius_des;
@@ -436,6 +513,7 @@ public:
 
     body_id_des.description = "The name of the body frame of the robot.";
     odom_id_des.description = "The name of the odometry frame.";
+    map_id_des.description = "The name of the map frame";
     wheel_left_des.description = "The name of the left wheel joint.";
     wheel_right_des.description = "The name of the right wheel joint.";
     wheel_radius_des.description = "Wheel radius of the turtlebot.";
@@ -445,6 +523,7 @@ public:
 
     declare_parameter<std::string>("body_id", "", body_id_des);
     declare_parameter<std::string>("odom_id", "odom", odom_id_des);
+    declare_parameter<std::string>("map_id", "map", map_id_des);
     declare_parameter<std::string>("wheel_left", "", wheel_left_des);
     declare_parameter<std::string>("wheel_right", "", wheel_right_des);
     declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
@@ -454,6 +533,7 @@ public:
 
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
+    map_id_ = get_parameter("map_id").as_string();
     wheel_left_ = get_parameter("wheel_left").as_string();
     wheel_right_ = get_parameter("wheel_right").as_string();
     wheel_radius_ = get_parameter("wheel_radius").as_double();

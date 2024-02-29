@@ -240,7 +240,7 @@ private:
   {
     LaserScan msg;
     msg.header.stamp = get_clock()->now();
-    msg.header.frame_id = body_frame_id_;
+    msg.header.frame_id = scan_frame_id_;
 
     msg.angle_min = -turtlelib::PI;
     msg.angle_max = turtlelib::PI;
@@ -248,6 +248,7 @@ private:
 
     msg.range_max = lidar_range_max_;
     msg.range_min = lidar_range_min_;
+
 
     // msg.time_increment = 0.2;
     // msg.scan_time = 0.2;
@@ -265,15 +266,22 @@ private:
     }
 
     std::vector<turtlelib::Obstacle> obstacles;
-    turtlelib::Transform2D T_sb(turtlelib::Vector2D{turtle_x_, turtle_y_}, turtle_theta_);
-    turtlelib::Transform2D T_bs = T_sb.inv();
-    RCLCPP_DEBUG_STREAM(get_logger(), "T_bs: " << T_bs);
+    const turtlelib::Transform2D T_sb({0.032, 0.0}, 0.0);
+    const turtlelib::Transform2D T_wb({turtle_x_, turtle_y_}, turtle_theta_);
+    const turtlelib::Transform2D T_bw = T_wb.inv();
+    const turtlelib::Transform2D T_sw = T_sb * T_bw;
+    const turtlelib::Transform2D T_ws = T_sw.inv();
+    RCLCPP_DEBUG_STREAM(get_logger(), "T_bs: " << T_bw);
+
+    const auto x_scan = T_ws.translation().x;
+    const auto y_scan = T_ws.translation().y;
+    const auto theta_scan = T_ws.rotation();
 
     for (size_t i = 0; i < obstacle_pos_sensor_.size(); ++i) {
-      turtlelib::Point2D ps{obstacle_pos_sensor_.at(i).x, obstacle_pos_sensor_.at(i).y};
-      turtlelib::Point2D pb = T_bs(ps);
-      obstacles.push_back({pb.x, pb.y, obstacle_radius_});
-      RCLCPP_DEBUG_STREAM(get_logger(), "Pb: " << pb);
+      const turtlelib::Point2D pw{obstacle_pos_sensor_.at(i).x, obstacle_pos_sensor_.at(i).y};
+      const turtlelib::Point2D ps = T_sw(pw);
+      obstacles.push_back({ps.x, ps.y, obstacle_radius_});
+      RCLCPP_DEBUG_STREAM(get_logger(), "Ps: " << ps);
     }
 
     RCLCPP_DEBUG_STREAM(get_logger(), "theta: " << turtle_theta_);
@@ -307,12 +315,12 @@ private:
         switch (wall) {
           case right:
             {
-              const auto d = arena_x_length_ / 2.0 - turtle_x_;
-              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_);
+              const auto d = arena_x_length_ / 2.0 - x_scan;
+              const auto beta = turtlelib::normalize_angle(alpha + theta_scan);
               const auto range = d / cos(beta) + distribution_laser_(generator_);
               msg.ranges.push_back(range);
 
-              const auto py = turtle_y_ + d * tan(beta);
+              const auto py = y_scan + d * tan(beta);
               if (py > arena_y_length_ / 2.0) {
                 wall = up;
               }
@@ -321,13 +329,13 @@ private:
 
           case up:
             {
-              const auto d = arena_y_length_ / 2.0 - turtle_y_;
-              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) -
+              const auto d = arena_y_length_ / 2.0 - y_scan;
+              const auto beta = turtlelib::normalize_angle(alpha + theta_scan) -
                 turtlelib::PI / 2.0;
               const auto range = d / cos(beta) + distribution_laser_(generator_);
               msg.ranges.push_back(range);
 
-              const auto px = turtle_x_ - d * tan(beta);
+              const auto px = x_scan - d * tan(beta);
               if (px < -arena_x_length_ / 2.0) {
                 wall = left;
               }
@@ -336,12 +344,12 @@ private:
 
           case left:
             {
-              const auto d = arena_x_length_ / 2.0 + turtle_x_;
-              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) - turtlelib::PI;
+              const auto d = arena_x_length_ / 2.0 + x_scan;
+              const auto beta = turtlelib::normalize_angle(alpha + theta_scan) - turtlelib::PI;
               const auto range = d / cos(beta) + distribution_laser_(generator_);
               msg.ranges.push_back(range);
 
-              const auto py = turtle_y_ - d * tan(beta);
+              const auto py = y_scan - d * tan(beta);
               if (py < -arena_y_length_ / 2.0) {
                 wall = down;
               }
@@ -350,14 +358,13 @@ private:
 
           case down:
             {
-              // msg.ranges.push_back(1.0);
-              const auto d = arena_y_length_ / 2.0 + turtle_y_;
-              const auto beta = turtlelib::normalize_angle(alpha + turtle_theta_) +
+              const auto d = arena_y_length_ / 2.0 + y_scan;
+              const auto beta = turtlelib::normalize_angle(alpha + theta_scan) +
                 turtlelib::PI / 2.0;
               const auto range = d / cos(beta) + distribution_laser_(generator_);
               msg.ranges.push_back(range);
 
-              const auto px = turtle_x_ + d * tan(beta);
+              const auto px = x_scan + d * tan(beta);
               if (px > arena_x_length_ / 2.0) {
                 wall = right;
               }
@@ -567,8 +574,8 @@ private:
       } else {
         m_sensor.action = Marker::DELETE;
 
-        m_measure.x = 100.0;
-        m_measure.y = 100.0;
+        m_measure.x = 1e4;
+        m_measure.y = 1e4;
         m_measure.uid = i;
       }
 
@@ -586,7 +593,6 @@ private:
   /// \brief reset the position of the turtlebot.
   void reset_turtle_pose_()
   {
-    period_ = 1.0 / rate_;
     turtlebot_.update_config(x0_, y0_, theta0_);
     turtlebot_ = turtlelib::DiffDrive(track_width_, wheel_radius_);
   }
@@ -698,6 +704,7 @@ private:
   double obstacle_height_;
   std::string world_frame_id_;
   std::string body_frame_id_;
+  std::string scan_frame_id_;
   turtlelib::DiffDrive turtlebot_;
   std::vector<PoseStamped> poses_;
   std::default_random_engine generator_;
@@ -712,7 +719,8 @@ public:
   NuSim()
   : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
     wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
-    world_frame_id_("nusim/world"), body_frame_id_("red/base_footprint")
+    world_frame_id_("nusim/world"), body_frame_id_("red/base_footprint"),
+    scan_frame_id_("red/base_scan")
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -832,6 +840,7 @@ public:
     }
 
     /// initialize attributes
+    period_ = 1.0 / rate_;
     distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
     distribution_slip_ = std::uniform_real_distribution<double>(-slip_fraction_, slip_fraction_);
     distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));

@@ -24,9 +24,19 @@
         <node
             pkg="tf2_ros"
             exec="static_transform_publisher"
-            name="static_tranform_publisher"
+            name="static_transform_publisher"
             args="--frame-id nusim/world 
-                  --child-frame-id odom
+                  --child-frame-id blue/odom
+                  --x 0.0
+                  --y 0.0
+                  --z 0.0" />
+
+        <node
+            pkg="tf2_ros"
+            exec="static_transform_publisher"
+            name="static_transform_publisher"
+            args="--frame-id nusim/world 
+                  --child-frame-id map
                   --x 0.0
                   --y 0.0
                   --z 0.0" />
@@ -41,7 +51,7 @@
     </group>
 
     <group if="$(eval '\'$(var cmd_src)\' == \'teleop\'')">
-        <node pkg="turtlebot3_teleop" exec="teleop_keyboard" />
+        <node pkg="turtlebot3_teleop" exec="teleop_keyboard" launch-prefix="xterm -e" />
     </group>
 
     <!-- robot argument -->
@@ -56,7 +66,8 @@
             <param from="$(find-pkg-share nusim)/config/basic_yaml.yaml" />
 
             <param name="body_id" value="blue/base_footprint" />
-            <param name="odom_id" value="odom" />
+            <param name="odom_id" value="blue/odom" />
+            <param name="map_id" value="map" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
 

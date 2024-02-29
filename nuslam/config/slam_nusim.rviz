@@ -6,9 +6,10 @@ Panels:
       Expanded:
         - /Walls1/Topic1
         - /Obstacles1/Topic1
-        - /Odometry1/Shape1
-        - /Odometry1/Covariance1/Position1
-        - /Odometry1/Covariance1/Orientation1
+        - /Corrected Odometry1/Shape1
+        - /Corrected Odometry1/Covariance1/Position1
+        - /Corrected Odometry1/Covariance1/Orientation1
+        - /Error Odometry1/Shape1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz_common/Selection
@@ -294,13 +295,13 @@ Visualization Manager:
         Value: true
       Enabled: true
       Keep: 10
-      Name: Odometry
+      Name: Corrected Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
         Alpha: 1
         Axes Length: 1
         Axes Radius: 0.10000000149011612
-        Color: 255; 25; 0
+        Color: 51; 209; 122
         Head Length: 0.10000000149011612
         Head Radius: 0.05000000074505806
         Shaft Length: 0.30000001192092896
@@ -333,15 +334,15 @@ Visualization Manager:
         Value: true
       Enabled: true
       Keep: 100
-      Name: Odometry
+      Name: Error Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
         Alpha: 1
         Axes Length: 1
         Axes Radius: 0.10000000149011612
-        Color: 255; 25; 0
-        Head Length: 0.30000001192092896
-        Head Radius: 0.10000000149011612
+        Color: 53; 132; 228
+        Head Length: 0.10000000149011612
+        Head Radius: 0.05000000074505806
         Shaft Length: 0.30000001192092896
         Shaft Radius: 0.05000000074505806
         Value: Arrow
@@ -368,6 +369,8 @@ Visualization Manager:
           Value: false
         blue/imu_link:
           Value: false
+        blue/odom:
+          Value: true
         blue/wheel_left_link:
           Value: false
         blue/wheel_right_link:
@@ -386,6 +389,8 @@ Visualization Manager:
           Value: false
         green/wheel_right_link:
           Value: false
+        map:
+          Value: true
         nusim/world:
           Value: true
         odom:
@@ -408,10 +413,10 @@ Visualization Manager:
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
         nusim/world:
-          odom:
+          blue/odom:
             blue/base_footprint:
               blue/base_link:
                 blue/base_scan:
@@ -424,18 +429,20 @@ Visualization Manager:
                   {}
                 blue/wheel_right_link:
                   {}
-            green/base_footprint:
-              green/base_link:
-                green/base_scan:
-                  {}
-                green/caster_back_link:
-                  {}
-                green/imu_link:
-                  {}
-                green/wheel_left_link:
-                  {}
-                green/wheel_right_link:
-                  {}
+          map:
+            odom:
+              green/base_footprint:
+                green/base_link:
+                  green/base_scan:
+                    {}
+                  green/caster_back_link:
+                    {}
+                  green/imu_link:
+                    {}
+                  green/wheel_left_link:
+                    {}
+                  green/wheel_right_link:
+                    {}
           red/base_footprint:
             red/base_link:
               red/base_scan:
@@ -537,14 +544,14 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
+        Max Value: 3.0062477588653564
+        Min Value: -3.0052199363708496
         Value: true
-      Axis: Z
+      Axis: X
       Channel Name: intensity
       Class: rviz_default_plugins/LaserScan
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: AxisColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -614,7 +621,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 5.8271050453186035
+      Distance: 3.165149450302124
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -629,10 +636,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9503992199897766
+      Pitch: 0.6453993320465088
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.620404243469238
+      Yaw: 3.8035812377929688
     Saved: ~
 Window Geometry:
   Displays:
