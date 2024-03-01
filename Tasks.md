@@ -50,11 +50,15 @@
  - E.5 Launchfile
  - E.6 Remote Launch (optional)
 
- # Task F The Real Robot
+# Task F. The Real Robot
   - F.1 Turtlebot Setup
   - F.2 Cross-Compilation
   - F.5 Physical Testing
 
-# Task V Visualization
+# Task V. Visualization
  - V.1 Simulatino Standalone
  - V.2 Simulation with Odometry
+
+# Task L. SLAM (Simutanously Localization and Mapping)
+ - L.1 Main SLAM Results
+ - L.2 SLAM in controlled environment
