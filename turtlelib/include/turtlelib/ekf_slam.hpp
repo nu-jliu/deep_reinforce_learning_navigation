@@ -47,7 +47,6 @@ private:
   std::vector<Measurement> obstacles_;
   arma::mat covariance_mat_;
   double num_obstacles_;
-  // bool landmark_pos_ready_;
 
 public:
   /// \brief Construct a new EFK object
@@ -101,14 +100,8 @@ public:
   /// \param landmarks The landmark positions
   void update_landmark_pos(arma::vec state);
 
-  // /// \brief Whether landmark positions has been updated
-  // /// \return true The landmark position has been updated
-  // /// \return false The landmark position has not been updated
-  // bool is_landmark_pos_ready() const;
-
   /// \brief Get the robot state for previous update
   /// \return RobotState The result robot state
-  ////
   RobotState get_robot_state() const;
 
   /// \brief Get the covariance mattrix

@@ -1,4 +1,3 @@
-///
 /// \file odometry.cpp
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
 /// \brief Track the odometry of a robot.
@@ -16,6 +15,7 @@
 ///
 /// PUBLISHERS:
 ///   odom          [nav_msgs/msg/Odomoetry]          The odometry of the node.
+///   ~/path        [nav_msgs/msg/Path]               The path of the robot.
 ///
 /// SERVICES:
 ///   initial_pose [nuturtle_control/srv/InitialPose] Reset the initial pose.
@@ -24,8 +24,6 @@
 /// \date 2024-02-15
 ///
 /// \copyright Copyright (c) 2024
-///
-///
 #include <chrono>
 
 #include <rclcpp/rclcpp.hpp>
@@ -61,11 +59,11 @@ using geometry_msgs::msg::PoseStamped;
 // using nuturtle_control::srv::InitialPose;
 using nuturtle_interfaces::srv::InitialPose;
 
-/// @brief
+/// \brief
 class Odom : public Node
 {
 private:
-  /// @brief The timer callback of the odometry node
+  /// \brief The timer callback of the odometry node
   void timer_callback_()
   {
     if (joint_states_available_) {
@@ -75,9 +73,9 @@ private:
     }
   }
 
-  /// @brief Update the turtlebot configuration based on new joint states,
+  /// \brief Update the turtlebot configuration based on new joint states,
   ///        then publish new odom
-  /// @param msg The subscibed joint_states message.
+  /// \param msg The subscibed joint_states message.
   void sub_joint_states_callback_(JointState::SharedPtr msg)
   {
     if (!joint_states_available_) {
@@ -113,9 +111,9 @@ private:
     // publish_odom_();
   }
 
-  /// @brief The initial pose service
-  /// @param request The initial pose service request
-  /// @param respose The initial pose service response
+  /// \brief The initial pose service
+  /// \param request The initial pose service request
+  /// \param respose The initial pose service response
   void srv_initial_pose_callback_(
     std::shared_ptr<InitialPose::Request> request,
     std::shared_ptr<InitialPose::Response> respose)
@@ -156,7 +154,7 @@ private:
     pub_path_->publish(msg_path);
   }
 
-  /// @brief publish the odometry
+  /// \brief publish the odometry
   void publish_odom_()
   {
     Odometry msg_odom;
@@ -196,7 +194,7 @@ private:
     pub_odometry_->publish(msg_odom);
   }
 
-  /// @brief Broadcast the transform
+  /// \brief Broadcast the transform
   void broadcast_tf_()
   {
     TransformStamped tf_msg;
@@ -257,7 +255,7 @@ private:
   std::vector<PoseStamped> poses_;
 
 public:
-  /// @brief
+  /// \brief
   Odom()
   : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX), index_right_(
       SIZE_MAX)
@@ -328,10 +326,10 @@ public:
   }
 };
 
-/// @brief The main entry of the node
-/// @param argc The number of arguments
-/// @param argv The value of arguments
-/// @return The result code.
+/// \brief The main entry of the node
+/// \param argc The number of arguments
+/// \param argv The value of arguments
+/// \return The result code.
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

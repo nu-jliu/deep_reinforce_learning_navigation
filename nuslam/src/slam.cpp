@@ -3,12 +3,14 @@
 /// \brief Update the odometry of a robot using SLAM algorithm.
 ///
 /// PARAMETERS:
-///   \param body_id      [string]  The id of the body frame
-///   \param odom_id      [string]  The id of the odom frame
-///   \param wheel_left   [string]  The left wheel joint name
-///   \param wheel_right  [string]  The right wheel joint name
-///   \param wheel_radius [double]  The radius of ythe wheel
-///   \param track_width  [double]  The distance between two wheels
+///   \param body_id                [string]  The id of the body frame
+///   \param odom_id                [string]  The id of the odom frame
+///   \param wheel_left             [string]  The left wheel joint name
+///   \param wheel_right            [string]  The right wheel joint name
+///   \param wheel_radius           [double]  The radius of ythe wheel
+///   \param track_width            [double]  The distance between two wheels
+///   \param input_noice            [double]  The input noice
+///   \param basic_sensor_variance  [double]  The variance of the sensor
 ///
 /// SUBSCRIPTIONS:
 ///   joint_states  [sensor_msgs/msg/JointState]                    The joint state of the robot.
@@ -16,7 +18,8 @@
 ///
 /// PUBLISHERS:
 ///   odom          [nav_msgs/msg/Odomoetry]                        The odometry of the node.
-///   path          []
+///   path          [nav_msgs//msgPath]                             The path robot follows.
+///   ~/map         [visualization/msg/MarkerArray]                 The mapped obstacle markers.
 ///
 /// SERVICES:
 ///   initial_pose [nuturtle_interfaces/srv/InitialPose]            Reset the initial pose.
@@ -66,7 +69,7 @@ using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
 using nuturtle_interfaces::srv::InitialPose;
 
-/// @brief
+/// \brief
 class Slam : public Node
 {
 private:
@@ -126,7 +129,7 @@ private:
       turtlebot_.config_theta()
     );
     const auto Tmb = Tmo_ * Tob;
-    // RCLCPP_INFO_STREAM(get_logger(), "Robot Position: " << Tmb);
+    RCLCPP_DEBUG_STREAM(get_logger(), "Robot Position: " << Tmb);
 
     double theta_est = Tmb.rotation();
     double x_est = Tmb.translation().x;
@@ -135,11 +138,11 @@ private:
     const auto state_prev = turtle_slam_.get_robot_state();
 
     const auto A_mat = turtle_slam_.get_A_mat(x_est - state_prev.x, y_est - state_prev.y);
-    // RCLCPP_INFO_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
+    RCLCPP_DEBUG_STREAM(get_logger(), "A_mat: " << std::endl << A_mat);
 
     const auto Sigma_pre = turtle_slam_.get_covariance_mat();
     const auto Sigma_est = A_mat * Sigma_pre * A_mat.t() + Q_mat_;
-    // RCLCPP_INFO_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
+    RCLCPP_DEBUG_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
 
     arma::vec state_curr = turtle_slam_.get_state_vec();
 
@@ -148,20 +151,20 @@ private:
     state_curr.at(2) = y_est;
 
     arma::mat Sigma_curr(Sigma_est);
-    // RCLCPP_INFO_STREAM(get_logger(), "State: " << std::endl << state_curr);
+    RCLCPP_DEBUG_STREAM(get_logger(), "State: " << std::endl << state_curr);
 
     for (size_t i = 0; i < msg->measurements.size(); ++i) {
       const auto measure = msg->measurements.at(i);
       const auto uid = measure.uid;
       const auto x = measure.x;
       const auto y = measure.y;
-      // RCLCPP_INFO_STREAM(get_logger(), "uid: " << uid);
+      RCLCPP_DEBUG_STREAM(get_logger(), "uid: " << uid);
       theta_est = state_curr.at(0);
       x_est = state_curr.at(1);
       y_est = state_curr.at(2);
 
       const arma::vec z_vec = turtle_slam_.get_h_vec({x, y, uid});
-      // RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
 
       auto landmark_pos = turtle_slam_.get_landmark_pos(uid);
       if (landmark_pos.uid == -1) {
@@ -178,7 +181,7 @@ private:
       turtlelib::Point2D pb_land = Tbm_land(pm_land);
       const auto dx = pb_land.x;
       const auto dy = pb_land.y;
-      // RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
+      RCLCPP_DEBUG_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
 
       turtlelib::Measurement est_body = {dx, dy, uid};
       turtlelib::Measurement est_world =
@@ -189,29 +192,29 @@ private:
       };
 
       const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);  // + dist_sensor_(generator_);
-      // RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
 
       const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, uid);
-      // RCLCPP_INFO_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+      RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
 
       const arma::mat K_mat = Sigma_curr * H_mat.t() *
         (H_mat * Sigma_curr * H_mat.t() + sensor_noice_).i();
-      // RCLCPP_INFO_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
+      RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
 
       arma::vec dz_vec = z_vec - z_hat;
       dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
-      // RCLCPP_INFO_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+      RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
 
       arma::vec update = K_mat * dz_vec;
       update.at(0) = turtlelib::normalize_angle(update.at(0));
-      // RCLCPP_INFO_STREAM(get_logger(), "Update: " << std::endl << update);
+      RCLCPP_DEBUG_STREAM(get_logger(), "Update: " << std::endl << update);
 
       const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
       state_curr += update;
       state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
       Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
-      // RCLCPP_INFO_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
+      RCLCPP_DEBUG_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
       turtle_slam_.update_landmark_pos(state_curr);
     }
 
@@ -244,7 +247,7 @@ private:
     respose->success = true;
   }
 
-  /// \brief
+  /// \brief Publish markers for mapped obstacles
   void publish_map_markers()
   {
     MarkerArray map_array_msg;
@@ -283,7 +286,7 @@ private:
     pub_map_array_->publish(map_array_msg);
   }
 
-  /// \brief
+  /// \brief Publish the path that green robot follows
   void publish_path_()
   {
     const auto x_turtle = turtlebot_.config_x();
@@ -313,11 +316,6 @@ private:
     pose.pose.orientation.w = cos(Tmb.rotation() / 2.0);
 
     poses_.push_back(pose);
-
-    // if (poses_.size() >= MAX_PATH_LEN) {
-    //   poses_.erase(poses_.begin());
-    // }
-
     msg_path.poses = poses_;
 
     pub_path_->publish(msg_path);
@@ -481,7 +479,7 @@ private:
   const size_t MAX_PATH_LEN = 100;
 
 public:
-  /// @brief
+  /// \brief
   Slam()
   : Node("odometry"), marker_qos_(10), joint_states_available_(false), index_left_(SIZE_MAX),
     index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_),
@@ -598,10 +596,10 @@ public:
   }
 };
 
-/// @brief The main entry of the node
-/// @param argc The number of arguments
-/// @param argv The value of arguments
-/// @return The result code.
+/// \brief The main entry of the node
+/// \param argc The number of arguments
+/// \param argv The value of arguments
+/// \return The result code.
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
