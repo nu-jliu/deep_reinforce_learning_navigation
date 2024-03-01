@@ -1,4 +1,4 @@
-# Nusim
+# NUSIM
 Simulate the turtlebot and display it in `rviz`
 
 ## Launch files
