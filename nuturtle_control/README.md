@@ -1,4 +1,4 @@
-# NUTurtle Control
+# NUTURTLE CONTROL
 Controls the motion of the turtlebot
 
 ## Running on turtlebot3
