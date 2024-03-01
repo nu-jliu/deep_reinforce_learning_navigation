@@ -139,7 +139,7 @@ private:
 
     const auto Sigma_pre = turtle_slam_.get_covariance_mat();
     const auto Sigma_est = A_mat * Sigma_pre * A_mat.t() + Q_mat_;
-    RCLCPP_INFO_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
+    // RCLCPP_INFO_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
 
     arma::vec state_curr = turtle_slam_.get_state_vec();
 
