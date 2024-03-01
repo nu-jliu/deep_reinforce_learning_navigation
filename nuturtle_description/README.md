@@ -1,4 +1,4 @@
-# Nuturtle  Description
+# NUTURTLE  DESCRIPTION
 URDF files for Nuturtle `nuturtlebot3_burger`
 * `ros2 launch load_one.launch.py` to see the robot in rviz.
 * `ros2 launch load_all.launch.xml` to see four copies of the robot in rviz.
