@@ -121,19 +121,6 @@ private:
   {
     obs_measure_ = *msg;
 
-    std::vector<turtlelib::Measurement> obstacles;
-    obstacles.clear();
-
-    for (size_t i = 0; i < msg->measurements.size(); ++i) {
-      const auto x = msg->measurements.at(i).x;
-      const auto y = msg->measurements.at(i).y;
-      const auto uid = msg->measurements.at(i).uid;
-
-      obstacles.push_back({x, y, uid});
-    }
-
-    // if (turtle_slam_.is_landmark_pos_ready()) {
-
     const turtlelib::Transform2D Tob(
       {turtlebot_.config_x(), turtlebot_.config_y()},
       turtlebot_.config_theta()
@@ -141,9 +128,9 @@ private:
     const auto Tmb = Tmo_ * Tob;
     // RCLCPP_INFO_STREAM(get_logger(), "Robot Position: " << Tmb);
 
+    double theta_est = Tmb.rotation();
     double x_est = Tmb.translation().x;
     double y_est = Tmb.translation().y;
-    double theta_est = Tmb.rotation();
 
     const auto state_prev = turtle_slam_.get_robot_state();
 
@@ -152,7 +139,7 @@ private:
 
     const auto Sigma_pre = turtle_slam_.get_covariance_mat();
     const auto Sigma_est = A_mat * Sigma_pre * A_mat.t() + Q_mat_;
-    // RCLCPP_INFO_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
+    RCLCPP_INFO_STREAM(get_logger(), "Sigma_mat: " << std::endl << Sigma_est);
 
     arma::vec state_curr = turtle_slam_.get_state_vec();
 
@@ -163,15 +150,18 @@ private:
     arma::mat Sigma_curr(Sigma_est);
     // RCLCPP_INFO_STREAM(get_logger(), "State: " << std::endl << state_curr);
 
-    for (size_t i = 0; i < obstacles.size(); ++i) {
-      const auto uid = obstacles.at(i).uid;
+    for (size_t i = 0; i < msg->measurements.size(); ++i) {
+      const auto measure = msg->measurements.at(i);
+      const auto uid = measure.uid;
+      const auto x = measure.x;
+      const auto y = measure.y;
       // RCLCPP_INFO_STREAM(get_logger(), "uid: " << uid);
       theta_est = state_curr.at(0);
       x_est = state_curr.at(1);
       y_est = state_curr.at(2);
 
-      const arma::vec z_vec = turtle_slam_.get_h_vec(obstacles.at(i));
-      RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+      const arma::vec z_vec = turtle_slam_.get_h_vec({x, y, uid});
+      // RCLCPP_INFO_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
 
       auto landmark_pos = turtle_slam_.get_landmark_pos(uid);
       if (landmark_pos.uid == -1) {
@@ -190,12 +180,18 @@ private:
       const auto dy = pb_land.y;
       // RCLCPP_INFO_STREAM(get_logger(), "x: " << dx << ", y: " << dy);
 
-      turtlelib::Measurement measure_est = {dx, dy, uid};
+      turtlelib::Measurement est_body = {dx, dy, uid};
+      turtlelib::Measurement est_world =
+      {
+        landmark_pos.x - x_est,
+        landmark_pos.y - y_est,
+        uid
+      };
 
-      const arma::vec z_hat = turtle_slam_.get_h_vec(measure_est);  // + dist_sensor_(generator_);
-      RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);  // + dist_sensor_(generator_);
+      // RCLCPP_INFO_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
 
-      const arma::mat H_mat = turtle_slam_.get_H_mat(measure_est, uid);
+      const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, uid);
       // RCLCPP_INFO_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
 
       const arma::mat K_mat = Sigma_curr * H_mat.t() *
@@ -204,16 +200,19 @@ private:
 
       arma::vec dz_vec = z_vec - z_hat;
       dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
-      RCLCPP_INFO_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+      // RCLCPP_INFO_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+
       arma::vec update = K_mat * dz_vec;
+      update.at(0) = turtlelib::normalize_angle(update.at(0));
+      // RCLCPP_INFO_STREAM(get_logger(), "Update: " << std::endl << update);
 
       const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
       state_curr += update;
       state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
       Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
+      // RCLCPP_INFO_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
       turtle_slam_.update_landmark_pos(state_curr);
-      RCLCPP_INFO_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
     }
 
     const auto theta_new = state_curr.at(0);
@@ -314,6 +313,11 @@ private:
     pose.pose.orientation.w = cos(Tmb.rotation() / 2.0);
 
     poses_.push_back(pose);
+
+    // if (poses_.size() >= MAX_PATH_LEN) {
+    //   poses_.erase(poses_.begin());
+    // }
+
     msg_path.poses = poses_;
 
     pub_path_->publish(msg_path);
@@ -471,13 +475,17 @@ private:
   double marker_g_;
   double marker_b_;
   turtlelib::Transform2D Tmo_;
+  bool landmark_updated_;
+
+  /// Constants
+  const size_t MAX_PATH_LEN = 100;
 
 public:
   /// @brief
   Slam()
   : Node("odometry"), marker_qos_(10), joint_states_available_(false), index_left_(SIZE_MAX),
     index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_),
-    marker_radius_(0.038), marker_height_(0.25), Tmo_({0.0, 0.0}, 0.0)
+    marker_radius_(0.038), marker_height_(0.25), Tmo_({0.0, 0.0}, 0.0), landmark_updated_(false)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;

@@ -1,6 +1,6 @@
 /// \file ekf_slam.cpp
 /// \author your Allen Liu (jingkunliu2025@u.northwestern.edu)
-/// \brief The libary for all slam calculations
+/// \brief The libary for all Extended-Kalman-Filter SLAM calculations
 /// \version 0.1
 /// \date 2024-02-25
 ///
@@ -48,17 +48,17 @@ arma::vec EKF::get_state_vec()
   state.at(2) = state_.y;
 
   for (size_t i = 0; i < num_obstacles_; ++i) {
-    const auto uid = obstacles_.at(i).uid;
+    // const auto uid = obstacles_.at(i).uid;
     const auto x = obstacles_.at(i).x;
     const auto y = obstacles_.at(i).y;
 
-    if (uid != -1) {
-      state(3 + 2 * uid) = x;
-      state(3 + 2 * uid + 1) = y;
-    } else {
-      state(3 + 2 * i) = x;
-      state(3 + 2 * i + 1) = y;
-    }
+    // if (uid != -1) {
+    // state(3 + 2 * uid) = x;
+    // state(3 + 2 * uid + 1) = y;
+    // } else {
+    state(3 + 2 * i) = x;
+    state(3 + 2 * i + 1) = y;
+    // }
   }
 
   return state;

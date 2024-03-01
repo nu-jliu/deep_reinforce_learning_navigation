@@ -98,16 +98,16 @@ using nuturtle_interfaces::srv::Teleport;
 enum WallState
 {
   /// @brief The up side of the wall
-  up,
+  NORTH,
 
   /// @brief The down side of the wall
-  down,
+  SOUTH,
 
   /// @brief The left side of the wall
-  left,
+  WEST,
 
   /// @brief The right side of the wall
-  right
+  EAST
 };
 
 /// @brief Simulate the turtlebot in a rviz world.
@@ -253,16 +253,16 @@ private:
     // msg.time_increment = 0.2;
     // msg.scan_time = 0.2;
 
-    WallState wall = right;
+    WallState wall = WallState::EAST;
 
     if (turtle_theta_ >= -turtlelib::PI / 4.0 && turtle_theta_ < turtlelib::PI / 4.0) {
-      wall = left;
+      wall = WallState::WEST;
     } else if (turtle_theta_ >= turtlelib::PI / 4.0 && turtle_theta_ < turtlelib::PI * 0.75) {
-      wall = down;
+      wall = WallState::SOUTH;
     } else if (turtle_theta_ >= turtlelib::PI * 0.75 || turtle_theta_ < -turtlelib::PI * 0.75) {
-      wall = right;
+      wall = WallState::EAST;
     } else {
-      wall = up;
+      wall = WallState::NORTH;
     }
 
     std::vector<turtlelib::Obstacle> obstacles;
@@ -313,7 +313,7 @@ private:
         msg.ranges.push_back(min_dist);
       } else {
         switch (wall) {
-          case right:
+          case WallState::EAST:
             {
               const auto d = arena_x_length_ / 2.0 - x_scan;
               const auto beta = turtlelib::normalize_angle(alpha + theta_scan);
@@ -322,12 +322,12 @@ private:
 
               const auto py = y_scan + d * tan(beta);
               if (py > arena_y_length_ / 2.0) {
-                wall = up;
+                wall = WallState::NORTH;
               }
               break;
             }
 
-          case up:
+          case WallState::NORTH:
             {
               const auto d = arena_y_length_ / 2.0 - y_scan;
               const auto beta = turtlelib::normalize_angle(alpha + theta_scan) -
@@ -337,12 +337,12 @@ private:
 
               const auto px = x_scan - d * tan(beta);
               if (px < -arena_x_length_ / 2.0) {
-                wall = left;
+                wall = WallState::WEST;
               }
               break;
             }
 
-          case left:
+          case WallState::WEST:
             {
               const auto d = arena_x_length_ / 2.0 + x_scan;
               const auto beta = turtlelib::normalize_angle(alpha + theta_scan) - turtlelib::PI;
@@ -351,12 +351,12 @@ private:
 
               const auto py = y_scan - d * tan(beta);
               if (py < -arena_y_length_ / 2.0) {
-                wall = down;
+                wall = WallState::SOUTH;
               }
               break;
             }
 
-          case down:
+          case WallState::SOUTH:
             {
               const auto d = arena_y_length_ / 2.0 + y_scan;
               const auto beta = turtlelib::normalize_angle(alpha + theta_scan) +
@@ -366,7 +366,7 @@ private:
 
               const auto px = x_scan + d * tan(beta);
               if (px > arena_x_length_ / 2.0) {
-                wall = right;
+                wall = WallState::EAST;
               }
               break;
             }
