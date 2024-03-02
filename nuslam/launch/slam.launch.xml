@@ -56,10 +56,20 @@
 
     <!-- robot argument -->
     <group if="$(eval '\'$(var robot)\' == \'nusim\'')">
+        <!-- simulation node -->
         <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
             <arg name="use_rviz" value="false" />
             <arg name="use_jsp" value="false" />
         </include>
+
+        <!-- control nodes -->
+        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+
+            <remap from="joint_states" to="red/joint_states" />
+            <remap from="wheel_cmd" to="red/wheel_cmd" />
+            <remap from="sensor_data" to="red/sensor_data" />
+        </node>
 
         <node pkg="nuslam" exec="odometry" name="odometry">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
@@ -75,6 +85,7 @@
             <remap from="odom" to="blue/odom" />
         </node>
 
+        <!-- slam node -->
         <node pkg="nuslam" exec="slam" name="slam">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
 
@@ -86,14 +97,6 @@
             <remap from="joint_states" to="red/joint_states" />
             <remap from="odom" to="green/odom" />
         </node>
-
-        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
-            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-
-            <remap from="joint_states" to="red/joint_states" />
-            <remap from="wheel_cmd" to="red/wheel_cmd" />
-            <remap from="sensor_data" to="red/sensor_data" />
-        </node>
     </group>
 
     <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
@@ -104,10 +107,17 @@
         </include>
         <node pkg="numsr_turtlebot" exec="numsr_turtlebot" />
 
+        <!-- visualization -->
+        <node pkg="nusim" exec="nusim" name="nuwall">
+            <param from="$(find-pkg-share nusim)/config/$(var config_file)" />
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <param name="draw_only" value="true" />
+        </node>
+
         <!-- control nodes -->
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-            <remap from="joint_states" to="red/joint_states" />
+            <remap from="joint_states" to="blue/joint_states" />
         </node>
 
         <node pkg="nuturtle_control" exec="odometry" name="odometry">
@@ -115,7 +125,7 @@
             <param name="odom_id" value="odom" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
-            <remap from="joint_states" to="red/joint_states" />
+            <remap from="joint_states" to="blue/joint_states" />
         </node>
     </group>
 

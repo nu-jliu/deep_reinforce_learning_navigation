@@ -255,7 +255,7 @@ private:
   std::vector<PoseStamped> poses_;
 
 public:
-  /// \brief
+  /// \brief The odometry of the robot
   Odom()
   : Node("odometry"), joint_states_available_(false), index_left_(SIZE_MAX), index_right_(
       SIZE_MAX)

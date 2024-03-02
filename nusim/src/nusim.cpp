@@ -1,4 +1,3 @@
-///
 /// \file nusim.cpp
 /// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
 /// \brief This node simulates the turtlebot in a world
@@ -32,8 +31,6 @@
 /// \date 2024-01-22
 ///
 /// \copyright Copyright (c) 2024
-///
-///
 #include <chrono>
 #include <random>
 #include <limits>
@@ -45,7 +42,6 @@
 #include <std_msgs/msg/u_int64.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-// #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -54,10 +50,6 @@
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 
 #include <std_srvs/srv/empty.hpp>
-// #include "nusim/srv/teleport.hpp"
-// #include "nusim/msg/obstacle_positions.hpp"
-// #include "nusim/msg/measurement.hpp"
-// #include "nusim/msg/obstacle_measurements.hpp"
 #include "nuturtle_interfaces/srv/teleport.hpp"
 #include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
 #include "nuturtle_interfaces/msg/measurement.hpp"
@@ -82,56 +74,54 @@ using nav_msgs::msg::Path;
 using sensor_msgs::msg::LaserScan;
 using nuturtlebot_msgs::msg::WheelCommands;
 using nuturtlebot_msgs::msg::SensorData;
-// using geometry_msgs::msg::Point;
-// using nusim::msg::ObstaclePositions;
-// using nusim::msg::Measurement;
-// using nusim::msg::ObstacleMeasurements;
 using nuturtle_interfaces::msg::Measurement;
 using nuturtle_interfaces::msg::ObstacleMeasurements;
 
 /// services
 using std_srvs::srv::Empty;
-// using nusim::srv::Teleport;
 using nuturtle_interfaces::srv::Teleport;
 
-/// @brief The state of the wall
+/// \brief The state of the wall
 enum WallState
 {
-  /// @brief The up side of the wall
+  /// \brief The up side of the wall
   NORTH,
 
-  /// @brief The down side of the wall
+  /// \brief The down side of the wall
   SOUTH,
 
-  /// @brief The left side of the wall
+  /// \brief The left side of the wall
   WEST,
 
-  /// @brief The right side of the wall
+  /// \brief The right side of the wall
   EAST
 };
 
-/// @brief Simulate the turtlebot in a rviz world.
+/// \brief Simulate the turtlebot in a rviz world.
 class NuSim : public Node
 {
 private:
   /// \brief Timer callback funcrion of the nusim node, calls at every cycle
   void timer_callback_()
   {
-    UInt64 msg_timestep;
-    msg_timestep.data = timestep_++;
-    pub_timestep_->publish(msg_timestep);
+    if (!draw_only_) {
+      UInt64 msg_timestep;
+      msg_timestep.data = timestep_++;
+      pub_timestep_->publish(msg_timestep);
 
-    if (++count_ >= static_cast<int>(0.2 / period_)) {
-      generate_sensor_obs_pos_();
-      publish_laser_scan_();
-      publish_obstacle_markers_();
-      count_ = 0;
+      if (++count_ >= static_cast<int>(0.2 / period_)) {
+        generate_sensor_obs_pos_();
+        publish_laser_scan_();
+        // publish_obstacle_markers_();
+        publish_fake_sensor_();
+        count_ = 0;
+      }
+
+      update_turtlebot_pos_();
+      publish_sensor_data_();
+      publish_path_();
+      broadcast_tf_();
     }
-
-    update_turtlebot_pos_();
-    publish_sensor_data_();
-    publish_path_();
-    broadcast_tf_();
   }
 
   /// @brief Get the fake sensor scan data about obstacle positions
@@ -170,10 +160,6 @@ private:
     const auto phi_left_new = turtlebot_.left_wheel() + left_wheel_speed * period_;
     const auto phi_right_new = turtlebot_.right_wheel() + right_wheel_speed * period_;
 
-    // const auto ita_left = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
-    //   slip_fraction_ - slip_fraction_;
-    // const auto ita_right = static_cast<double>(rand()) / static_cast<double>(RAND_MAX) * 2.0 *
-    //   slip_fraction_ - slip_fraction_;
     const auto ita_left = distribution_slip_(generator_);
     const auto ita_right = distribution_slip_(generator_);
 
@@ -236,6 +222,7 @@ private:
     tf_broadcaster_->sendTransform(tf);
   }
 
+  /// \brief publish lidar data on laser scan message
   void publish_laser_scan_()
   {
     LaserScan msg;
@@ -248,10 +235,6 @@ private:
 
     msg.range_max = lidar_range_max_;
     msg.range_min = lidar_range_min_;
-
-
-    // msg.time_increment = 0.2;
-    // msg.scan_time = 0.2;
 
     WallState wall = WallState::EAST;
 
@@ -382,7 +365,7 @@ private:
     }
 
     pub_laser_scan_->publish(msg);
-    // RCLCPP_INFO(get_logger(), "laser published");
+    RCLCPP_DEBUG_STREAM(get_logger(), "laser published");
   }
 
   /// @brief publish a path message that displays the of the robot on rviz
@@ -514,25 +497,13 @@ private:
   void publish_obstacle_markers_()
   {
     MarkerArray m_array_obs;
-    MarkerArray m_array_sensor;
-    ObstacleMeasurements m_measurements;
-
-    turtlelib::Transform2D Tsb(turtlelib::Vector2D{turtle_x_, turtle_y_}, turtle_theta_);
-    turtlelib::Transform2D Tbs = Tsb.inv();
 
     for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
       const auto x_pos = obstacles_x_.at(i);
       const auto y_pos = obstacles_y_.at(i);
-      const auto dist = sqrt(pow(x_pos - turtle_x_, 2.0) + pow(y_pos - turtle_y_, 2.0));
-
-      const auto ps = obstacle_pos_sensor_.at(i);
-      const auto pb = Tbs(ps);
 
       Marker m_obs;
-      Marker m_sensor;
-      Measurement m_measure;
 
-      /// Obstacle marker
       m_obs.header.stamp = get_clock()->now();
       m_obs.header.frame_id = world_frame_id_;
       m_obs.id = i + 10;
@@ -548,6 +519,33 @@ private:
       m_obs.color.g = 0.0;
       m_obs.color.b = 0.0;
       m_obs.color.a = 1.0;
+
+      m_array_obs.markers.push_back(m_obs);
+    }
+
+    pub_obstacle_markers_->publish(m_array_obs);
+  }
+
+  void publish_fake_sensor_()
+  {
+
+    // MarkerArray m_array_obs;
+    MarkerArray m_array_sensor;
+    ObstacleMeasurements m_measurements;
+
+    turtlelib::Transform2D Tsb(turtlelib::Vector2D{turtle_x_, turtle_y_}, turtle_theta_);
+    turtlelib::Transform2D Tbs = Tsb.inv();
+
+    for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
+      const auto x_pos = obstacles_x_.at(i);
+      const auto y_pos = obstacles_y_.at(i);
+      const auto dist = sqrt(pow(x_pos - turtle_x_, 2.0) + pow(y_pos - turtle_y_, 2.0));
+
+      const auto ps = obstacle_pos_sensor_.at(i);
+      const auto pb = Tbs(ps);
+
+      Marker m_sensor;
+      Measurement m_measure;
 
       /// Sensor marker
       m_sensor.header.stamp = get_clock()->now();
@@ -579,13 +577,10 @@ private:
         m_measure.uid = i;
       }
 
-      m_measurements.measurements.push_back(m_measure);
-
-      m_array_obs.markers.push_back(m_obs);
       m_array_sensor.markers.push_back(m_sensor);
+      m_measurements.measurements.push_back(m_measure);
     }
 
-    pub_obstacle_markers_->publish(m_array_obs);
     pub_fake_sensor_markers_->publish(m_array_sensor);
     pub_obstacles_->publish(m_measurements);
   }
@@ -688,6 +683,7 @@ private:
   double lidar_range_max_;
   double lidar_accuracy_;
   double lidar_resolution_;
+  bool draw_only_;
 
   /// other attributes
   int count_;
@@ -746,6 +742,7 @@ public:
     ParameterDescriptor lidar_range_max_des;
     ParameterDescriptor lidar_accuracy_des;
     ParameterDescriptor lidar_resolution_des;
+    ParameterDescriptor draw_only_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -769,6 +766,7 @@ public:
     lidar_range_max_des.description = "The maximum range of the lidar";
     lidar_accuracy_des.description = "The accuracy of the lidar";
     lidar_resolution_des.description = "The angular resolution of the lidar";
+    draw_only_des.description = "Whether this is behave as draw only";
 
     /// declare parameters
     declare_parameter<double>("rate", 100.0, rate_des);
@@ -802,6 +800,7 @@ public:
     declare_parameter<double>("lidar_range_max", 3.5, lidar_range_max_des);
     declare_parameter<double>("lidar_accuracy", 0.015, lidar_accuracy_des);
     declare_parameter<double>("lidar_resolution", 0.02, lidar_resolution_des);
+    declare_parameter<bool>("draw_only", false, draw_only_des);
 
     /// get parameter values
     rate_ = get_parameter("rate").as_double();
@@ -827,6 +826,7 @@ public:
     lidar_range_max_ = get_parameter("lidar_range_max").as_double();
     lidar_accuracy_ = get_parameter("lidar_accuracy").as_double();
     lidar_resolution_ = get_parameter("lidar_resolution").as_double();
+    draw_only_ = get_parameter("draw_only").as_bool();
 
 
     /// check for x y length
@@ -839,58 +839,59 @@ public:
       exit(EXIT_FAILURE);
     }
 
-    /// initialize attributes
-    period_ = 1.0 / rate_;
-    distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
-    distribution_slip_ = std::uniform_real_distribution<double>(-slip_fraction_, slip_fraction_);
-    distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
-    distribution_laser_ = std::normal_distribution<double>(0.0, lidar_accuracy_ / 6.0);
-    reset_turtle_pose_();
+    if (!draw_only_) {
+      /// initialize attributes
+      period_ = 1.0 / rate_;
+      distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
+      distribution_slip_ = std::uniform_real_distribution<double>(-slip_fraction_, slip_fraction_);
+      distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
+      distribution_laser_ = std::normal_distribution<double>(0.0, lidar_accuracy_ / 6.0);
+      reset_turtle_pose_();
 
-    // set marker qos policy
-    marker_qos_.transient_local();
-    // laser_qos_.best_effort();
-    laser_qos_.transient_local();
+      // set marker qos policy
+      marker_qos_.transient_local();
+      laser_qos_.transient_local();
 
-    /// timer
-    timer_ = create_wall_timer(
-      std::chrono::duration<long double>{period_},
-      std::bind(&NuSim::timer_callback_, this));
+      /// timer
+      timer_ = create_wall_timer(
+        std::chrono::duration<long double>{period_},
+        std::bind(&NuSim::timer_callback_, this));
 
-    /// services
-    srv_reset_ = create_service<Empty>(
-      "~/reset",
-      std::bind(
-        &NuSim::srv_reset_callback_, this, std::placeholders::_1,
-        std::placeholders::_2));
-    srv_teleport_ =
-      create_service<Teleport>(
-      "~/teleport",
-      std::bind(
-        &NuSim::srv_teleport_callback_, this, std::placeholders::_1,
-        std::placeholders::_2));
+      /// services
+      srv_reset_ = create_service<Empty>(
+        "~/reset",
+        std::bind(
+          &NuSim::srv_reset_callback_, this, std::placeholders::_1,
+          std::placeholders::_2));
+      srv_teleport_ =
+        create_service<Teleport>(
+        "~/teleport",
+        std::bind(
+          &NuSim::srv_teleport_callback_, this, std::placeholders::_1,
+          std::placeholders::_2));
 
-    // subscribers
-    sub_wheel_cmd_ =
-      create_subscription<WheelCommands>(
-      "red/wheel_cmd", 10,
-      std::bind(&NuSim::sub_wheel_cmd_callback_, this, std::placeholders::_1));
+      // subscribers
+      sub_wheel_cmd_ =
+        create_subscription<WheelCommands>(
+        "red/wheel_cmd", 10,
+        std::bind(&NuSim::sub_wheel_cmd_callback_, this, std::placeholders::_1));
 
-    // publishers
-    pub_timestep_ = create_publisher<UInt64>("~/timestep", 10);
-    pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
+      // publishers
+      pub_timestep_ = create_publisher<UInt64>("~/timestep", 10);
+      pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
+      pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
+      pub_path_ = create_publisher<Path>("~/path", 10);
+      pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
+      pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);
+    }
     pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
     pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
-    pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
-    pub_path_ = create_publisher<Path>("~/path", 10);
-    pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
-    pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
 
     publish_wall_markers_();
-    // publish_obstacle_markers_();
+    publish_obstacle_markers_();
   }
 };
 

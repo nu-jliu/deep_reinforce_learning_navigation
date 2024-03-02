@@ -69,7 +69,7 @@ using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
 using nuturtle_interfaces::srv::InitialPose;
 
-/// \brief
+/// \brief The slam algorithm based on Extended Kalman Filter
 class Slam : public Node
 {
 private:

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
+        <arg name="port" value="/dev/ttyUSB0" />
+        <arg name="frame_id" value="laser" />
+    </include>
+    <node pkg="numsr_turtlebot" exec="numsr_turtlebot" />
+</launch>
