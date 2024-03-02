@@ -58,6 +58,8 @@
 # Task V. Visualization
  - V.1 Simulatino Standalone
  - V.2 Simulation with Odometry
+ - V.3 Real Robot with Odometry
+ - V.4 Simulated Robot with SLAM
 
 # Task L. SLAM (Simutanously Localization and Mapping)
  - L.1 Main SLAM Results
