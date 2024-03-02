@@ -45,9 +45,7 @@ double find_distance(double alpha, Obstacle obs)
   if (almost_equal(alpha_prime, 0.0)) {
     return magnitude(v_AO) - obs.r;
   } else {
-    // alpha = alpha < 0 ? alpha + 2.0 * turtlelib::PI : alpha;
     const auto beta = PI - asin(a / obs.r * sin(alpha_prime));
-    std::cout << "beta = " << beta << std::endl;
     const auto gamma = PI - alpha_prime - beta;
 
     return obs.r * sin(gamma) / sin(alpha_prime);
