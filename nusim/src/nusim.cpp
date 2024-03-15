@@ -104,6 +104,8 @@ private:
   /// \brief Timer callback funcrion of the nusim node, calls at every cycle
   void timer_callback_()
   {
+    current_time_ = get_clock()->now();
+
     if (!draw_only_) {
       UInt64 msg_timestep;
       msg_timestep.data = timestep_++;
@@ -206,7 +208,7 @@ private:
   void broadcast_tf_()
   {
     TransformStamped tf;
-    tf.header.stamp = get_clock()->now();
+    tf.header.stamp = current_time_;
     tf.header.frame_id = world_frame_id_;
     tf.child_frame_id = body_frame_id_;
 
@@ -226,7 +228,7 @@ private:
   void publish_laser_scan_()
   {
     LaserScan msg;
-    msg.header.stamp = get_clock()->now();
+    msg.header.stamp = current_time_;
     msg.header.frame_id = scan_frame_id_;
 
     msg.angle_min = -turtlelib::PI;
@@ -373,7 +375,7 @@ private:
   {
     PoseStamped pose_curr;
 
-    pose_curr.header.stamp = this->get_clock()->now();
+    pose_curr.header.stamp = current_time_;
     pose_curr.header.frame_id = world_frame_id_;
 
     pose_curr.pose.position.x = turtle_x_;
@@ -389,7 +391,7 @@ private:
 
     Path msg_path;
 
-    msg_path.header.stamp = this->get_clock()->now();
+    msg_path.header.stamp = current_time_;
     msg_path.header.frame_id = world_frame_id_;
     msg_path.poses = poses_;
 
@@ -401,7 +403,7 @@ private:
   {
     SensorData msg_sensor;
 
-    msg_sensor.stamp = get_clock()->now();
+    msg_sensor.stamp = current_time_;
     msg_sensor.left_encoder = (int32_t) (turtlebot_.left_wheel() * encoder_ticks_per_rad_);
     msg_sensor.right_encoder = (int32_t) (turtlebot_.right_wheel() * encoder_ticks_per_rad_);
 
@@ -418,7 +420,7 @@ private:
     MarkerArray m_array;
 
     /// first wall
-    m1.header.stamp = get_clock()->now();
+    m1.header.stamp = current_time_;
     m1.header.frame_id = world_frame_id_;
     m1.id = 1;
     m1.type = Marker::CUBE;
@@ -435,7 +437,7 @@ private:
     m1.color.a = 1.0;
 
     /// second wall
-    m2.header.stamp = get_clock()->now();
+    m2.header.stamp = current_time_;
     m2.header.frame_id = world_frame_id_;
     m2.id = 2;
     m2.type = Marker::CUBE;
@@ -452,7 +454,7 @@ private:
     m2.color.a = 1.0;
 
     /// third wall
-    m3.header.stamp = get_clock()->now();
+    m3.header.stamp = current_time_;
     m3.header.frame_id = world_frame_id_;
     m3.id = 3;
     m3.type = Marker::CUBE;
@@ -469,7 +471,7 @@ private:
     m3.color.a = 1.0;
 
     /// fourth wall
-    m4.header.stamp = get_clock()->now();
+    m4.header.stamp = current_time_;
     m4.header.frame_id = world_frame_id_;
     m4.id = 4;
     m4.type = Marker::CUBE;
@@ -504,7 +506,7 @@ private:
 
       Marker m_obs;
 
-      m_obs.header.stamp = get_clock()->now();
+      m_obs.header.stamp = current_time_;
       m_obs.header.frame_id = world_frame_id_;
       m_obs.id = i + 10;
       m_obs.type = Marker::CYLINDER;
@@ -548,7 +550,7 @@ private:
       Measurement m_measure;
 
       /// Sensor marker
-      m_sensor.header.stamp = get_clock()->now();
+      m_sensor.header.stamp = current_time_;
       m_sensor.header.frame_id = body_frame_id_;
       m_sensor.id = i + 20;
       m_sensor.type = Marker::CYLINDER;
@@ -655,6 +657,9 @@ private:
   /// qos profile
   rclcpp::QoS marker_qos_;
   rclcpp::QoS laser_qos_;
+
+  /// Time stamp
+  rclcpp::Time current_time_;
 
   /// subscribed messages
   WheelCommands wheel_cmd_;

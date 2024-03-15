@@ -191,31 +191,36 @@ private:
         uid
       };
 
-      const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);  // + dist_sensor_(generator_);
-      RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      try {
+        const arma::vec z_hat = turtle_slam_.get_h_vec(est_body); // + dist_sensor_(generator_);
+        RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
 
-      const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, uid);
-      RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+        const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, uid);
+        RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
 
-      const arma::mat K_mat = Sigma_curr * H_mat.t() *
-        (H_mat * Sigma_curr * H_mat.t() + sensor_noice_).i();
-      RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
+        const arma::mat K_mat = Sigma_curr * H_mat.t() *
+          (H_mat * Sigma_curr * H_mat.t() + sensor_noice_).i();
+        RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
 
-      arma::vec dz_vec = z_vec - z_hat;
-      dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
-      RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+        arma::vec dz_vec = z_vec - z_hat;
+        dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
+        RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
 
-      arma::vec update = K_mat * dz_vec;
-      update.at(0) = turtlelib::normalize_angle(update.at(0));
-      RCLCPP_DEBUG_STREAM(get_logger(), "Update: " << std::endl << update);
+        arma::vec update = K_mat * dz_vec;
+        update.at(0) = turtlelib::normalize_angle(update.at(0));
+        RCLCPP_DEBUG_STREAM(get_logger(), "Update: " << std::endl << update);
 
-      const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
+        const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
-      state_curr += update;
-      state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
-      Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
-      RCLCPP_DEBUG_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
-      turtle_slam_.update_landmark_pos(state_curr);
+        state_curr += update;
+        state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
+        Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
+        RCLCPP_DEBUG_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
+        turtle_slam_.update_landmark_pos(state_curr);
+      } catch (std::runtime_error) {
+        RCLCPP_ERROR_STREAM(get_logger(), "ERROR");
+        continue;
+      }
     }
 
     const auto theta_new = state_curr.at(0);
