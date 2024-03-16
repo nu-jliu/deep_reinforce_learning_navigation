@@ -504,6 +504,7 @@ public:
     ParameterDescriptor track_width_des;
     ParameterDescriptor input_noice_des;
     ParameterDescriptor sensor_noice_des;
+    ParameterDescriptor marker_radius_des;
 
     body_id_des.description = "The name of the body frame of the robot.";
     odom_id_des.description = "The name of the odometry frame.";
@@ -514,6 +515,7 @@ public:
     track_width_des.description = "Track width of the turtlebot.";
     input_noice_des.description = "Input noice of the robot";
     sensor_noice_des.description = "Sensor noice of the robot";
+    marker_radius_des.description = "The radius of the marker";
 
     declare_parameter<std::string>("body_id", "", body_id_des);
     declare_parameter<std::string>("odom_id", "odom", odom_id_des);
@@ -524,6 +526,7 @@ public:
     declare_parameter<double>("track_width", 0.16, track_width_des);
     declare_parameter<double>("input_noice", 0.1, input_noice_des);
     declare_parameter<double>("basic_sensor_variance", 0.1, sensor_noice_des);
+    declare_parameter<double>("marker_radius", 0.05, marker_radius_des);
 
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();

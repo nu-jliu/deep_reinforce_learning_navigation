@@ -1,6 +1,8 @@
 #include <armadillo>
 #include <iostream>
 #include <limits>
+#include <vector>
+#include <iterator>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -88,28 +90,39 @@ private:
         pre_data.y = point.y;
         // pre_index = i;
         RCLCPP_DEBUG_STREAM(get_logger(), i << ": " << point << " dist: " << dist);
-      } else if (data_points.size() >= 4) {
-        RCLCPP_DEBUG_STREAM(get_logger(), data_points.size() << " " << i);
-        // for (size_t j = 0; j < data_points.size(); ++i) {
-        //   RCLCPP_DEBUG_STREAM(get_logger(), data_points.at(j));
-        // }
-        detect_flag = true;
-        pre_data.x = 1e10;
-        pre_data.y = 1e10;
       } else {
-        on_start = false;
-        if (data_points.size() > 0) {
-          RCLCPP_WARN_STREAM(
-            get_logger(),
-            "Ignoring data with size of " << data_points.size() << " at index of " << i);
+        if (on_start) {
+          on_start = false;
+        } else if (i == data.size() - 1) {
+          data_points.insert(
+            data_points.end(),
+            std::make_move_iterator(start_points.begin()),
+            std::make_move_iterator(start_points.end())
+          );
+
+          if (data_points.size() >= 4) {
+            detect_flag = true;
+          }
+        } else if (data_points.size() >= 4) {
+          RCLCPP_DEBUG_STREAM(get_logger(), data_points.size() << " " << i);
+          // for (size_t j = 0; j < data_points.size(); ++i) {
+          //   RCLCPP_DEBUG_STREAM(get_logger(), data_points.at(j));
+          // }
+          detect_flag = true;
+          pre_data.x = 1e10;
+          pre_data.y = 1e10;
+        } else {
+          on_start = false;
+          if (data_points.size() > 0) {
+            RCLCPP_WARN_STREAM(
+              get_logger(),
+              "Ignoring data with size of " << data_points.size() << " at index of " << i);
+          }
+          data_points.clear();
+          detect_flag = false;
         }
-        data_points.clear();
-        detect_flag = false;
       }
 
-      if (i == data_points.size() - 1 && data_points.size() > 0) {
-
-      }
 
       if (detect_flag) {
         RCLCPP_DEBUG_STREAM(get_logger(), "Start detecting " << data_points.size() << " ...");
