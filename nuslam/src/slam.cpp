@@ -45,6 +45,8 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include "nuturtle_interfaces/msg/obstacle_measurements.hpp"
+#include "nuturtle_interfaces/msg/circle.hpp"
+#include "nuturtle_interfaces/msg/circles.hpp"
 
 #include "nuturtle_interfaces/srv/initial_pose.hpp"
 
@@ -64,9 +66,12 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
-using nuturtle_interfaces::msg::ObstacleMeasurements;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
+using nuturtle_interfaces::msg::ObstacleMeasurements;
+using nuturtle_interfaces::msg::Circle;
+using nuturtle_interfaces::msg::Circles;
+
 using nuturtle_interfaces::srv::InitialPose;
 
 /// \brief The slam algorithm based on Extended Kalman Filter
@@ -199,7 +204,7 @@ private:
         RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
 
         const arma::mat K_mat = Sigma_curr * H_mat.t() *
-          (H_mat * Sigma_curr * H_mat.t() + sensor_noice_).i();
+          (H_mat * Sigma_curr * H_mat.t() + (sensor_noice_ * arma::mat(2, 2, arma::fill::eye))).i();
         RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
 
         arma::vec dz_vec = z_vec - z_hat;
@@ -217,7 +222,7 @@ private:
         Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
         RCLCPP_DEBUG_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
         turtle_slam_.update_landmark_pos(state_curr);
-      } catch (std::runtime_error) {
+      } catch (std::runtime_error const &) {
         RCLCPP_ERROR_STREAM(get_logger(), "ERROR");
         continue;
       }

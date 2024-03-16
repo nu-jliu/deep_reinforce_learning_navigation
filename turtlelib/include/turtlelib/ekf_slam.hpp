@@ -8,6 +8,7 @@
 #ifndef EKF_SLAM_HPP_INCLUDE_GUARD
 #define EKF_SLAM_HPP_INCLUDE_GUARD
 
+#include <iostream>
 #include <armadillo>
 #include "turtlelib/se2d.hpp"
 
@@ -26,6 +27,8 @@ struct RobotState
   double y;
 };
 
+std::ostream & operator<<(std::ostream & os, const RobotState & rs);
+
 /// \brief The measurement of a obstacle
 struct Measurement
 {
@@ -38,6 +41,8 @@ struct Measurement
   /// \brief The id of the obstacle
   int uid;
 };
+
+std::ostream & operator<<(std::ostream & os, const Measurement & ms);
 
 /// \brief The EKF class for Extented Kalman Filter calculations
 class EKF

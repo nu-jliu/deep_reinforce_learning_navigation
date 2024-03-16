@@ -18,6 +18,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     "srv/Teleport.srv"
     "msg/Measurement.msg"
     "msg/ObstacleMeasurements.msg"
+    "msg/Circle.msg"
+    "msg/Circles.msg"
 )
 
 if(BUILD_TESTING)

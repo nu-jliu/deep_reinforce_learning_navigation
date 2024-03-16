@@ -51,6 +51,7 @@ set(LANDMARK_DEPENDENCIES
     rcl_interfaces
     sensor_msgs
     visualization_msgs
+    nuturtle_interfaces
 )
 
 add_executable(slam src/slam.cpp)

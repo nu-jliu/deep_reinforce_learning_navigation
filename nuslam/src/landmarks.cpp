@@ -1,3 +1,4 @@
+#include <armadillo>
 #include <iostream>
 #include <limits>
 
@@ -7,19 +8,25 @@
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+#include "nuturtle_interfaces/msg/circle.hpp"
+#include "nuturtle_interfaces/msg/circles.hpp"
 
 #include "turtlelib/detect.hpp"
-#include <armadillo>
+#include "turtlelib/ekf_slam.hpp"
 
 using rcl_interfaces::msg::ParameterDescriptor;
 using sensor_msgs::msg::LaserScan;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
+using nuturtle_interfaces::msg::Circle;
+using nuturtle_interfaces::msg::Circles;
 
 
 class Landmark : public rclcpp::Node
 {
 private:
+  /// @brief
+  /// @param msg
   void sub_scan_callback_(LaserScan::SharedPtr msg)
   {
     scan_frame_id_ = msg->header.frame_id;
@@ -30,7 +37,10 @@ private:
     const auto range_max = msg->range_max;
 
     bool detect_flag = false;
+    bool on_start = true;
+
     std::vector<turtlelib::Point2D> data_points;
+    std::vector<turtlelib::Point2D> start_points;
     data_points.clear();
     // std::vector<turtlelib::Point2D> data_detect;
 
@@ -58,8 +68,11 @@ private:
           continue;
         }
 
-
-        data_points.push_back(pre_data);
+        if (on_start) {
+          start_points.push_back(pre_data);
+        } else {
+          data_points.push_back(pre_data);
+        }
         const auto dist = sqrt(pow(pre_data.x - point.x, 2.0) + pow(pre_data.y - point.y, 2.0));
 
         if (dist >= 0.5) {
@@ -84,11 +97,18 @@ private:
         pre_data.x = 1e10;
         pre_data.y = 1e10;
       } else {
+        on_start = false;
         if (data_points.size() > 0) {
-          RCLCPP_DEBUG_STREAM(get_logger(), data_points.size() << " " << i);
+          RCLCPP_WARN_STREAM(
+            get_logger(),
+            "Ignoring data with size of " << data_points.size() << " at index of " << i);
         }
         data_points.clear();
         detect_flag = false;
+      }
+
+      if (i == data_points.size() - 1 && data_points.size() > 0) {
+
       }
 
       if (detect_flag) {
@@ -166,10 +186,13 @@ private:
 
     if (landmarks_.size() > 0) {
       publish_markers_(msg->header.stamp);
+      publish_measurements_();
       landmarks_.clear();
     }
   }
 
+  /// @brief
+  /// @param time_stamp
   void publish_markers_(rclcpp::Time time_stamp)
   {
     MarkerArray msg_markers;
@@ -198,11 +221,36 @@ private:
     pub_detect_marker_->publish(msg_markers);
   }
 
+  void publish_measurements_()
+  {
+    Circles msg_circles;
+
+    for (size_t i = 0; i < landmarks_.size(); ++i) {
+      turtlelib::Landmark landmark = landmarks_.at(i);
+
+      const auto dx = landmark.x;
+      const auto dy = landmark.y;
+
+      const turtlelib::Point2D ps{dx, dy};
+      const turtlelib::Point2D pb = Tbs_(ps);
+
+      Circle msg_circle;
+      msg_circle.x = pb.x;
+      msg_circle.y = pb.y;
+      msg_circle.r = landmark.r;
+
+      msg_circles.circles.push_back(msg_circle);
+    }
+
+    pub_detect_circle_->publish(msg_circles);
+  }
+
   rclcpp::QoS marker_qos_;
 
   rclcpp::Subscription<LaserScan>::SharedPtr sub_scan_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_detect_marker_;
+  rclcpp::Publisher<Circles>::SharedPtr pub_detect_circle_;
 
   std::string scan_frame_id_;
 
@@ -210,11 +258,21 @@ private:
   std::vector<turtlelib::Landmark> landmarks_;
   double marker_radius_;
   double marker_height_;
+  turtlelib::Transform2D Tbs_;
 
 public:
   Landmark()
-  : rclcpp::Node("landmark"), marker_qos_(10), marker_radius_(0.038), marker_height_(0.25)
+  : rclcpp::Node("landmark"), marker_qos_(10), marker_radius_(0.038), marker_height_(0.25),
+    Tbs_({-0.032, 0.0}, 0.0)
   {
+    ParameterDescriptor scan_frame_id_des;
+
+    scan_frame_id_des.description = "Frame id of the scan frame";
+
+    declare_parameter("scan_frame_id", "scan", scan_frame_id_des);
+
+    scan_frame_id_ = get_parameter("scan_frame_id").as_string();
+
     marker_qos_.transient_local();
 
     sub_scan_ =
@@ -223,6 +281,7 @@ public:
       std::bind(&Landmark::sub_scan_callback_, this, std::placeholders::_1));
 
     pub_detect_marker_ = create_publisher<MarkerArray>("~/detect", marker_qos_);
+    pub_detect_circle_ = create_publisher<Circles>("detect/circles", 10);
   }
 };
 

@@ -306,7 +306,7 @@ Visualization Manager:
           Value: true
         Value: true
       Enabled: true
-      Keep: 10
+      Keep: 5
       Name: Corrected Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -345,7 +345,7 @@ Visualization Manager:
           Value: true
         Value: true
       Enabled: true
-      Keep: 100
+      Keep: 5
       Name: Error Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -556,8 +556,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.8221210241317749
-        Min Value: -0.5152734518051147
+        Max Value: 0.8114662170410156
+        Min Value: -0.5091812610626221
         Value: true
       Axis: X
       Channel Name: intensity
@@ -633,7 +633,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.588851928710938
+      Distance: 1.4656641483306885
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -648,10 +648,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8753991723060608
+      Pitch: 0.13039973378181458
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.3435819149017334
+      Yaw: 0.7304078340530396
     Saved: ~
 Window Geometry:
   Displays:

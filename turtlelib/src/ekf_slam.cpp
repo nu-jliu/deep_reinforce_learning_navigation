@@ -12,6 +12,24 @@
 
 namespace turtlelib
 {
+std::ostream & operator<<(std::ostream & os, const RobotState & rs)
+{
+  os << "x: " << rs.x;
+  os << " y: " << rs.y;
+  os << " theta: " << rs.theta;
+
+  return os;
+}
+
+std::ostream & operator<<(std::ostream & os, const Measurement & ms)
+{
+  os << "x: " << ms.x;
+  os << " y: " << ms.y;
+  os << " theta: " << ms.uid;
+
+  return os;
+}
+
 EKF::EKF()
 {
   EKF(20);

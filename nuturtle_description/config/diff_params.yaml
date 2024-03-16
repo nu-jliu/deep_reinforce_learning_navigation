@@ -9,4 +9,5 @@
     lidar_rangle_min: 0.12
     lidar_rangle_max: 3.5
     lidar_accuracy: 0.015
+    # lidar_accuracy: 0.0
     lidar_resolution: 0.01745329251
