@@ -7,6 +7,8 @@
         <arg name="robot" value="$(var robot)" />
         <arg name="cmd_src" value="$(var cmd_src)" />
         <arg name="use_rviz" value="false" />
+        <arg name="use_scan" value="true" />
+
     </include>
 
     <node pkg="nuslam" exec="landmarks" name="landmarks" />

@@ -721,7 +721,7 @@ public:
   : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
     wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
     world_frame_id_("nusim/world"), body_frame_id_("red/base_footprint"),
-    scan_frame_id_("green/base_scan")
+    scan_frame_id_("red/base_scan")
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
