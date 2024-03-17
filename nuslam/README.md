@@ -26,4 +26,4 @@ ros2 launch nuslam landmarks.launch.xml cmd_src:=teleop
 
 ### Video Demo
 
-<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/8e766ea4-24a4-46eb-9b77-a019af0710dd" controls></video>
+<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/1090f3eb-7a68-45b1-9b95-fd0f915f2d55" controls></video>

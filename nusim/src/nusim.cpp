@@ -262,8 +262,8 @@ private:
     const auto y_scan = T_ws.translation().y;
     const auto theta_scan = T_ws.rotation();
 
-    for (size_t i = 0; i < obstacle_pos_sensor_.size(); ++i) {
-      const turtlelib::Point2D pw{obstacle_pos_sensor_.at(i).x, obstacle_pos_sensor_.at(i).y};
+    for (size_t i = 0; i < obstacles_x_.size(); ++i) {
+      const turtlelib::Point2D pw{obstacles_x_.at(i), obstacles_y_.at(i)};
       const turtlelib::Point2D ps = T_sw(pw);
       obstacles.push_back({ps.x, ps.y, obstacle_radius_});
       RCLCPP_DEBUG_STREAM(get_logger(), "Ps: " << ps);

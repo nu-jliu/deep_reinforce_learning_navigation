@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Grid1
         - /Walls1/Topic1
         - /Obstacles1/Topic1
         - /Corrected Odometry1/Shape1
@@ -48,7 +49,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 20
       Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 1
@@ -241,41 +242,41 @@ Visualization Manager:
         Value: /nusim/walls
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: Obstacles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 10
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /nusim/obstacles
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: Sensor
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /fake_sensor
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: Map
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /slam/map
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Detect
@@ -305,7 +306,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 5
       Name: Corrected Odometry
       Position Tolerance: 0.10000000149011612
@@ -326,7 +327,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /green/odom
-      Value: true
+      Value: false
     - Angle Tolerance: 0.10000000149011612
       Class: rviz_default_plugins/Odometry
       Covariance:
@@ -344,7 +345,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 5
       Name: Error Odometry
       Position Tolerance: 0.10000000149011612
@@ -365,7 +366,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /blue/odom
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/TF
       Enabled: true
       Frame Timeout: 15
@@ -556,8 +557,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.8114662170410156
-        Min Value: -0.5091812610626221
+        Max Value: 0.81563800573349
+        Min Value: -0.5081079602241516
         Value: true
       Axis: X
       Channel Name: intensity
@@ -633,7 +634,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.4656641483306885
+      Distance: 2.621209144592285
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -648,10 +649,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.13039973378181458
+      Pitch: 1.0003995895385742
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.7304078340530396
+      Yaw: 0.8154077529907227
     Saved: ~
 Window Geometry:
   Displays:

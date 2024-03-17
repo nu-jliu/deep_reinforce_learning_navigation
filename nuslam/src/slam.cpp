@@ -353,104 +353,6 @@ private:
     turtle_slam_.update_state(x_new, y_new, theta_new);
   }
 
-  int get_landmark_id(Circle circle)
-  {
-    arma::vec state_vec = turtle_slam_.get_state_vec();
-    arma::mat Sigma_mat = turtle_slam_.get_covariance_mat();
-
-    const turtlelib::Transform2D Tob({
-      turtlebot_.config_x(),
-      turtlebot_.config_y()
-    },
-      turtlebot_.config_theta());
-    const turtlelib::Transform2D Tmb = Tmo_ * Tob;
-    const turtlelib::Transform2D Tbm = Tmb.inv();
-
-    // const auto theta_est = Tmb.rotation();
-    const auto x_est = Tmb.translation().x;
-    const auto y_est = Tmb.translation().y;
-
-    // for (size_t i = 0; i < msg->circles.size(); ++i) {
-    double d_star = std::numeric_limits<double>::max();
-    int uid = std::numeric_limits<int>::max();
-
-    // const Circle circle = msg->circles.at(i);
-
-    RCLCPP_DEBUG_STREAM(get_logger(), "Got circle: x=" << circle.x << ", y=" << circle.y);
-
-    const turtlelib::Point2D pb{circle.x, circle.y};
-    const turtlelib::Point2D pm = Tmb(pb);
-
-    const arma::vec z_vec = turtle_slam_.get_h_vec({circle.x, circle.y, -1});
-    RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
-
-    const turtlelib::Landmark landmark{pm.x, pm.y, circle.r};
-
-    state_vec.at(3 + 2 * landmarks_seen_) = landmark.x;
-    state_vec.at(3 + 2 * landmarks_seen_ + 1) = landmark.y;
-
-    RCLCPP_DEBUG_STREAM(get_logger(), "Get measurement: " << pm);
-
-    for (int j = 0; j < landmarks_seen_ + 1; ++j) {
-      const turtlelib::Point2D pm_land{
-        state_vec.at(3 + 2 * j),
-        state_vec.at(3 + 2 * j + 1)
-      };
-      const turtlelib::Point2D pb_land = Tbm(pm_land);
-      RCLCPP_DEBUG_STREAM(get_logger(), "Landmark position: " << pb_land << " " << pm_land);
-
-      const turtlelib::Measurement est_body{
-        pb_land.x,
-        pb_land.y,
-        -1
-      };
-      const turtlelib::Measurement est_world{
-        state_vec.at(3 + 2 * j) - x_est,
-        state_vec.at(3 + 2 * j + 1) - y_est,
-        -1
-      };
-      RCLCPP_DEBUG_STREAM(get_logger(), "Landmark Measure: " << est_world);
-
-      const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, j);
-      RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
-
-      const arma::mat R_mat = sensor_noice_ * arma::mat(2, 2, arma::fill::eye);
-      const arma::mat Psi_mat = H_mat * Sigma_mat * H_mat.t() + R_mat;
-      RCLCPP_DEBUG_STREAM(get_logger(), "Psi_mat: " << std::endl << Psi_mat);
-
-      const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);
-
-      arma::vec dz_vec = z_vec - z_hat;
-      dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
-      RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
-      RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
-      RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
-
-      const arma::vec d = dz_vec.t() * Psi_mat.t() * dz_vec;
-      RCLCPP_INFO_STREAM(get_logger(), "dk: " << std::endl << d);
-
-      double d_j = d.at(0);
-
-      if (j == landmarks_seen_) {
-        d_j = 0.1;
-      }
-
-      if (d_j < d_star) {
-        d_star = d_j;
-        uid = j;
-      }
-      // }
-
-      RCLCPP_INFO_STREAM(
-        get_logger(), "Fitted index: " << uid << " (x=" << circle.x << ", y=" << circle.y << ")");
-      // arma::mat H_mat = turtle_slam_.get_H_mat()
-    }
-
-    // if (uid == landmarks_seen_) {
-
-    return uid;
-    // }
-  }
 
   /// \brief The initial pose service callback function
   /// \param request The initial pose service request
@@ -635,6 +537,100 @@ private:
     const turtlelib::Transform2D Tbo = Tob.inv();
 
     Tmo_ = Tmb * Tbo;
+  }
+
+  int get_landmark_id(Circle circle)
+  {
+    arma::vec state_vec = turtle_slam_.get_state_vec();
+    arma::mat Sigma_mat = turtle_slam_.get_covariance_mat();
+
+    const turtlelib::Transform2D Tob({
+      turtlebot_.config_x(),
+      turtlebot_.config_y()
+    },
+      turtlebot_.config_theta());
+    const turtlelib::Transform2D Tmb = Tmo_ * Tob;
+    const turtlelib::Transform2D Tbm = Tmb.inv();
+
+    // const auto theta_est = Tmb.rotation();
+    const auto x_est = Tmb.translation().x;
+    const auto y_est = Tmb.translation().y;
+
+    // for (size_t i = 0; i < msg->circles.size(); ++i) {
+    double d_star = std::numeric_limits<double>::max();
+    int uid = std::numeric_limits<int>::max();
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "Got circle: x=" << circle.x << ", y=" << circle.y);
+
+    const turtlelib::Point2D pb{circle.x, circle.y};
+    const turtlelib::Point2D pm = Tmb(pb);
+
+    const arma::vec z_vec = turtle_slam_.get_h_vec({circle.x, circle.y, -1});
+    RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+
+    const turtlelib::Landmark landmark{pm.x, pm.y, circle.r};
+
+    state_vec.at(3 + 2 * landmarks_seen_) = landmark.x;
+    state_vec.at(3 + 2 * landmarks_seen_ + 1) = landmark.y;
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "Get measurement: " << pm);
+
+    for (int j = 0; j < landmarks_seen_ + 1; ++j) {
+      const turtlelib::Point2D pm_land{
+        state_vec.at(3 + 2 * j),
+        state_vec.at(3 + 2 * j + 1)
+      };
+      const turtlelib::Point2D pb_land = Tbm(pm_land);
+      RCLCPP_DEBUG_STREAM(get_logger(), "Landmark position: " << pb_land << " " << pm_land);
+
+      const turtlelib::Measurement est_body{
+        pb_land.x,
+        pb_land.y,
+        -1
+      };
+      const turtlelib::Measurement est_world{
+        state_vec.at(3 + 2 * j) - x_est,
+        state_vec.at(3 + 2 * j + 1) - y_est,
+        -1
+      };
+      RCLCPP_DEBUG_STREAM(get_logger(), "Landmark Measure: " << est_world);
+
+      const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, j);
+      RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+
+      const arma::mat R_mat = sensor_noice_ * arma::mat(2, 2, arma::fill::eye);
+      const arma::mat Psi_mat = H_mat * Sigma_mat * H_mat.t() + R_mat;
+      RCLCPP_DEBUG_STREAM(get_logger(), "Psi_mat: " << std::endl << Psi_mat);
+
+      const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);
+
+      arma::vec dz_vec = z_vec - z_hat;
+      dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+
+      const arma::vec d = dz_vec.t() * Psi_mat.t() * dz_vec;
+      RCLCPP_DEBUG_STREAM(get_logger(), "dk: " << std::endl << d);
+
+      double d_j = d.at(0);
+
+      if (j == landmarks_seen_) {
+        d_j = 0.1;
+      }
+
+      if (d_j < d_star) {
+        d_star = d_j;
+        uid = j;
+      }
+      // }
+
+      RCLCPP_DEBUG_STREAM(
+        get_logger(), "Fitted index: " << uid << " (x=" << circle.x << ", y=" << circle.y << ")");
+      // arma::mat H_mat = turtle_slam_.get_H_mat()
+    }
+
+    return uid;
   }
 
   /// Timer
