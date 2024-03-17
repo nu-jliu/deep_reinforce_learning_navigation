@@ -64,3 +64,8 @@
 # Task L. SLAM (Simutanously Localization and Mapping)
  - L.1 Main SLAM Results
  - L.2 SLAM in controlled environment
+ - L.3 SLAM with unknown data association
+
+ # Task S. Feature Detection
+  - S.1 Landmark Detection
+  - S.2 Testing Landmark Detection
