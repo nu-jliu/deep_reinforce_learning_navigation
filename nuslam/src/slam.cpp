@@ -52,6 +52,7 @@
 
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/ekf_slam.hpp"
+#include "turtlelib/detect.hpp"
 
 using namespace std::chrono_literals;
 
@@ -178,6 +179,8 @@ private:
 
         state_curr(3 + 2 * uid) = landmark_pos.x;
         state_curr(3 + 2 * uid + 1) = landmark_pos.y;
+
+        ++landmarks_seen_;
       }
 
       turtlelib::Point2D pm_land{landmark_pos.x, landmark_pos.y};
@@ -196,36 +199,32 @@ private:
         uid
       };
 
-      try {
-        const arma::vec z_hat = turtle_slam_.get_h_vec(est_body); // + dist_sensor_(generator_);
-        RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);   // + dist_sensor_(generator_);
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
 
-        const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, uid);
-        RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+      const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, uid);
+      RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
 
-        const arma::mat K_mat = Sigma_curr * H_mat.t() *
-          (H_mat * Sigma_curr * H_mat.t() + (sensor_noice_ * arma::mat(2, 2, arma::fill::eye))).i();
-        RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
+      const arma::mat R_mat = sensor_noice_ * arma::mat(2, 2, arma::fill::eye);
+      const arma::mat K_mat = Sigma_curr * H_mat.t() *
+        (H_mat * Sigma_curr * H_mat.t() + R_mat).i();
+      RCLCPP_DEBUG_STREAM(get_logger(), "K_mat: " << std::endl << K_mat);
 
-        arma::vec dz_vec = z_vec - z_hat;
-        dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
-        RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+      arma::vec dz_vec = z_vec - z_hat;
+      dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
+      RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
 
-        arma::vec update = K_mat * dz_vec;
-        update.at(0) = turtlelib::normalize_angle(update.at(0));
-        RCLCPP_DEBUG_STREAM(get_logger(), "Update: " << std::endl << update);
+      arma::vec update = K_mat * dz_vec;
+      update.at(0) = turtlelib::normalize_angle(update.at(0));
+      RCLCPP_DEBUG_STREAM(get_logger(), "Update: " << std::endl << update);
 
-        const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
+      const arma::mat I_mat(2 * num_obstacles_ + 3, 2 * num_obstacles_ + 3, arma::fill::eye);
 
-        state_curr += update;
-        state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
-        Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
-        RCLCPP_DEBUG_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
-        turtle_slam_.update_landmark_pos(state_curr);
-      } catch (std::runtime_error const &) {
-        RCLCPP_ERROR_STREAM(get_logger(), "ERROR");
-        continue;
-      }
+      state_curr += update;
+      state_curr.at(0) = turtlelib::normalize_angle(state_curr.at(0));
+      Sigma_curr = (I_mat - (K_mat * H_mat)) * Sigma_curr;
+      RCLCPP_DEBUG_STREAM(get_logger(), "State vec: " << std::endl << state_curr);
+      turtle_slam_.update_landmark_pos(state_curr);
     }
 
     const auto theta_new = state_curr.at(0);
@@ -238,6 +237,110 @@ private:
 
     turtle_slam_.update_covariance(Sigma_curr);
     turtle_slam_.update_state(x_new, y_new, theta_new);
+  }
+
+  void sub_detect_circles_callback_(Circles::SharedPtr msg)
+  {
+    for (size_t i = 0; i < msg->circles.size(); ++i) {
+      const int uid = get_landmark_id(msg->circles.at(i));
+      RCLCPP_INFO_STREAM(get_logger(), "uid: " << uid);
+    }
+  }
+
+  int get_landmark_id(Circle circle)
+  {
+    arma::vec state_vec = turtle_slam_.get_state_vec();
+    arma::mat Sigma_mat = turtle_slam_.get_covariance_mat();
+
+    const turtlelib::Transform2D Tob({
+      turtlebot_.config_x(),
+      turtlebot_.config_y()
+    },
+      turtlebot_.config_theta());
+    const turtlelib::Transform2D Tmb = Tmo_ * Tob;
+    const turtlelib::Transform2D Tbm = Tmb.inv();
+
+    // const auto theta_est = Tmb.rotation();
+    const auto x_est = Tmb.translation().x;
+    const auto y_est = Tmb.translation().y;
+
+    // for (size_t i = 0; i < msg->circles.size(); ++i) {
+    double d_star = std::numeric_limits<double>::max();
+    int uid = std::numeric_limits<int>::max();
+
+    // const Circle circle = msg->circles.at(i);
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "Got circle: x=" << circle.x << ", y=" << circle.y);
+
+    const turtlelib::Point2D pb{circle.x, circle.y};
+    const turtlelib::Point2D pm = Tmb(pb);
+
+    const arma::vec z_vec = turtle_slam_.get_h_vec({circle.x, circle.y, -1});
+    RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+
+    const turtlelib::Landmark landmark{pm.x, pm.y, circle.r};
+
+    state_vec.at(3 + 2 * landmarks_seen_) = landmark.x;
+    state_vec.at(3 + 2 * landmarks_seen_ + 1) = landmark.y;
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "Get measurement: " << pm);
+
+    for (int j = 0; j < landmarks_seen_ + 1; ++j) {
+      const turtlelib::Point2D pm_land{
+        state_vec.at(3 + 2 * j),
+        state_vec.at(3 + 2 * j + 1)
+      };
+      const turtlelib::Point2D pb_land = Tbm(pm_land);
+      RCLCPP_DEBUG_STREAM(get_logger(), "Landmark position: " << pb_land << " " << pm_land);
+
+      const turtlelib::Measurement est_body{
+        pb_land.x,
+        pb_land.y,
+        -1
+      };
+      const turtlelib::Measurement est_world{
+        state_vec.at(3 + 2 * j) - x_est,
+        state_vec.at(3 + 2 * j + 1) - y_est,
+        -1
+      };
+      RCLCPP_DEBUG_STREAM(get_logger(), "Landmark Measure: " << est_world);
+
+      const arma::mat H_mat = turtle_slam_.get_H_mat(est_world, j);
+      RCLCPP_DEBUG_STREAM(get_logger(), "H_mat: " << std::endl << H_mat);
+
+      const arma::mat R_mat = sensor_noice_ * arma::mat(2, 2, arma::fill::eye);
+      const arma::mat Psi_mat = H_mat * Sigma_mat * H_mat.t() + R_mat;
+      RCLCPP_DEBUG_STREAM(get_logger(), "Psi_mat: " << std::endl << Psi_mat);
+
+      const arma::vec z_hat = turtle_slam_.get_h_vec(est_body);
+
+      arma::vec dz_vec = z_vec - z_hat;
+      dz_vec.at(1) = turtlelib::normalize_angle(dz_vec.at(1));
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_vec: " << std::endl << z_vec);
+      RCLCPP_DEBUG_STREAM(get_logger(), "z_hat: " << std::endl << z_hat);
+      RCLCPP_DEBUG_STREAM(get_logger(), "dz_vec: " << std::endl << dz_vec);
+
+      const arma::vec d = dz_vec.t() * Psi_mat.t() * dz_vec;
+      RCLCPP_INFO_STREAM(get_logger(), "dk: " << std::endl << d);
+
+      double d_j = d.at(0);
+
+      if (j == landmarks_seen_) {
+        d_j = 0.1;
+      }
+
+      if (d_j < d_star) {
+        d_star = d_j;
+        uid = j;
+      }
+      // }
+
+      RCLCPP_INFO_STREAM(
+        get_logger(), "Fitted index: " << uid << " (x=" << circle.x << ", y=" << circle.y << ")");
+      // arma::mat H_mat = turtle_slam_.get_H_mat()
+    }
+
+    return uid;
   }
 
   /// \brief The initial pose service callback function
@@ -431,6 +534,7 @@ private:
   /// Subscriber
   rclcpp::Subscription<JointState>::SharedPtr sub_joint_states_;
   rclcpp::Subscription<ObstacleMeasurements>::SharedPtr sub_obs_measure_;
+  rclcpp::Subscription<Circles>::SharedPtr sub_detect_circles_;
 
   /// Publisher
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry_;
@@ -463,6 +567,8 @@ private:
   double wheel_radius_;
   double input_noice_;
   double sensor_noice_;
+  double distance_threshold_;
+  bool use_laser_scan_;
 
   /// other attributes
   bool joint_states_available_;
@@ -484,6 +590,7 @@ private:
   double marker_b_;
   turtlelib::Transform2D Tmo_;
   bool landmark_updated_;
+  int landmarks_seen_;
 
   /// Constants
   const size_t MAX_PATH_LEN = 100;
@@ -493,7 +600,8 @@ public:
   Slam()
   : Node("odometry"), marker_qos_(10), joint_states_available_(false), index_left_(SIZE_MAX),
     index_right_(SIZE_MAX), num_obstacles_(20), turtle_slam_(num_obstacles_),
-    marker_radius_(0.038), marker_height_(0.25), Tmo_({0.0, 0.0}, 0.0), landmark_updated_(false)
+    marker_radius_(0.038), marker_height_(0.25), Tmo_({0.0, 0.0}, 0.0), landmark_updated_(false),
+    landmarks_seen_(0)
   {
     ParameterDescriptor body_id_des;
     ParameterDescriptor odom_id_des;
@@ -505,6 +613,8 @@ public:
     ParameterDescriptor input_noice_des;
     ParameterDescriptor sensor_noice_des;
     ParameterDescriptor marker_radius_des;
+    ParameterDescriptor distance_threshold_des;
+    ParameterDescriptor use_laser_scan_des;
 
     body_id_des.description = "The name of the body frame of the robot.";
     odom_id_des.description = "The name of the odometry frame.";
@@ -516,6 +626,8 @@ public:
     input_noice_des.description = "Input noice of the robot";
     sensor_noice_des.description = "Sensor noice of the robot";
     marker_radius_des.description = "The radius of the marker";
+    distance_threshold_des.description = "Distance threshold of the landmark";
+    use_laser_scan_des.description = "Whether to use the laser scan data";
 
     declare_parameter<std::string>("body_id", "", body_id_des);
     declare_parameter<std::string>("odom_id", "odom", odom_id_des);
@@ -527,6 +639,8 @@ public:
     declare_parameter<double>("input_noice", 0.1, input_noice_des);
     declare_parameter<double>("basic_sensor_variance", 0.1, sensor_noice_des);
     declare_parameter<double>("marker_radius", 0.05, marker_radius_des);
+    declare_parameter<double>("distance_threshold", 0.1, distance_threshold_des);
+    declare_parameter<bool>("use_laser_scan", false, use_laser_scan_des);
 
     body_id_ = get_parameter("body_id").as_string();
     odom_id_ = get_parameter("odom_id").as_string();
@@ -537,6 +651,8 @@ public:
     track_width_ = get_parameter("track_width").as_double();
     input_noice_ = get_parameter("input_noice").as_double();
     sensor_noice_ = get_parameter("basic_sensor_variance").as_double();
+    distance_threshold_ = get_parameter("distance_threshold").as_double();
+    use_laser_scan_ = get_parameter("use_laser_scan").as_bool();
 
     dist_sensor_ = std::normal_distribution<double>(0.0, sqrt(sensor_noice_));
     turtlebot_ = turtlelib::DiffDrive(track_width_, wheel_radius_);
@@ -582,15 +698,25 @@ public:
       std::bind(
         &Slam::sub_joint_states_callback_,
         this,
-        std::placeholders::_1));
-    sub_obs_measure_ =
-      create_subscription<ObstacleMeasurements>(
-      "obs_pos",
-      10,
-      std::bind(
-        &Slam::sub_obs_measure_callback_,
-        this,
-        std::placeholders::_1));
+        std::placeholders::_1
+      ));
+    if (!use_laser_scan_) {
+      sub_obs_measure_ =
+        create_subscription<ObstacleMeasurements>(
+        "obs_pos",
+        10,
+        std::bind(
+          &Slam::sub_obs_measure_callback_,
+          this,
+          std::placeholders::_1
+        ));
+    } else {
+      sub_detect_circles_ = create_subscription<Circles>(
+        "detect/circles",
+        10,
+        std::bind(&Slam::sub_detect_circles_callback_, this, std::placeholders::_1)
+      );
+    }
 
     /// Publishers
     pub_odometry_ = create_publisher<Odometry>("odom", 10);

@@ -1,0 +1,4 @@
+slam:
+  ros__parameter:
+    distance_threshold: 0.1
+    use_laser_scan: true

@@ -3,6 +3,7 @@
     <arg name="cmd_src" default="teleop" description="The source of the cmd_vel" />
     <arg name="robot" default="nusim" description="The robot target" />
     <arg name="use_rviz" default="true" description="whether to use rviz" />
+    <arg name="use_scan" default="false" />
 
     <!-- use_rviz argument -->
     <group if="$(var use_rviz)">
@@ -100,6 +101,9 @@
             <param name="odom_id" value="odom" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
+            <param name="distance_threshold" value="0.1" />
+            <param name="use_laser_scan" value="$(var use_scan)" />
+
 
             <remap from="joint_states" to="red/joint_states" />
             <remap from="odom" to="green/odom" />
