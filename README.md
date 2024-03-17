@@ -15,5 +15,5 @@ To install all required packages
 ```
 mkdir -p ~/ws/slam_ws/src
 cd ~/ws/slam_ws
-vcs import --imput https://raw.githubusercontent.com/ME495-Navigation/slam-project-nu-jliu/main/turtle.repos?token=GHSAT0AAAAAACHGN4BBCRW7U6I35BKHJAREZPXLFBQ src
+vcs import --input https://raw.githubusercontent.com/ME495-Navigation/slam-project-nu-jliu/main/turtle.repos?token=GHSAT0AAAAAACHGN4BBCRW7U6I35BKHJAREZPXLFBQ src
 ```
