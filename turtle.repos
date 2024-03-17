@@ -1,17 +1,17 @@
 repositories:
-  src/homework:
+  homework:
     type: git
     url: git@github.com:ME495-Navigation/slam-project-nu-jliu.git
     version: main
-  src/numsr_turtlebot:
+  numsr_turtlebot:
     type: git
     url: https://github.com/NU-MSR/numsr_turtlebot.git
     version: main
-  src/nuturtlebot_msgs:
+  nuturtlebot_msgs:
     type: git
     url: https://github.com/ME495-Navigation/nuturtlebot_msgs.git
     version: humble
-  src/topic_tools:
+  topic_tools:
     type: git
     url: https://github.com/ros-tooling/topic_tools.git
     version: iron
