@@ -1,3 +1,10 @@
+/// \file detect.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Circle Detection algorithm
+/// \version 0.1
+/// \date 2024-03-17
+///
+/// \copyright Copyright (c) 2024
 #include <armadillo>
 #include <cmath>
 #include "turtlelib/detect.hpp"

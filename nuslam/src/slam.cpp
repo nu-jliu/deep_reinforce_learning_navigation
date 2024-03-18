@@ -11,10 +11,13 @@
 ///   \param track_width            [double]  The distance between two wheels
 ///   \param input_noice            [double]  The input noice
 ///   \param basic_sensor_variance  [double]  The variance of the sensor
+///   \param distance_threshold     [double]  The maximum distance to for considering as same landmark.
+///   \param use_laser_scan         [bool]    Whether to use the laser scan data instead of fake sensor.
 ///
 /// SUBSCRIPTIONS:
-///   joint_states  [sensor_msgs/msg/JointState]                    The joint state of the robot.
-///   obs_pos       [nuturtle_interfaces/msg/ObstacleMeasurements]  The measurements of the obstacles
+///   joint_states    [sensor_msgs/msg/JointState]                    The joint state of the robot.
+///   obs_pos         [nuturtle_interfaces/msg/ObstacleMeasurements]  The measurements of the obstacles
+///   detect/circles  [nuturtle_interfaces/msg/Circles]               The detected circles
 ///
 /// PUBLISHERS:
 ///   odom          [nav_msgs/msg/Odomoetry]                        The odometry of the node.
@@ -240,10 +243,10 @@ private:
     turtle_slam_.update_state(x_new, y_new, theta_new);
   }
 
+  /// @brief Perform the SLAM algorith along with the landmark detection.
+  /// @param msg The subcribed circles.
   void sub_detect_circles_callback_(Circles::SharedPtr msg)
   {
-    // obs_measure_ = *msg;
-
     const turtlelib::Transform2D Tob(
       {turtlebot_.config_x(), turtlebot_.config_y()},
       turtlebot_.config_theta()
@@ -552,11 +555,9 @@ private:
     const turtlelib::Transform2D Tmb = Tmo_ * Tob;
     const turtlelib::Transform2D Tbm = Tmb.inv();
 
-    // const auto theta_est = Tmb.rotation();
     const auto x_est = Tmb.translation().x;
     const auto y_est = Tmb.translation().y;
 
-    // for (size_t i = 0; i < msg->circles.size(); ++i) {
     double d_star = std::numeric_limits<double>::max();
     int uid = std::numeric_limits<int>::max();
 
@@ -623,11 +624,9 @@ private:
         d_star = d_j;
         uid = j;
       }
-      // }
 
       RCLCPP_DEBUG_STREAM(
         get_logger(), "Fitted index: " << uid << " (x=" << circle.x << ", y=" << circle.y << ")");
-      // arma::mat H_mat = turtle_slam_.get_H_mat()
     }
 
     return uid;
@@ -645,7 +644,6 @@ private:
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_map_array_;
-  rclcpp::Publisher<ObstacleMeasurements>::SharedPtr pub_detect_obs_;
 
   /// TF Broadcaster
   std::unique_ptr<TransformBroadcaster> tf_broadcater_;
@@ -828,7 +826,6 @@ public:
     pub_odometry_ = create_publisher<Odometry>("odom", 10);
     pub_path_ = create_publisher<Path>("~/path", 10);
     pub_map_array_ = create_publisher<MarkerArray>("~/map", marker_qos_);
-    pub_detect_obs_ = create_publisher<ObstacleMeasurements>("detect_obs", 10);
 
     /// Services
     srv_initial_pose_ =

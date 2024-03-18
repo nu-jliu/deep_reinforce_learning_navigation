@@ -1,3 +1,20 @@
+/// \file landmarks.cpp
+/// \author Allen Liu (jingkunliu2025@u.northwestern.edu)
+/// \brief Perform landmark detection on laser scan data.
+/// \version 0.1
+/// \date 2024-03-18
+///
+/// PARAMETERS:
+///   \param scan_frame_id  [sensor_msgs/msg/LaserScan]           Frame id of the scanned frame
+///
+/// SUBSCRIPTIONS:
+///   scan                  [sensor_msgs/msg/LaserScan]           Scanned laser scan data
+///
+/// PUBLISHERS:
+///   ~/detect              [visualization_msgs/msg/MarkerArray]  Detected landmarks
+///   detect/circles        [nuturtle_interfaces/msg/Circles]     Position of the detected circles.
+///
+/// \copyright Copyright (c) 2024
 #include <armadillo>
 #include <iostream>
 #include <limits>
@@ -27,8 +44,8 @@ using nuturtle_interfaces::msg::Circles;
 class Landmark : public rclcpp::Node
 {
 private:
-  /// @brief
-  /// @param msg
+  /// @brief Callback function of the scan message
+  /// @param msg The subcribed scan message
   void sub_scan_callback_(LaserScan::SharedPtr msg)
   {
     scan_frame_id_ = msg->header.frame_id;
@@ -44,10 +61,8 @@ private:
     std::vector<turtlelib::Point2D> data_points;
     std::vector<turtlelib::Point2D> start_points;
     data_points.clear();
-    // std::vector<turtlelib::Point2D> data_detect;
 
     turtlelib::Point2D pre_data{1e10, 1e10};
-    // size_t pre_index = 1e10;
 
     for (size_t i = 0; i < data.size(); ++i) {
       const auto theta = angle_min + i * angle_inc;
@@ -105,9 +120,6 @@ private:
           }
         } else if (data_points.size() >= 4) {
           RCLCPP_DEBUG_STREAM(get_logger(), data_points.size() << " " << i);
-          // for (size_t j = 0; j < data_points.size(); ++i) {
-          //   RCLCPP_DEBUG_STREAM(get_logger(), data_points.at(j));
-          // }
           detect_flag = true;
           pre_data.x = 1e10;
           pre_data.y = 1e10;
@@ -204,8 +216,8 @@ private:
     }
   }
 
-  /// @brief
-  /// @param time_stamp
+  /// @brief Publish detected circles as markers
+  /// @param time_stamp The timestamp of the marker
   void publish_markers_(rclcpp::Time time_stamp)
   {
     MarkerArray msg_markers;
@@ -234,6 +246,7 @@ private:
     pub_detect_marker_->publish(msg_markers);
   }
 
+  /// @brief Published detected circle measurements.
   void publish_measurements_()
   {
     Circles msg_circles;
@@ -282,17 +295,22 @@ public:
 
     scan_frame_id_des.description = "Frame id of the scan frame";
 
+    /// Parameters
     declare_parameter("scan_frame_id", "scan", scan_frame_id_des);
 
+    // Parameter values
     scan_frame_id_ = get_parameter("scan_frame_id").as_string();
 
+    /// QoS
     marker_qos_.transient_local();
 
+    /// Subcriptions
     sub_scan_ =
       create_subscription<LaserScan>(
       "scan", 10,
       std::bind(&Landmark::sub_scan_callback_, this, std::placeholders::_1));
 
+    /// Publishers
     pub_detect_marker_ = create_publisher<MarkerArray>("~/detect", marker_qos_);
     pub_detect_circle_ = create_publisher<Circles>("detect/circles", 10);
   }
