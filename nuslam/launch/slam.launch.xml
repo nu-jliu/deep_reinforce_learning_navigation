@@ -30,7 +30,7 @@
         exec="static_transform_publisher"
         name="static_transform_publisher"
         args="--frame-id nusim/world 
-              --child-frame-id blue/odom
+              --child-frame-id map
               --x 0.0
               --y 0.0
               --z 0.0" />
@@ -39,8 +39,8 @@
         pkg="tf2_ros"
         exec="static_transform_publisher"
         name="static_transform_publisher"
-        args="--frame-id nusim/world 
-              --child-frame-id map
+        args="--frame-id map 
+              --child-frame-id blue/odom
               --x 0.0
               --y 0.0
               --z 0.0" />
@@ -98,7 +98,7 @@
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
 
             <param name="body_id" value="green/base_footprint" />
-            <param name="odom_id" value="odom" />
+            <param name="odom_id" value="green/odom" />
             <param name="wheel_left" value="wheel_left_joint" />
             <param name="wheel_right" value="wheel_right_joint" />
             <param name="distance_threshold" value="0.1" />

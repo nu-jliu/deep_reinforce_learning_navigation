@@ -4,6 +4,11 @@
 
 This package is used for performing `Extended-Kalman-Filter` Based `SLAM` algorithm on a turtlebot
 
+## Frames
+The structure of the frames is shown in the figure below:
+
+![](images/frames.svg)
+
 ## SLAM with Fake Sensor
 
 ### Software Structure
