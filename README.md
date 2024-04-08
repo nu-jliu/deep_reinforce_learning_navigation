@@ -16,7 +16,7 @@ To install all required packages
 ```
 mkdir -p ~/ws/slam_ws/src
 cd ~/ws/slam_ws
-vcs import --input https://raw.githubusercontent.com/ME495-Navigation/slam-project-nu-jliu/main/turtle.repos?token=GHSAT0AAAAAACHGN4BBK7GG3ADS3DNGNO4OZPXLJZA src
+vcs import --input https://raw.githubusercontent.com/ME495-Navigation/slam-project-nu-jliu/main/turtle.repos src
 ```
 
 ## EFK-SLAM
