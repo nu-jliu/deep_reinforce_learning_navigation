@@ -1,0 +1,14 @@
+<launch>
+    <!-- <node pkg="slam_toolbox" exec="" name="/* node_name */" output="screen"/> -->
+    <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
+        <arg name="use_rviz" value="false" />
+        <arg name="odom_frame_id" value="odom" />
+    </include>
+
+    <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
+        <arg name="slam_params_file" value="$(find-pkg-share nuturtle_slam)/config/slam_config.yaml" />
+    </include>
+
+    <node pkg="rviz2" exec="rviz2" name="rviz2"
+        args="-d $(find-pkg-share nuturtle_slam)/config/slam.rviz" />
+</launch>

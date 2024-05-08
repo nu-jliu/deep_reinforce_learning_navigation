@@ -209,7 +209,7 @@ private:
   {
     TransformStamped tf;
     tf.header.stamp = current_time_;
-    tf.header.frame_id = world_frame_id_;
+    tf.header.frame_id = odom_frame_id_;
     tf.child_frame_id = body_frame_id_;
 
     tf.transform.translation.x = turtle_x_;
@@ -376,7 +376,7 @@ private:
     PoseStamped pose_curr;
 
     pose_curr.header.stamp = current_time_;
-    pose_curr.header.frame_id = world_frame_id_;
+    pose_curr.header.frame_id = odom_frame_id_;
 
     pose_curr.pose.position.x = turtle_x_;
     pose_curr.pose.position.y = turtle_y_;
@@ -392,7 +392,7 @@ private:
     Path msg_path;
 
     msg_path.header.stamp = current_time_;
-    msg_path.header.frame_id = world_frame_id_;
+    msg_path.header.frame_id = odom_frame_id_;
     msg_path.poses = poses_;
 
     pub_path_->publish(msg_path);
@@ -421,7 +421,7 @@ private:
 
     /// first wall
     m1.header.stamp = current_time_;
-    m1.header.frame_id = world_frame_id_;
+    m1.header.frame_id = odom_frame_id_;
     m1.id = 1;
     m1.type = Marker::CUBE;
     m1.action = Marker::ADD;
@@ -438,7 +438,7 @@ private:
 
     /// second wall
     m2.header.stamp = current_time_;
-    m2.header.frame_id = world_frame_id_;
+    m2.header.frame_id = odom_frame_id_;
     m2.id = 2;
     m2.type = Marker::CUBE;
     m2.action = Marker::ADD;
@@ -455,7 +455,7 @@ private:
 
     /// third wall
     m3.header.stamp = current_time_;
-    m3.header.frame_id = world_frame_id_;
+    m3.header.frame_id = odom_frame_id_;
     m3.id = 3;
     m3.type = Marker::CUBE;
     m3.action = Marker::ADD;
@@ -472,7 +472,7 @@ private:
 
     /// fourth wall
     m4.header.stamp = current_time_;
-    m4.header.frame_id = world_frame_id_;
+    m4.header.frame_id = odom_frame_id_;
     m4.id = 4;
     m4.type = Marker::CUBE;
     m4.action = Marker::ADD;
@@ -507,7 +507,7 @@ private:
       Marker m_obs;
 
       m_obs.header.stamp = current_time_;
-      m_obs.header.frame_id = world_frame_id_;
+      m_obs.header.frame_id = odom_frame_id_;
       m_obs.id = i + 10;
       m_obs.type = Marker::CYLINDER;
       m_obs.action = Marker::ADD;
@@ -689,6 +689,7 @@ private:
   double lidar_accuracy_;
   double lidar_resolution_;
   bool draw_only_;
+  std::string odom_frame_id_;
 
   /// other attributes
   int count_;
@@ -703,7 +704,6 @@ private:
   double wall_height_;
   double wall_thickness_;
   double obstacle_height_;
-  std::string world_frame_id_;
   std::string body_frame_id_;
   std::string scan_frame_id_;
   turtlelib::DiffDrive turtlebot_;
@@ -720,8 +720,7 @@ public:
   NuSim()
   : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
     wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
-    world_frame_id_("nusim/world"), body_frame_id_("red/base_footprint"),
-    scan_frame_id_("red/base_scan")
+    body_frame_id_("red/base_footprint"), scan_frame_id_("red/base_scan")
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -748,6 +747,7 @@ public:
     ParameterDescriptor lidar_accuracy_des;
     ParameterDescriptor lidar_resolution_des;
     ParameterDescriptor draw_only_des;
+    ParameterDescriptor odom_frame_id_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -772,6 +772,7 @@ public:
     lidar_accuracy_des.description = "The accuracy of the lidar";
     lidar_resolution_des.description = "The angular resolution of the lidar";
     draw_only_des.description = "Whether this is behave as draw only";
+    odom_frame_id_des.description = "The frame id of the odom frame";
 
     /// declare parameters
     declare_parameter<double>("rate", 100.0, rate_des);
@@ -806,6 +807,7 @@ public:
     declare_parameter<double>("lidar_accuracy", 0.015, lidar_accuracy_des);
     declare_parameter<double>("lidar_resolution", 0.02, lidar_resolution_des);
     declare_parameter<bool>("draw_only", false, draw_only_des);
+    declare_parameter<std::string>("odom_frame_id", "nusim/world", odom_frame_id_des);
 
     /// get parameter values
     rate_ = get_parameter("rate").as_double();
@@ -832,6 +834,7 @@ public:
     lidar_accuracy_ = get_parameter("lidar_accuracy").as_double();
     lidar_resolution_ = get_parameter("lidar_resolution").as_double();
     draw_only_ = get_parameter("draw_only").as_bool();
+    odom_frame_id_ = get_parameter("odom_frame_id").as_string();
 
 
     /// check for x y length
@@ -855,7 +858,9 @@ public:
 
       // set marker qos policy
       marker_qos_.transient_local();
-      laser_qos_.transient_local();
+      // laser_qos_.transient_local();
+      laser_qos_.best_effort();
+      laser_qos_.durability_volatile();
 
       /// timer
       timer_ = create_wall_timer(

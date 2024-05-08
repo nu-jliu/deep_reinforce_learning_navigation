@@ -3,6 +3,7 @@
     <arg name="config_file" default="basic_world.yaml" description="Simulator configuration file" />
     <arg name="use_rviz" default="true" description="Whether to run the rviz" />
     <arg name="use_jsp" default="true" description="Whether to use the joint state publisher" />
+    <arg name="odom_frame_id" default="nusim/world" />
 
     <group if="$(var use_rviz)">
         <node pkg="rviz2" exec="rviz2" name="rviz2"
@@ -17,6 +18,7 @@
     </include>
 
     <node pkg="nusim" exec="nusim" name="nusim">
+        <param name="odom_frame_id" value="$(var odom_frame_id)" />
         <param from="$(find-pkg-share nusim)/config/$(var config_file)" />
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
     </node>
