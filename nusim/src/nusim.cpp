@@ -853,7 +853,7 @@ public:
       distribution_input_ = std::normal_distribution<double>(0.0, sqrt(input_noice_));
       distribution_slip_ = std::uniform_real_distribution<double>(-slip_fraction_, slip_fraction_);
       distribution_sensor_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
-      distribution_laser_ = std::normal_distribution<double>(0.0, lidar_accuracy_ / 6.0);
+      distribution_laser_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
       reset_turtle_pose_();
 
       // set marker qos policy

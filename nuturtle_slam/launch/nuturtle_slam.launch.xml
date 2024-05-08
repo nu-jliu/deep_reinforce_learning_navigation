@@ -1,9 +1,18 @@
 <launch>
     <!-- <node pkg="slam_toolbox" exec="" name="/* node_name */" output="screen"/> -->
+    <node pkg="turtlebot3_teleop" exec="teleop_keyboard" launch-prefix="xterm -e" />
+
     <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
         <arg name="use_rviz" value="false" />
         <arg name="odom_frame_id" value="odom" />
     </include>
+
+    <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
+        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+        <remap from="joint_states" to="red/joint_states" />
+        <remap from="wheel_cmd" to="red/wheel_cmd" />
+        <remap from="sensor_data" to="red/sensor_data" />
+    </node>
 
     <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
         <arg name="slam_params_file" value="$(find-pkg-share nuturtle_slam)/config/slam_config.yaml" />
