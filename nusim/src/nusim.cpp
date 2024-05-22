@@ -420,8 +420,8 @@ private:
     MarkerArray m_array;
 
     /// first wall
-    m1.header.stamp = current_time_;
-    m1.header.frame_id = odom_frame_id_;
+    m1.header.stamp = get_clock()->now();
+    m1.header.frame_id = world_frame_id_;
     m1.id = 1;
     m1.type = Marker::CUBE;
     m1.action = Marker::ADD;
@@ -437,8 +437,8 @@ private:
     m1.color.a = 1.0;
 
     /// second wall
-    m2.header.stamp = current_time_;
-    m2.header.frame_id = odom_frame_id_;
+    m2.header.stamp = get_clock()->now();
+    m2.header.frame_id = world_frame_id_;
     m2.id = 2;
     m2.type = Marker::CUBE;
     m2.action = Marker::ADD;
@@ -454,8 +454,8 @@ private:
     m2.color.a = 1.0;
 
     /// third wall
-    m3.header.stamp = current_time_;
-    m3.header.frame_id = odom_frame_id_;
+    m3.header.stamp = get_clock()->now();
+    m3.header.frame_id = world_frame_id_;
     m3.id = 3;
     m3.type = Marker::CUBE;
     m3.action = Marker::ADD;
@@ -471,8 +471,8 @@ private:
     m3.color.a = 1.0;
 
     /// fourth wall
-    m4.header.stamp = current_time_;
-    m4.header.frame_id = odom_frame_id_;
+    m4.header.stamp = get_clock()->now();
+    m4.header.frame_id = world_frame_id_;
     m4.id = 4;
     m4.type = Marker::CUBE;
     m4.action = Marker::ADD;
@@ -495,6 +495,40 @@ private:
     pub_wall_markers_->publish(m_array);
   }
 
+  void publish_cell_markers_()
+  {
+    MarkerArray m_cell_array;
+
+    for (size_t i = 0; i < wall_starts_x_.size(); ++i) {
+      Marker m;
+
+      const auto start_x = wall_starts_x_.at(i);
+      const auto start_y = wall_starts_y_.at(i);
+      const auto end_x = wall_ends_x_.at(i);
+      const auto end_y = wall_ends_y_.at(i);
+
+      m.header.stamp = get_clock()->now();
+      m.header.frame_id = world_frame_id_;
+      m.id = 100 + i;
+      m.type = Marker::CUBE;
+      m.action = Marker::ADD;
+      m.pose.position.x = (start_x + end_x) / 2.0;
+      m.pose.position.y = (start_y + end_y) / 2.0;
+      m.pose.position.z = wall_height_ / 2.0;
+      m.scale.x = abs(end_x - start_x) + 0.1;
+      m.scale.y = abs(end_y - start_y) + 0.1;
+      m.scale.z = wall_height_;
+      m.color.r = 0.0;
+      m.color.g = 0.0;
+      m.color.b = 1.0;
+      m.color.a = 1.0;
+
+      m_cell_array.markers.push_back(m);
+    }
+
+    pub_cell_markers_->publish(m_cell_array);
+  }
+
   /// \brief publish marker to display obstacle on rviz
   void publish_obstacle_markers_()
   {
@@ -506,8 +540,8 @@ private:
 
       Marker m_obs;
 
-      m_obs.header.stamp = current_time_;
-      m_obs.header.frame_id = odom_frame_id_;
+      m_obs.header.stamp = get_clock()->now();
+      m_obs.header.frame_id = world_frame_id_;
       m_obs.id = i + 10;
       m_obs.type = Marker::CYLINDER;
       m_obs.action = Marker::ADD;
@@ -644,6 +678,7 @@ private:
   /// publishers
   rclcpp::Publisher<UInt64>::SharedPtr pub_timestep_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_cell_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_fake_sensor_markers_;
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
@@ -690,6 +725,11 @@ private:
   double lidar_resolution_;
   bool draw_only_;
   std::string odom_frame_id_;
+  std::string world_frame_id_;
+  std::vector<double> wall_starts_x_;
+  std::vector<double> wall_starts_y_;
+  std::vector<double> wall_ends_x_;
+  std::vector<double> wall_ends_y_;
 
   /// other attributes
   int count_;
@@ -748,6 +788,11 @@ public:
     ParameterDescriptor lidar_resolution_des;
     ParameterDescriptor draw_only_des;
     ParameterDescriptor odom_frame_id_des;
+    ParameterDescriptor world_frame_id_des;
+    ParameterDescriptor wall_starts_x_des;
+    ParameterDescriptor wall_starts_y_des;
+    ParameterDescriptor wall_ends_x_des;
+    ParameterDescriptor wall_ends_y_des;
     rate_des.description = "The rate of the simulator";
     x0_des.description = "The initial x location";
     y0_des.description = "The initial y location";
@@ -773,6 +818,11 @@ public:
     lidar_resolution_des.description = "The angular resolution of the lidar";
     draw_only_des.description = "Whether this is behave as draw only";
     odom_frame_id_des.description = "The frame id of the odom frame";
+    world_frame_id_des.description = "The frame id of the world frame";
+    wall_starts_x_des.description = "The start x coordinates of the wall";
+    wall_starts_y_des.description = "The start y coordinates of the wall";
+    wall_ends_x_des.description = "The end x coordinates of the wall";
+    wall_ends_y_des.description = "The end y coordinates of the wall";
 
     /// declare parameters
     declare_parameter<double>("rate", 100.0, rate_des);
@@ -808,6 +858,28 @@ public:
     declare_parameter<double>("lidar_resolution", 0.02, lidar_resolution_des);
     declare_parameter<bool>("draw_only", false, draw_only_des);
     declare_parameter<std::string>("odom_frame_id", "nusim/world", odom_frame_id_des);
+    declare_parameter<std::string>("world_frame_id", "nusim/world", world_frame_id_des);
+    declare_parameter<std::vector<double>>(
+      "wall_starts/x",
+      std::vector<double>{0.0},
+      wall_starts_x_des
+    );
+    declare_parameter<std::vector<double>>(
+      "wall_starts/y",
+      std::vector<double>{0.0},
+      wall_starts_y_des
+    );
+    declare_parameter<std::vector<double>>(
+      "wall_ends/x",
+      std::vector<double>{0.0},
+      wall_ends_x_des
+    );
+    declare_parameter<std::vector<double>>(
+      "wall_ends/y",
+      std::vector<double>{0.0},
+      wall_ends_y_des
+    );
+
 
     /// get parameter values
     rate_ = get_parameter("rate").as_double();
@@ -835,6 +907,11 @@ public:
     lidar_resolution_ = get_parameter("lidar_resolution").as_double();
     draw_only_ = get_parameter("draw_only").as_bool();
     odom_frame_id_ = get_parameter("odom_frame_id").as_string();
+    world_frame_id_ = get_parameter("world_frame_id").as_string();
+    wall_starts_x_ = get_parameter("wall_starts/x").as_double_array();
+    wall_starts_y_ = get_parameter("wall_starts/y").as_double_array();
+    wall_ends_x_ = get_parameter("wall_ends/x").as_double_array();
+    wall_ends_y_ = get_parameter("wall_ends/y").as_double_array();
 
 
     /// check for x y length
@@ -895,12 +972,14 @@ public:
       pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);
     }
     pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
+    pub_cell_markers_ = create_publisher<MarkerArray>("~/cells", marker_qos_);
     pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
 
     publish_wall_markers_();
+    publish_cell_markers_();
     publish_obstacle_markers_();
   }
 };
