@@ -57,6 +57,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include "turtlelib/trig2d.hpp"
 #include "turtlelib/se2d.hpp"
+#include "turtlelib/wall_range.hpp"
 
 
 using rclcpp::QoS;
@@ -113,7 +114,8 @@ private:
 
       if (++count_ >= static_cast<int>(0.2 / period_)) {
         generate_sensor_obs_pos_();
-        publish_laser_scan_();
+        // publish_laser_scan_();
+        publish_cell_scan_();
         // publish_obstacle_markers_();
         publish_fake_sensor_();
         count_ = 0;
@@ -370,6 +372,59 @@ private:
     RCLCPP_DEBUG_STREAM(get_logger(), "laser published");
   }
 
+  void publish_cell_scan_()
+  {
+    LaserScan msg_scan;
+    msg_scan.header.stamp = current_time_;
+    msg_scan.header.frame_id = scan_frame_id_;
+
+    msg_scan.angle_min = -turtlelib::PI;
+    msg_scan.angle_max = turtlelib::PI;
+    msg_scan.angle_increment = lidar_resolution_;
+
+    msg_scan.range_min = lidar_range_min_;
+    msg_scan.range_max = lidar_range_max_;
+
+    const turtlelib::Transform2D T_sb({0.032, 0.0}, 0.0);
+    const turtlelib::Transform2D T_wb({turtle_x_, turtle_y_}, turtle_theta_);
+    const turtlelib::Transform2D T_bw = T_wb.inv();
+    const turtlelib::Transform2D T_sw = T_sb * T_bw;
+    const turtlelib::Transform2D T_ws = T_sw.inv();
+
+    const auto x_scan = T_ws.translation().x;
+    const auto y_scan = T_ws.translation().y;
+    const auto theta_scan = T_ws.rotation();
+
+    const turtlelib::Point2D origin_scan{x_scan, y_scan};
+
+    for (int i = 0; i < static_cast<int>(turtlelib::PI * 2.0 / lidar_resolution_); ++i) {
+      const double alpha = turtlelib::normalize_angle(
+        lidar_resolution_ * i - turtlelib::PI + theta_scan
+      );
+
+      std::vector<double> distances;
+
+      for (size_t j = 0; j < cell_walls_.size(); ++j) {
+        if (turtlelib::can_intersect(origin_scan, alpha, cell_walls_.at(j))) {
+          const auto dist = turtlelib::find_wall_distance(origin_scan, alpha, cell_walls_.at(j));
+          distances.push_back(dist);
+        }
+      }
+
+      if (distances.empty()) {
+        msg_scan.ranges.push_back(100.0);
+      } else {
+        const auto min_iter = std::min_element(distances.begin(), distances.end());
+        const auto min_dist = *min_iter + distribution_laser_(generator_);
+        msg_scan.ranges.push_back(min_dist);
+        // RCLCPP_INFO_STREAM(get_logger(), min_dist);
+      }
+
+    }
+
+    pub_laser_scan_->publish(msg_scan);
+  }
+
   /// @brief publish a path message that displays the of the robot on rviz
   void publish_path_()
   {
@@ -408,6 +463,21 @@ private:
     msg_sensor.right_encoder = (int32_t) (turtlebot_.right_wheel() * encoder_ticks_per_rad_);
 
     pub_sensor_data_->publish(msg_sensor);
+  }
+
+  void parse_walls_()
+  {
+    for (size_t i = 0; i < wall_starts_x_.size(); ++i) {
+      turtlelib::Wall wall_curr;
+      const auto start_x = wall_starts_x_.at(i);
+      const auto start_y = wall_starts_y_.at(i);
+      const auto end_x = wall_ends_x_.at(i);
+      const auto end_y = wall_ends_y_.at(i);
+
+      wall_curr.start = {start_x, start_y};
+      wall_curr.end = {end_x, end_y};
+      cell_walls_.push_back(wall_curr);
+    }
   }
 
   /// \brief publish the markers to display wall on rviz
@@ -499,13 +569,14 @@ private:
   {
     MarkerArray m_cell_array;
 
-    for (size_t i = 0; i < wall_starts_x_.size(); ++i) {
+    for (size_t i = 0; i < cell_walls_.size(); ++i) {
       Marker m;
 
-      const auto start_x = wall_starts_x_.at(i);
-      const auto start_y = wall_starts_y_.at(i);
-      const auto end_x = wall_ends_x_.at(i);
-      const auto end_y = wall_ends_y_.at(i);
+      const auto wall_curr = cell_walls_.at(i);
+      const auto start_x = wall_curr.start.x;
+      const auto start_y = wall_curr.start.y;
+      const auto end_x = wall_curr.end.x;
+      const auto end_y = wall_curr.end.y;
 
       m.header.stamp = get_clock()->now();
       m.header.frame_id = world_frame_id_;
@@ -754,6 +825,7 @@ private:
   std::normal_distribution<double> distribution_sensor_;
   std::normal_distribution<double> distribution_laser_;
   std::vector<turtlelib::Point2D> obstacle_pos_sensor_;
+  std::vector<turtlelib::Wall> cell_walls_;
 
 public:
   /// \brief Initialize the nusim node
@@ -832,16 +904,16 @@ public:
     declare_parameter<double>("arena_x_length", 10.0, arena_x_des);
     declare_parameter<double>("arena_y_length", 10.0, arena_y_des);
     declare_parameter<std::vector<double>>(
-      "obstacles/x",
+      "obstacles.x",
       std::vector<double>{1.2, 2.3},
       obs_x_des
     );
     declare_parameter<std::vector<double>>(
-      "obstacles/y",
+      "obstacles.y",
       std::vector<double>{2.3, 4.5},
       obs_y_des
     );
-    declare_parameter<double>("obstacles/r", 0.05, obs_r_des);
+    declare_parameter<double>("obstacles.r", 0.05, obs_r_des);
     declare_parameter<double>("wheel_radius", 0.033, wheel_radius_des);
     declare_parameter<double>("track_width", 0.16, track_width_des);
     declare_parameter<int64_t>("motor_cmd_max", 265, motor_cmd_max_des);
@@ -860,22 +932,22 @@ public:
     declare_parameter<std::string>("odom_frame_id", "nusim/world", odom_frame_id_des);
     declare_parameter<std::string>("world_frame_id", "nusim/world", world_frame_id_des);
     declare_parameter<std::vector<double>>(
-      "wall_starts/x",
+      "wall_starts.x",
       std::vector<double>{0.0},
       wall_starts_x_des
     );
     declare_parameter<std::vector<double>>(
-      "wall_starts/y",
+      "wall_starts.y",
       std::vector<double>{0.0},
       wall_starts_y_des
     );
     declare_parameter<std::vector<double>>(
-      "wall_ends/x",
+      "wall_ends.x",
       std::vector<double>{0.0},
       wall_ends_x_des
     );
     declare_parameter<std::vector<double>>(
-      "wall_ends/y",
+      "wall_ends.y",
       std::vector<double>{0.0},
       wall_ends_y_des
     );
@@ -888,9 +960,9 @@ public:
     theta0_ = get_parameter("theta0").as_double();
     arena_x_length_ = get_parameter("arena_x_length").as_double();
     arena_y_length_ = get_parameter("arena_y_length").as_double();
-    obstacles_x_ = get_parameter("obstacles/x").as_double_array();
-    obstacles_y_ = get_parameter("obstacles/y").as_double_array();
-    obstacle_radius_ = get_parameter("obstacles/r").as_double();
+    obstacles_x_ = get_parameter("obstacles.x").as_double_array();
+    obstacles_y_ = get_parameter("obstacles.y").as_double_array();
+    obstacle_radius_ = get_parameter("obstacles.r").as_double();
     wheel_radius_ = get_parameter("wheel_radius").as_double();
     track_width_ = get_parameter("track_width").as_double();
     motor_cmd_max_ = get_parameter("motor_cmd_max").as_int();
@@ -908,10 +980,10 @@ public:
     draw_only_ = get_parameter("draw_only").as_bool();
     odom_frame_id_ = get_parameter("odom_frame_id").as_string();
     world_frame_id_ = get_parameter("world_frame_id").as_string();
-    wall_starts_x_ = get_parameter("wall_starts/x").as_double_array();
-    wall_starts_y_ = get_parameter("wall_starts/y").as_double_array();
-    wall_ends_x_ = get_parameter("wall_ends/x").as_double_array();
-    wall_ends_y_ = get_parameter("wall_ends/y").as_double_array();
+    wall_starts_x_ = get_parameter("wall_starts.x").as_double_array();
+    wall_starts_y_ = get_parameter("wall_starts.y").as_double_array();
+    wall_ends_x_ = get_parameter("wall_ends.x").as_double_array();
+    wall_ends_y_ = get_parameter("wall_ends.y").as_double_array();
 
 
     /// check for x y length
@@ -978,6 +1050,7 @@ public:
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
 
+    parse_walls_();
     publish_wall_markers_();
     publish_cell_markers_();
     publish_obstacle_markers_();

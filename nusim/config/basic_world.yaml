@@ -6,18 +6,21 @@
     theta0: 1.28
     arena_x_length: 10.0
     arena_y_length: 10.0
-    obstacles/x: [-0.5, 0.8, 0.4]
-    obstacles/y: [-0.7, -0.8, 0.8]
-    wall_starts/x: [-0.5, 0.5, -0.5, 0.5]
-    wall_starts/y: [-1.0, -1.0, 4.0, 3.0]
-    wall_ends/x: [-0.5, 0.5, 3.5, 3.5]
-    wall_ends/y: [4.0, 3.0, 4.0, 3.0]
-    obstacles/r: 0.05
+    obstacles:
+      x: [-0.5, 0.8, 0.4]
+      y: [-0.7, -0.8, 0.8]
+      r: 0.05
+    wall_starts:
+      x: [-1.0, -1.0, 4.0, 3.0, 4.0, 3.0]
+      y: [-0.5, 0.5, -0.5, 0.5, 4.0, 3.0]
+    wall_ends:
+      x: [4.0, 3.0, 4.0, 3.0, -1.0, -1.0]
+      y: [-0.5, 0.5, 4.0, 3.0, 4.0, 3.0]
     input_noice: 0.1 
     slip_fraction: 0.1 
-    # basic_sensor_variance: 1e-4 
+    basic_sensor_variance: 1e-4 
     # input_noice: 0.0 
     # slip_fraction: 0.0 
-    basic_sensor_variance: 0.0 
+    # basic_sensor_variance: 0.0 
     max_range: 3.5
     world_frame_id: nusim/world

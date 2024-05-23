@@ -30,7 +30,13 @@ set(TURTLELIB_SRC_FILES
     src/trig2d.cpp
     src/ekf_slam.cpp
     src/detect.cpp
+    src/wall_range.cpp
 )
+
+# file(GLOB TURTLELIB_SRC_FILES
+#     CMAKE_CONFIGURE_DEPENDS
+#     "src/*.cpp"
+# )
 
 add_library(${PROJECT_NAME} 
     ${TURTLELIB_SRC_FILES}

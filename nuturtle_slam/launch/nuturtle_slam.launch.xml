@@ -1,6 +1,8 @@
 <launch>
     <!-- <node pkg="slam_toolbox" exec="" name="/* node_name */" output="screen"/> -->
     <node pkg="turtlebot3_teleop" exec="teleop_keyboard" launch-prefix="xterm -e" />
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="static_transform_publisher"
+        args="--frame-id nusim/world --child-frame-id map" />
 
     <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
         <arg name="use_rviz" value="false" />
