@@ -31,6 +31,7 @@ set(TURTLELIB_SRC_FILES
     src/ekf_slam.cpp
     src/detect.cpp
     src/wall_range.cpp
+    src/circ_line.cpp
 )
 
 # file(GLOB TURTLELIB_SRC_FILES

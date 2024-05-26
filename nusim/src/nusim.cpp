@@ -204,6 +204,10 @@ private:
         break;
       }
     }
+
+    // for (size_t i = 0; i < cell_walls_.size(); ++i) {
+
+    // }
   }
 
   /// @brief broadcast the transform
@@ -459,8 +463,10 @@ private:
     SensorData msg_sensor;
 
     msg_sensor.stamp = current_time_;
-    msg_sensor.left_encoder = (int32_t) (turtlebot_.left_wheel() * encoder_ticks_per_rad_);
-    msg_sensor.right_encoder = (int32_t) (turtlebot_.right_wheel() * encoder_ticks_per_rad_);
+    msg_sensor.left_encoder =
+      static_cast<int32_t>(turtlebot_.left_wheel() * encoder_ticks_per_rad_);
+    msg_sensor.right_encoder =
+      static_cast<int32_t>(turtlebot_.right_wheel() * encoder_ticks_per_rad_);
 
     pub_sensor_data_->publish(msg_sensor);
   }
