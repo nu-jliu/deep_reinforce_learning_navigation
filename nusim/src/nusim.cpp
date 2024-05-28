@@ -40,11 +40,13 @@
 
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <std_msgs/msg/u_int64.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <nav_msgs/msg/path.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
@@ -58,6 +60,7 @@
 #include "turtlelib/trig2d.hpp"
 #include "turtlelib/se2d.hpp"
 #include "turtlelib/wall_range.hpp"
+#include "turtlelib/circ_line.hpp"
 
 
 using rclcpp::QoS;
@@ -67,11 +70,13 @@ using tf2_ros::TransformBroadcaster;
 /// messages
 using rcl_interfaces::msg::ParameterDescriptor;
 using std_msgs::msg::UInt64;
+using std_msgs::msg::Bool;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using nav_msgs::msg::Path;
+using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::LaserScan;
 using nuturtlebot_msgs::msg::WheelCommands;
 using nuturtlebot_msgs::msg::SensorData;
@@ -125,6 +130,7 @@ private:
       publish_sensor_data_();
       publish_path_();
       broadcast_tf_();
+      publish_odom_();
     }
   }
 
@@ -175,7 +181,7 @@ private:
     turtlebot_.compute_fk(phi_left_slip, phi_right_slip);
     turtlebot_.update_wheel(phi_left_new, phi_right_new);
 
-    check_collision_(turtle_x_, turtle_y_);
+    check_collision_(turtle_x_, turtle_y_, turtle_theta_);
 
     turtle_x_ = turtlebot_.config_x();
     turtle_y_ = turtlebot_.config_y();
@@ -185,29 +191,43 @@ private:
   /// @brief Check if turtlebot has collided with one of the obstacles
   /// @param pre_x previous x position
   /// @param pre_y previous y position
-  void check_collision_(double pre_x, double pre_y)
+  void check_collision_(double pre_x, double pre_y, double pre_theta)
   {
     const auto robot_x = turtlebot_.config_x();
     const auto robot_y = turtlebot_.config_y();
 
-    for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
-      const auto obs_x = obstacles_x_.at(i);
-      const auto obs_y = obstacles_y_.at(i);
-      const auto dist = sqrt(pow(obs_x - robot_x, 2.0) + pow(obs_y - robot_y, 2.0));
+    // for (std::size_t i = 0; i < obstacles_x_.size(); ++i) {
+    //   const auto obs_x = obstacles_x_.at(i);
+    //   const auto obs_y = obstacles_y_.at(i);
+    //   const auto dist = sqrt(pow(obs_x - robot_x, 2.0) + pow(obs_y - robot_y, 2.0));
 
-      if (dist < collision_radius_ + obstacle_radius_) {
-        const auto dx = obs_x - robot_x;
-        const auto dy = obs_y - robot_y;
+    //   if (dist < collision_radius_ + obstacle_radius_) {
+    //     const auto dx = obs_x - robot_x;
+    //     const auto dy = obs_y - robot_y;
 
-        const auto theta_new = atan2(dy, dx);
-        turtlebot_.update_config(pre_x, pre_y, theta_new);
-        break;
-      }
-    }
-
-    // for (size_t i = 0; i < cell_walls_.size(); ++i) {
-
+    //     const auto theta_new = atan2(dy, dx);
+    //     turtlebot_.update_config(pre_x, pre_y, theta_new);
+    //     break;
+    //   }
     // }
+
+    for (size_t i = 0; i < cell_walls_.size(); ++i) {
+      const turtlelib::Wall wall_curr = cell_walls_.at(i);
+      const turtlelib::Point2D pA = wall_curr.start;
+      const turtlelib::Point2D pB = wall_curr.end;
+      const turtlelib::Point2D pO{robot_x, robot_y};
+
+      Bool msg_colllide;
+
+      if (turtlelib::line_circ_intersect(pA, pB, pO, collision_radius_)) {
+        turtlebot_.update_config(pre_x, pre_y, pre_theta);
+        msg_colllide.data = true;
+      } else {
+        msg_colllide.data = false;
+      }
+
+      pub_collide_->publish(msg_colllide);
+    }
   }
 
   /// @brief broadcast the transform
@@ -228,6 +248,24 @@ private:
     tf.transform.rotation.w = cos(turtle_theta_ / 2.0);
 
     tf_broadcaster_->sendTransform(tf);
+  }
+
+  void publish_odom_()
+  {
+    Odometry odom;
+    odom.header.stamp = current_time_;
+    odom.header.frame_id = odom_frame_id_;
+
+    odom.pose.pose.position.x = turtle_x_;
+    odom.pose.pose.position.y = turtle_y_;
+    odom.pose.pose.position.z = 0.0;
+
+    odom.pose.pose.orientation.x = 0.0;
+    odom.pose.pose.orientation.y = 0.0;
+    odom.pose.pose.orientation.z = sin(turtle_theta_ / 2.0);
+    odom.pose.pose.orientation.w = cos(turtle_theta_ / 2.0);
+
+    pub_odom_->publish(odom);
   }
 
   /// \brief publish lidar data on laser scan message
@@ -598,7 +636,7 @@ private:
       m.color.r = 0.0;
       m.color.g = 0.0;
       m.color.b = 1.0;
-      m.color.a = 1.0;
+      m.color.a = 0.5;
 
       m_cell_array.markers.push_back(m);
     }
@@ -716,6 +754,7 @@ private:
     (void) response;
 
     reset_turtle_pose_();
+    poses_.clear();
     timestep_ = 0;
   }
 
@@ -754,12 +793,14 @@ private:
 
   /// publishers
   rclcpp::Publisher<UInt64>::SharedPtr pub_timestep_;
+  rclcpp::Publisher<Bool>::SharedPtr pub_collide_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_wall_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_cell_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_obstacle_markers_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_fake_sensor_markers_;
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
+  rclcpp::Publisher<Odometry>::SharedPtr pub_odom_;
   rclcpp::Publisher<LaserScan>::SharedPtr pub_laser_scan_;
   rclcpp::Publisher<ObstacleMeasurements>::SharedPtr pub_obstacles_;
 
@@ -1043,9 +1084,11 @@ public:
 
       // publishers
       pub_timestep_ = create_publisher<UInt64>("~/timestep", 10);
+      pub_collide_ = create_publisher<Bool>("~/collide", 10);
       pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
       pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
       pub_path_ = create_publisher<Path>("~/path", 10);
+      pub_odom_ = create_publisher<Odometry>("~/odom", 10);
       pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
       pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);
     }

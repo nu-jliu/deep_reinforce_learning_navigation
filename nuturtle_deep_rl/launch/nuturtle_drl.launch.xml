@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find-pkg-share nuturtle_slam)/launch/nuturtle_slam.launch.xml" />
+
+    <node pkg="nuturtle_deep_rl" exec="deep_rl_node" name="deep_rl_node">
+        <param name="pkg_share_dir" value="$(find-pkg-share nuturtle_deep_rl)" />
+    </node>
+</launch>
