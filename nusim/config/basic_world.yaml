@@ -11,16 +11,16 @@
       y: [-0.7, -0.8, 0.8]
       r: 0.05
     wall_starts:
-      x: [-1.0, -1.0, 4.0, 3.0, 4.0, 3.0]
-      y: [-0.5, 0.5, -0.5, 0.5, 4.0, 3.0]
+      x: [-1.0, -1.0, -1.0, 4.0, 3.0, 4.0, 3.0]
+      y: [-0.5, -0.5, 0.5, -0.5, 0.5, 4.0, 3.0]
     wall_ends:
-      x: [4.0, 3.0, 4.0, 3.0, -1.0, -1.0]
-      y: [-0.5, 0.5, 4.0, 3.0, 4.0, 3.0]
-    input_noice: 0.1 
-    slip_fraction: 0.1 
+      x: [-1.0, 4.0, 3.0, 4.0, 3.0, -1.0, -1.0]
+      y: [0.5, -0.5, 0.5, 4.0, 3.0, 4.0, 3.0]
+    # input_noice: 0.1 
+    # slip_fraction: 0.1 
     basic_sensor_variance: 1e-4 
-    # input_noice: 0.0 
-    # slip_fraction: 0.0 
+    input_noice: 0.0 
+    slip_fraction: 0.0 
     # basic_sensor_variance: 0.0 
     max_range: 3.5
     world_frame_id: nusim/world

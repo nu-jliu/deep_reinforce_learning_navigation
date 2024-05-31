@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = "nuturtle_deep_rl"
 
@@ -9,7 +10,8 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("share/" + package_name + "/launch", ["launch/nuturtle_drl.launch.xml"]),
+        ("share/" + package_name + "/launch", glob("launch/*")),
+        ("share/" + package_name + "/config", glob("config/*")),
     ],
     py_modules=[(package_name + ".nuturtle_env")],
     install_requires=["setuptools"],

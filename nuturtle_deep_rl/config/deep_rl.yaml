@@ -1,0 +1,10 @@
+deep_rl_node:
+  ros__parameters:
+    turn:
+      x: 3.5
+      y: 3.5
+    gain:
+      d: 10.0
+      target: 0.0
+      linear: 5.0
+      angular: 1.0

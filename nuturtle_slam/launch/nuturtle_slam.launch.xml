@@ -1,14 +1,38 @@
 <launch>
     <!-- <node pkg="slam_toolbox" exec="" name="/* node_name */" output="screen"/> -->
-    <node pkg="turtlebot3_teleop" exec="teleop_keyboard" launch-prefix="xterm -e" />
+    <arg name="teleop" default="true" />
+    <arg name="slam" default="true" />
+    <arg name="use_rviz" default="true" />
+
+
+    <group if="$(var teleop)">
+        <node pkg="turtlebot3_teleop" exec="teleop_keyboard" launch-prefix="xterm -e" />
+    </group>
+
     <node pkg="tf2_ros" exec="static_transform_publisher" name="static_transform_publisher"
         args="--frame-id nusim/world --child-frame-id map" />
 
-    <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
-        <arg name="use_rviz" value="false" />
-        <arg name="use_jsp" value="false" />
-        <arg name="odom_frame_id" value="nusim/world" />
-    </include>
+
+    <group if="$(var use_rviz)">
+        <node pkg="rviz2" exec="rviz2" name="rviz2"
+            args="-d $(find-pkg-share nuturtle_slam)/config/slam.rviz" />
+    </group>
+
+    <group if="$(var slam)">
+        <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
+            <arg name="use_rviz" value="false" />
+            <arg name="use_jsp" value="false" />
+            <arg name="odom_frame_id" value="odom" />
+        </include>
+    </group>
+
+    <group unless="$(var slam)">
+        <include file="$(find-pkg-share nusim)/launch/nusim.launch.xml">
+            <arg name="use_rviz" value="false" />
+            <arg name="use_jsp" value="false" />
+            <arg name="odom_frame_id" value="nusim/world" />
+        </include>
+    </group>
 
     <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
@@ -17,10 +41,14 @@
         <remap from="sensor_data" to="red/sensor_data" />
     </node>
 
-    <!-- <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
-        <arg name="slam_params_file" value="$(find-pkg-share nuturtle_slam)/config/slam_config.yaml" />
-    </include> -->
+    <group if="$(var slam)">
+        <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
+            <arg
+                name="slam_params_file"
+                value="$(find-pkg-share nuturtle_slam)/config/slam_config.yaml"
+            />
+        </include>
+    </group>
 
-    <node pkg="rviz2" exec="rviz2" name="rviz2"
-        args="-d $(find-pkg-share nuturtle_slam)/config/drl.rviz" />
+
 </launch>

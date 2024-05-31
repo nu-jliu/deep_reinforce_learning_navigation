@@ -11,24 +11,24 @@ import rclpy.node
 from tf2_ros import TransformListener, Buffer
 from tf_transformations import euler_from_quaternion
 
+from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import Bool
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
 from std_srvs.srv import Empty
 import time
+import scipy.stats
 
 
 class NuTurtleEnv(gym.Env):
 
-    def __init__(self, node: Node, turn_x: float, turn_y: float) -> None:
+    def __init__(self, node: Node) -> None:
         super().__init__()
         self.node = node
-        self.turn_x = turn_x
-        self.turn_y = turn_y
         self.action_space = spaces.Box(
-            low=np.array([-0.5, -0.5]),
-            high=np.array([0.5, 0.5]),
+            low=np.array([0.0, -1.0]),
+            high=np.array([0.2, 1.0]),
             dtype=np.float64,
         )
         self.observation_space = spaces.Box(
@@ -38,9 +38,60 @@ class NuTurtleEnv(gym.Env):
             shape=(3,),
         )
         self.reward_range = (-np.inf, np.inf)
+        # self.time_
         self.odom: Odometry = None
         self.state = np.zeros(3)
         self.collide = False
+
+        self.node.declare_parameter(
+            "turn.x",
+            3.5,
+            ParameterDescriptor(description="X turning coordinate"),
+        )
+        self.node.declare_parameter(
+            "turn.y",
+            3.5,
+            ParameterDescriptor(description="Y turning coordinate"),
+        )
+        self.node.declare_parameter(
+            "gain.d",
+            10.0,
+            ParameterDescriptor(description="Gain on distance to desired trajectory"),
+        )
+        self.node.declare_parameter(
+            "gain.target",
+            2.5,
+            ParameterDescriptor(description="Gain on target position"),
+        )
+        self.node.declare_parameter(
+            "gain.linear",
+            5.0,
+            ParameterDescriptor(description="Gain on linear speed"),
+        )
+        self.node.declare_parameter(
+            "gain.angular",
+            1.0,
+            ParameterDescriptor(description="Gain on linear speed"),
+        )
+
+        self.turn_x = (
+            self.node.get_parameter("turn.x").get_parameter_value().double_value
+        )
+        self.turn_y = (
+            self.node.get_parameter("turn.y").get_parameter_value().double_value
+        )
+        self.gain_d = (
+            self.node.get_parameter("gain.d").get_parameter_value().double_value
+        )
+        self.gain_target = (
+            self.node.get_parameter("gain.target").get_parameter_value().double_value
+        )
+        self.gain_linear = (
+            self.node.get_parameter("gain.linear").get_parameter_value().double_value
+        )
+        self.gain_angular = (
+            self.node.get_parameter("gain.angular").get_parameter_value().double_value
+        )
 
         self.pub_cmd_vel = self.node.create_publisher(Twist, "cmd_vel", 10)
 
@@ -64,12 +115,13 @@ class NuTurtleEnv(gym.Env):
 
     def sub_odom_callback(self, msg: Odometry):
         self.odom = msg
-        self.node.get_logger().warn(f"got odom: {msg.pose.pose.position}")
+        # self.node.get_logger().warn(f"got odom: {msg.pose.pose.position}")
         # self.node.get_logger().info(f"State: {self.state}")
 
     def sub_collide_callback(self, msg: Bool):
-        self.collide = msg.data
-        self.node.get_logger().info(f"Collsion: {self.collide}")
+        if msg.data:
+            self.collide = True
+        # self.node.get_logger().info(f"Collsion: {self.collide}")
 
     def update_state(self):
         if self.odom is None:
@@ -87,9 +139,14 @@ class NuTurtleEnv(gym.Env):
 
             q = (qx, qy, qz, qw)
             e = euler_from_quaternion(q)
-            theta = e[2]
+            # self.node.get_logger().info(f"euler angle: {e}")
+            theta = self.normalize_angle(e[2])
 
             self.state = np.array([x, y, theta])
+
+    def normalize_angle(self, angle):
+        output = np.arctan2(np.sin(angle), np.cos(angle))
+        return output
 
     def step(self, action):
         cmd = Twist()
@@ -131,19 +188,49 @@ class NuTurtleEnv(gym.Env):
             d2 += np.square(y - self.turn_y)
 
         d = np.min(np.array([d1, d2, d3]))
+        min_ind = np.argmin(np.array([d1, d2, d3]))
 
-        reward -= 5.0 * np.sqrt(d)
-        reward -= 10.0 * np.sum(np.square(self.state[:2] - np.array([0, self.turn_y])))
-        reward += 50 * np.sum(np.fabs(action))
+        d_angle = 0
+        if min_ind == 0:
+            d_angle = 0
 
-        self.node.get_logger().info(f"Reward: {reward}, d: {d}")
+        elif min_ind == 1:
+            d_angle = np.pi / 2.0
+
+        elif min_ind == 2:
+            d_angle = np.pi
+
+        e_angle = self.normalize_angle(theta - d_angle)
+
+        # reward -= self.gain_d * np.sqrt(d)
+        # reward -= self.gain_target * np.sum(
+        #     np.square(self.state[:2] - np.array([0, self.turn_y]))
+        # )
+        # reward += self.gain_linear * action[0] + self.gain_angular * np.square(
+        #     action[1]
+        # )
+        if np.sqrt(d) > 0.2:
+            reward -= 10
+        else:
+            reward += scipy.stats.norm.pdf(np.sqrt(d), 0, 0.2)
+
+        if np.fabs(e_angle) > 0.5:
+            reward -= 10
+        else:
+            reward += scipy.stats.norm.pdf(np.fabs(e_angle), 0, 0.2)
+
+        # self.node.get_logger().info(f"Reward: {reward}")
+        # self.node.get_logger().info(f"d1: {d1}")
+        # self.node.get_logger().info(f"d2: {d2}")
+        # self.node.get_logger().info(f"d3: {d3}")
+        # self.node.get_logger().info(f"d: {np.sqrt(d)}")
+        # self.node.get_logger().info(f"angle: {e_angle}")
         return reward
 
     def reset(self):
         request = Empty.Request()
 
         future = self.cli_reset_turtle.call_async(request=request)
-
         rclpy.spin_until_future_complete(node=self.node, future=future)
 
         self.state = np.zeros(3, dtype=np.float64)
@@ -152,6 +239,8 @@ class NuTurtleEnv(gym.Env):
 
     def is_done(self):
         if self.collide:
+            self.node.get_logger().info("Collision")
+            self.collide = False
             return True
 
         else:

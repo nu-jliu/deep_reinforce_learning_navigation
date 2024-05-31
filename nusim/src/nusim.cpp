@@ -43,6 +43,8 @@
 #include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+#include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -73,6 +75,8 @@ using std_msgs::msg::UInt64;
 using std_msgs::msg::Bool;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::PoseStamped;
+using geometry_msgs::msg::PolygonStamped;
+using geometry_msgs::msg::Point32;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using nav_msgs::msg::Path;
@@ -126,11 +130,17 @@ private:
         count_ = 0;
       }
 
-      update_turtlebot_pos_();
+      if (wheel_cmd_available_) {
+        update_turtlebot_pos_();
+        wheel_cmd_available_ = false;
+      }
+
+
       publish_sensor_data_();
       publish_path_();
       broadcast_tf_();
       publish_odom_();
+      publish_polygon_();
     }
   }
 
@@ -255,6 +265,7 @@ private:
     Odometry odom;
     odom.header.stamp = current_time_;
     odom.header.frame_id = odom_frame_id_;
+    odom.child_frame_id = body_frame_id_;
 
     odom.pose.pose.position.x = turtle_x_;
     odom.pose.pose.position.y = turtle_y_;
@@ -465,6 +476,28 @@ private:
     }
 
     pub_laser_scan_->publish(msg_scan);
+  }
+
+  void publish_polygon_()
+  {
+    PolygonStamped msg;
+
+    msg.header.stamp = current_time_;
+    msg.header.frame_id = body_frame_id_;
+
+    for (int i = 0; i < 100; ++i) {
+      Point32 point;
+
+      const auto theta = -turtlelib::PI + 2.0 * turtlelib::PI / 100 * i;
+
+      point.x = collision_radius_ * cos(theta);
+      point.y = collision_radius_ * sin(theta);
+      point.z = 0.0;
+
+      msg.polygon.points.push_back(point);
+    }
+
+    pub_footprint_->publish(msg);
   }
 
   /// @brief publish a path message that displays the of the robot on rviz
@@ -778,6 +811,10 @@ private:
   /// @param msg the wheel_cmd message
   void sub_wheel_cmd_callback_(WheelCommands::SharedPtr msg)
   {
+    if (!wheel_cmd_available_) {
+      wheel_cmd_available_ = true;
+    }
+
     wheel_cmd_ = *msg;
   }
 
@@ -800,6 +837,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_fake_sensor_markers_;
   rclcpp::Publisher<SensorData>::SharedPtr pub_sensor_data_;
   rclcpp::Publisher<Path>::SharedPtr pub_path_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr pub_footprint_;
   rclcpp::Publisher<Odometry>::SharedPtr pub_odom_;
   rclcpp::Publisher<LaserScan>::SharedPtr pub_laser_scan_;
   rclcpp::Publisher<ObstacleMeasurements>::SharedPtr pub_obstacles_;
@@ -862,6 +900,7 @@ private:
   double wall_height_;
   double wall_thickness_;
   double obstacle_height_;
+  bool wheel_cmd_available_;
   std::string body_frame_id_;
   std::string scan_frame_id_;
   turtlelib::DiffDrive turtlebot_;
@@ -879,7 +918,8 @@ public:
   NuSim()
   : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
     wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
-    body_frame_id_("red/base_footprint"), scan_frame_id_("red/base_scan")
+    wheel_cmd_available_(false), body_frame_id_("red/base_footprint"),
+    scan_frame_id_("red/base_scan")
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -1088,6 +1128,7 @@ public:
       pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
       pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
       pub_path_ = create_publisher<Path>("~/path", 10);
+      pub_footprint_ = create_publisher<PolygonStamped>("~/footprint", 10);
       pub_odom_ = create_publisher<Odometry>("~/odom", 10);
       pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
       pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);

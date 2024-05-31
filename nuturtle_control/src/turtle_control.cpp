@@ -127,6 +127,7 @@ private:
     msg.right_velocity = right_vel;
 
     pub_wheel_cmd_->publish(msg);
+    cmd_twist_available_ = false;
   }
 
   /// @brief Publish joint state message.

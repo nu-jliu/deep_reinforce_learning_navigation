@@ -1,7 +1,15 @@
 <launch>
-    <include file="$(find-pkg-share nuturtle_slam)/launch/nuturtle_slam.launch.xml" />
+    <include file="$(find-pkg-share nuturtle_slam)/launch/nuturtle_slam.launch.xml">
+        <arg name="teleop" value="false" />
+        <arg name="slam" value="false" />
+        <arg name="use_rviz" value="false" />
+    </include>
 
     <node pkg="nuturtle_deep_rl" exec="deep_rl_node" name="deep_rl_node">
+        <param from="$(find-pkg-share nuturtle_deep_rl)/config/deep_rl.yaml" />
         <param name="pkg_share_dir" value="$(find-pkg-share nuturtle_deep_rl)" />
     </node>
+
+    <node pkg="rviz2" exec="rviz2" name="rviz2"
+        args="-d $(find-pkg-share nuturtle_deep_rl)/config/drl.rviz" />
 </launch>
