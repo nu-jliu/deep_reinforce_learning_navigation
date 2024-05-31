@@ -5,7 +5,7 @@
         <arg name="use_rviz" value="false" />
     </include>
 
-    <node pkg="nuturtle_deep_rl" exec="deep_rl_node" name="deep_rl_node">
+    <node pkg="nuturtle_deep_rl" exec="deep_rl_node" name="deep_rl_node" output="screen">
         <param from="$(find-pkg-share nuturtle_deep_rl)/config/deep_rl.yaml" />
         <param name="pkg_share_dir" value="$(find-pkg-share nuturtle_deep_rl)" />
     </node>

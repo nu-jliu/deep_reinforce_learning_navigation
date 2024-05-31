@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 import gym
@@ -32,7 +33,7 @@ class NuTurtleDRL(Node):
         )
 
         # self.timer = self.create_timer(0.01, self.timer_callback)
-
+        self.log_path = os.path.join(self.pkg_share_dir, "ppo_turtlebot3.log")
         self.get_logger().info("Setting up environment ...")
         self.env = NuTurtleEnv(node=self)
         self.model = PPO(
@@ -40,10 +41,11 @@ class NuTurtleDRL(Node):
             env=self.env,
             verbose=1,
             learning_rate=0.05,
-            n_steps=10,
+            # n_steps=10,
             n_epochs=10,
-            batch_size=10,
-            gamma=0.95,
+            # batch_size=10,
+            # gamma=0.95,
+            tensorboard_log=self.log_path,
         )
         # self.model = DQN(
         #     policy="MlpPolicy",
@@ -53,8 +55,8 @@ class NuTurtleDRL(Node):
         # )
         self.get_logger().warn("Start training ...")
         # self.model.set_logger(self.get_logger())
-        self.model.learn(total_timesteps=int(1e15))
-        self.model.save(f"{self.pkg_share_dir}/ppo_turtlebot3")
+        self.model.learn(total_timesteps=int(1e15), progress_bar=True)
+        self.model.save(os.path.join(self.pkg_share_dir, "ppo_turtlebot3"))
         self.get_logger().info("Training finished")
         # self.model = PPO(env=self.env)
 

@@ -1,7 +1,7 @@
 import numpy as np
 
-import gym
-from gym import spaces
+import gymnasium
+from gymnasium import spaces
 from stable_baselines3 import PPO
 
 import rclpy
@@ -21,7 +21,7 @@ import time
 import scipy.stats
 
 
-class NuTurtleEnv(gym.Env):
+class NuTurtleEnv(gymnasium.Env):
 
     def __init__(self, node: Node) -> None:
         super().__init__()
@@ -161,7 +161,7 @@ class NuTurtleEnv(gym.Env):
         reward = self.compute_reward(action)
         done = self.is_done()
 
-        return self.state, reward, done, {}
+        return self.state, reward, done, False, {}
 
     def compute_reward(self, action):
         # self.node.get_logger().info(f"State: {self.state}")
@@ -227,7 +227,7 @@ class NuTurtleEnv(gym.Env):
         # self.node.get_logger().info(f"angle: {e_angle}")
         return reward
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         request = Empty.Request()
 
         future = self.cli_reset_turtle.call_async(request=request)
@@ -235,7 +235,7 @@ class NuTurtleEnv(gym.Env):
 
         self.state = np.zeros(3, dtype=np.float64)
 
-        return self.state
+        return self.state, {}
 
     def is_done(self):
         if self.collide:
