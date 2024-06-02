@@ -8,24 +8,102 @@
 
 This repository consists of several ROS packages
 
-* [nuturtle_description](https://github.com/ME495-Navigation/slam-project-nu-jliu/tree/main/nuturtle_description) - Display the turtlebot in the rviz
+* [nuturtle_description](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nuturtle_description) - Display the turtlebot in the rviz
 
-* [turtlelib](https://github.com/ME495-Navigation/slam-project-nu-jliu/tree/main/turtlelib) - The library used for geometry calculations
+* [turtlelib](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/turtlelib) - The library used for geometry calculations
 
-* [nusim](https://github.com/ME495-Navigation/slam-project-nu-jliu/tree/main/nusim) - Simulate the turtlebot on rviz
+* [nusim](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nusim) - Simulate the turtlebot on rviz
 
-* [nuturtle_control](https://github.com/ME495-Navigation/slam-project-nu-jliu/tree/main/nuturtle_control) - Controls the motion of the turtlebot.
+* [nuturtle_control](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nuturtle_control) - Controls the motion of the turtlebot.
 
-* [nuslam](https://github.com/ME495-Navigation/slam-project-nu-jliu/tree/main/nuslam) - Using `Extended Kalman Filter` to perform `SLAM` algorithm on a turtlebot3
+* [nuslam](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nuslam) - Using `Extended Kalman Filter` to perform `SLAM` algorithm on a turtlebot3
+
+* [nuturtle_interfaces](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nuturtle_interfaces) - All message interfaces for communication between the nodes
+
+* [nuturtle_slam](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nuturtle_slam) - Intergrare `slam_toolbox` for setting up learning environment
+
+* [nuturtle_deep_rl](https://github.com/nu-jliu/deep_reinforce_learning_navigation/tree/main/nuturtle_deep_rl) - Wrapped with `OpenAI` gym for `DeepRL` traing environment
 
 ## Software Setup
 
-To install all required packages
+### System Requirement
+
+Ubuntu 22.04
+
+### Install ROS2 Iron
+
+Refer official `ROS2` document: [Install ROS2 Iron](https://docs.ros.org/en/iron/Installation/Ubuntu-Install-Debians.html)
+
+#### Set Locale
+
+```bash
+locale  # check for UTF-8
+
+sudo apt update && sudo apt install locales
+sudo locale-gen en_US en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+locale  # verify settings
+```
+
+#### Add Required Repositories
+
+Add `ROS2` GPG key
+
+```bash
+sudo apt update && sudo apt install curl -y
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+```
+
+Add repositories to `sources.list`
+
+```bash
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+```
+
+#### Install Development Tools
+
+```bash
+sudo apt update
+sudo apt install ros-dev-tools
+```
+
+#### Install `ROS2`
+
+Fetch updated respoitory
+
+```bash
+sudo apt update
+```
+
+Upgrade the system
+
+```bash
+sudo apt upgrade
+```
+
+Install `ROS2 Iron`
+
+```bash
+sudo apt install ros-iron-desktop-full
+```
+
+### Install All packages
+
+To install all required packages, first clone all source code
 
 ```bash
 mkdir -p ~/ws/slam_ws/src
 cd ~/ws/slam_ws
 vcs import --input https://raw.githubusercontent.com/ME495-Navigation/slam-project-nu-jliu/main/turtle.repos src
+```
+
+Build and install
+
+```bash
+cd ~/ws/slam_ws
+colcon build --symlink-install
 ```
 
 ## EFK-SLAM
