@@ -1,7 +1,7 @@
-# ME495 Sensing, Navigation and Machine Learning For Robotics
+# EE473 Deep Reinforcement Learning
 
 * Allen Liu
-* Winter 2024
+* Spring 2024
 * [Portfolio Post](https://nu-jliu.github.io/slam/)
 
 ## Package List
