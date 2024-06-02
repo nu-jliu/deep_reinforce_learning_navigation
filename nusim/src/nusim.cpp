@@ -121,6 +121,10 @@ private:
       msg_timestep.data = timestep_++;
       pub_timestep_->publish(msg_timestep);
 
+      Bool msg_collision;
+      msg_collision.data = collide_with_wall_;
+      pub_collide_->publish(msg_collision);
+
       if (++count_ >= static_cast<int>(0.2 / period_)) {
         generate_sensor_obs_pos_();
         // publish_laser_scan_();
@@ -130,11 +134,10 @@ private:
         count_ = 0;
       }
 
-      if (wheel_cmd_available_) {
-        update_turtlebot_pos_();
-        wheel_cmd_available_ = false;
-      }
-
+      // if (wheel_cmd_available_) {
+      //   update_turtlebot_pos_();
+      //   wheel_cmd_available_ = false;
+      // }
 
       publish_sensor_data_();
       publish_path_();
@@ -227,16 +230,10 @@ private:
       const turtlelib::Point2D pB = wall_curr.end;
       const turtlelib::Point2D pO{robot_x, robot_y};
 
-      Bool msg_colllide;
-
       if (turtlelib::line_circ_intersect(pA, pB, pO, collision_radius_)) {
         turtlebot_.update_config(pre_x, pre_y, pre_theta);
-        msg_colllide.data = true;
-      } else {
-        msg_colllide.data = false;
+        collide_with_wall_ = true;
       }
-
-      pub_collide_->publish(msg_colllide);
     }
   }
 
@@ -786,9 +783,12 @@ private:
     (void) request;
     (void) response;
 
+    RCLCPP_WARN_STREAM(get_logger(), "Resetting simulator");
+
     reset_turtle_pose_();
     poses_.clear();
     timestep_ = 0;
+    collide_with_wall_ = false;
   }
 
   /// \brief Callback function of the teleport service, teleport the turtlebot to a place
@@ -816,6 +816,7 @@ private:
     }
 
     wheel_cmd_ = *msg;
+    update_turtlebot_pos_();
   }
 
   /// timer
@@ -901,6 +902,7 @@ private:
   double wall_thickness_;
   double obstacle_height_;
   bool wheel_cmd_available_;
+  bool collide_with_wall_;
   std::string body_frame_id_;
   std::string scan_frame_id_;
   turtlelib::DiffDrive turtlebot_;
@@ -918,7 +920,7 @@ public:
   NuSim()
   : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
     wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
-    wheel_cmd_available_(false), body_frame_id_("red/base_footprint"),
+    wheel_cmd_available_(false), collide_with_wall_(false), body_frame_id_("red/base_footprint"),
     scan_frame_id_("red/base_scan")
   {
     /// parameter descriptions

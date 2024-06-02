@@ -52,9 +52,9 @@ private:
   /// @brief The timer callback of the turtle_control node.
   void timer_callback_()
   {
-    if (cmd_twist_available_) {
-      publish_wheel_cmd_();
-    }
+    // if (cmd_twist_available_) {
+    //   publish_wheel_cmd_();
+    // }
 
     if (sensor_data_available_) {
       publish_joint_states_();
@@ -76,6 +76,8 @@ private:
     cmd_twist_.angular.x = msg->angular.x;
     cmd_twist_.angular.y = msg->angular.y;
     cmd_twist_.angular.z = msg->angular.z;
+
+    publish_wheel_cmd_();
   }
 
   /// @brief The subcriber callback of the sensor_data message

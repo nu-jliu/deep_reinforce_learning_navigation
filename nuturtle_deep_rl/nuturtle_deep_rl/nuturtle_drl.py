@@ -40,12 +40,12 @@ class NuTurtleDRL(Node):
             policy="MlpPolicy",
             env=self.env,
             verbose=1,
-            learning_rate=0.05,
+            # learning_rate=0.05,
             # n_steps=10,
-            n_epochs=10,
+            # n_epochs=10,
             # batch_size=10,
             # gamma=0.95,
-            tensorboard_log=self.log_path,
+            # tensorboard_log=self.log_path,
         )
         # self.model = DQN(
         #     policy="MlpPolicy",
