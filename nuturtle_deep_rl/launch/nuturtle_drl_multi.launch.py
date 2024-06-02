@@ -1,3 +1,5 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.substitutions import PathJoinSubstitution
@@ -7,9 +9,10 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     package = "nuturtle_deep_rl"
+    num_env = int(os.getenv("NUM_GYM_ENV"))
     launch_descriptions = []
 
-    for i in range(10):
+    for i in range(num_env):
         # namespace = f"nuturtle_ns_{i+1}"
         launch_descriptions.append(
             GroupAction(

@@ -27,8 +27,8 @@ class NuTurtleEnv(gymnasium.Env):
         super().__init__()
         self.node = node
         self.action_space = spaces.Box(
-            low=np.array([0.0, -1.0]),
-            high=np.array([0.2, 1.0]),
+            low=np.array([0.0, -2.0]),
+            high=np.array([0.22, 2.0]),
             dtype=np.float64,
         )
         self.observation_space = spaces.Box(
@@ -232,6 +232,10 @@ class NuTurtleEnv(gymnasium.Env):
 
         future = self.cli_reset_turtle.call_async(request=request)
         rclpy.spin_until_future_complete(node=self.node, future=future)
+
+        if not future.done():
+            self.node.get_logger().error("ERROR: The service call is not complete")
+            raise RuntimeError("Service not complete")
 
         self.state = np.zeros(3, dtype=np.float64)
 

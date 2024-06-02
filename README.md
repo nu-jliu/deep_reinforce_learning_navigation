@@ -106,7 +106,7 @@ cd ~/ws/slam_ws
 colcon build --symlink-install
 ```
 
-## EFK-SLAM
+<!-- ## EFK-SLAM
 
 ### Software Structure
 
@@ -123,6 +123,18 @@ ros2 launch nuslam landmarks.launch.xml cmd_src:=teleop
 
 ### Video Demo
 
-<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/1090f3eb-7a68-45b1-9b95-fd0f915f2d55" controls></video>
+<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/1090f3eb-7a68-45b1-9b95-fd0f915f2d55" controls></video> -->
 
-<!-- ![demo](https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/1090f3eb-7a68-45b1-9b95-fd0f915f2d55) -->
+## Deep Reinforcement Learning
+
+### Software Structure
+
+The `rqt_graph` of the entire system is shown in the figure below:
+
+![rqt_graph](rosgraph.svg)
+
+### Video Demo
+
+#### Train
+
+The Training process is shown in the video below:
