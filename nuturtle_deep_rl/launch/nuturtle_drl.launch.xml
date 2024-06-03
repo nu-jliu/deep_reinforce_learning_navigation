@@ -1,13 +1,21 @@
 <launch>
+    <arg name="drl_algorithm" default="ppo" />
+
     <include file="$(find-pkg-share nuturtle_slam)/launch/nuturtle_slam.launch.xml">
         <arg name="teleop" value="false" />
         <arg name="slam" value="false" />
         <arg name="use_rviz" value="false" />
     </include>
 
-    <node pkg="nuturtle_deep_rl" exec="deep_rl_node" name="deep_rl_node" output="screen">
+    <node
+        pkg="nuturtle_deep_rl"
+        exec="deep_rl_node"
+        name="deep_rl_$(var drl_algorithm)"
+        output="screen"
+    >
         <param from="$(find-pkg-share nuturtle_deep_rl)/config/deep_rl.yaml" />
         <param name="pkg_share_dir" value="$(find-pkg-share nuturtle_deep_rl)" />
+        <param name="algorithm" value="$(var drl_algorithm)" />
     </node>
 
     <node pkg="rviz2" exec="rviz2" name="rviz2"

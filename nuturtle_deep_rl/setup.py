@@ -13,7 +13,10 @@ setup(
         ("share/" + package_name + "/launch", glob("launch/*")),
         ("share/" + package_name + "/config", glob("config/*")),
     ],
-    py_modules=[(package_name + ".nuturtle_env")],
+    py_modules=[
+        (package_name + ".nuturtle_ppo_env"),
+        (package_name + ".nuturtle_dqn_env"),
+    ],
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="jliu",

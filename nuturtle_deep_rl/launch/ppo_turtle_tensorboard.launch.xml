@@ -1,0 +1,6 @@
+<launch>
+    <executable
+        cmd="tensorboard --logdir $(find-pkg-share nuturtle_deep_rl)/ppo_turtlebot3.log"
+        shell="True"
+    />
+</launch>

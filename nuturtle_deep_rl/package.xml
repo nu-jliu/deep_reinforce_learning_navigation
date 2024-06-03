@@ -3,9 +3,9 @@
 <package format="3">
     <name>nuturtle_deep_rl</name>
     <version>0.0.0</version>
-    <description>TODO: Package description</description>
-    <maintainer email="JingkunLiu2025@u.northwestern.edu">jliu</maintainer>
-    <license>TODO: License declaration</license>
+    <description>Deep Reinforcement Learning for Turtlebot3 Navigation</description>
+    <maintainer email="JingkunLiu2025@u.northwestern.edu">Allen Liu</maintainer>
+    <license>MIT</license>
 
     <test_depend>ament_copyright</test_depend>
     <test_depend>ament_flake8</test_depend>

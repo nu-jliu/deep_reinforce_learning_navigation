@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Optional
 
 import gymnasium
 from gymnasium import spaces
@@ -21,7 +22,7 @@ import time
 import scipy.stats
 
 
-class NuTurtleEnv(gymnasium.Env):
+class NuTurtlePPOEnv(gymnasium.Env):
 
     def __init__(self, node: Node) -> None:
         super().__init__()
@@ -158,8 +159,13 @@ class NuTurtleEnv(gymnasium.Env):
         rclpy.spin_once(node=self.node)
         self.update_state()
 
-        reward = self.compute_reward(action)
+        # reward = self.compute_reward(action)
         done = self.is_done()
+
+        if done:
+            reward = 0.0
+        else:
+            reward = 1.0
 
         return self.state, reward, done, False, {}
 
@@ -227,7 +233,12 @@ class NuTurtleEnv(gymnasium.Env):
         # self.node.get_logger().info(f"angle: {e_angle}")
         return reward
 
-    def reset(self, *args, **kwargs):
+    def reset(
+        self,
+        *,
+        seed: Optional[int] = None,
+        options: Optional[dict] = None,
+    ):
         request = Empty.Request()
 
         future = self.cli_reset_turtle.call_async(request=request)
