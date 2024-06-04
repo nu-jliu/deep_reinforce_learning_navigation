@@ -64,6 +64,7 @@ class NuTurtleDRL(Node):
                 policy="MlpPolicy",
                 env=self.env_dqn,
                 verbose=1,
+                policy_kwargs=dict(net_arch=[64, 64]),
                 # learning_rate=0.01,
                 tensorboard_log=self.log_path,
             )
@@ -82,7 +83,8 @@ class NuTurtleDRL(Node):
                 # n_steps=10,
                 # n_epochs=10,
                 # batch_size=10,
-                gamma=0.95,
+                # gamma=0.95,
+                policy_kwargs=dict(net_arch=[64, 64]),
                 tensorboard_log=self.log_path,
             )
 
