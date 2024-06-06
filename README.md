@@ -134,7 +134,12 @@ The `rqt_graph` of the entire system is shown in the figure below:
 ![rqt_graph](rosgraph.svg)
 
 ### Video Demo
+https://github.com/nu-jliu/deep_reinforce_learning_navigation/assets/49068329/805b5a28-166a-4720-b573-a29af80eb05f
 
 #### Train
-
 The Training process is shown in the video below:
+
+https://github.com/nu-jliu/deep_reinforce_learning_navigation/assets/49068329/7440550b-90f7-4124-9d45-86449c826d3b
+
+
+
