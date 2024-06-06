@@ -106,24 +106,29 @@ cd ~/ws/slam_ws
 colcon build --symlink-install
 ```
 
-<!-- ## EFK-SLAM
+### Launch the Traning Sessions
 
-### Software Structure
-
-The rqt_graph is shown in the figure below:
-![rosgraph](nuslam/images/rosgraph_landmark.svg)
-
-### Launch
-
-To launch the slam with landmark detection in simulation run
+Before launching the code, need to source the workspace first:
 
 ```bash
-ros2 launch nuslam landmarks.launch.xml cmd_src:=teleop
+source /opt/ros/iron/setup.bash
+source install/setup.bash
 ```
 
-### Video Demo
+#### Launch single training session
 
-<video src="https://github.com/ME495-Navigation/slam-project-nu-jliu/assets/49068329/1090f3eb-7a68-45b1-9b95-fd0f915f2d55" controls></video> -->
+```bash
+ros2 launch nuturtle_deep_rl nuturtle_drl.launch.xml
+```
+
+#### Launch multiple traning session
+
+```bash
+export NUM_GYM_ENV=<X>
+ros2 launch nuturtle_deep_rl nuturtle_drl_multi.launch.py
+```
+
+Where `<X>` stands for number of the environment for each algorithm
 
 ## Deep Reinforcement Learning
 
@@ -134,12 +139,11 @@ The `rqt_graph` of the entire system is shown in the figure below:
 ![rqt_graph](rosgraph.svg)
 
 ### Video Demo
-https://github.com/nu-jliu/deep_reinforce_learning_navigation/assets/49068329/805b5a28-166a-4720-b573-a29af80eb05f
+
+<https://github.com/nu-jliu/deep_reinforce_learning_navigation/assets/49068329/805b5a28-166a-4720-b573-a29af80eb05f>
 
 #### Train
+
 The Training process is shown in the video below:
 
-https://github.com/nu-jliu/deep_reinforce_learning_navigation/assets/49068329/7440550b-90f7-4124-9d45-86449c826d3b
-
-
-
+<https://github.com/nu-jliu/deep_reinforce_learning_navigation/assets/49068329/7440550b-90f7-4124-9d45-86449c826d3b>
