@@ -16,7 +16,7 @@ from launch.substitutions import (
     TextSubstitution,
 )
 
-package_name = "nuturtle_description"
+PACKAGE_NAME = "nuturtle_description"
 
 
 def generate_launch_description():
@@ -40,6 +40,11 @@ def generate_launch_description():
                 choices=["red", "green", "blue", "purple"],
                 description="The color of the base link",
             ),
+            DeclareLaunchArgument(
+                name="robot_name",
+                default_value="bot_0",
+                description="The name of the robot",
+            ),
             SetLaunchConfiguration(
                 name="config_filename",
                 value=[
@@ -50,7 +55,7 @@ def generate_launch_description():
             ),
             GroupAction(
                 actions=[
-                    PushROSNamespace(LaunchConfiguration("color")),
+                    PushROSNamespace(LaunchConfiguration("robot_name")),
                     Node(
                         package="rviz2",
                         executable="rviz2",
@@ -60,7 +65,7 @@ def generate_launch_description():
                             "-d",
                             PathJoinSubstitution(
                                 [
-                                    FindPackageShare(package=package_name),
+                                    FindPackageShare(package=PACKAGE_NAME),
                                     "config",
                                     LaunchConfiguration("config_filename"),
                                 ]
@@ -79,7 +84,11 @@ def generate_launch_description():
                         package="joint_state_publisher",
                         executable="joint_state_publisher",
                         name="joint_state_publisher",
-                        parameters=[{"rate": 100}],
+                        parameters=[
+                            {
+                                "rate": 100,
+                            },
+                        ],
                         condition=IfCondition(LaunchConfiguration("use_jsp")),
                         on_exit=Shutdown(),
                     ),
@@ -95,7 +104,7 @@ def generate_launch_description():
                                         TextSubstitution(text=" "),
                                         PathJoinSubstitution(
                                             [
-                                                FindPackageShare(package=package_name),
+                                                FindPackageShare(package=PACKAGE_NAME),
                                                 "urdf",
                                                 "turtlebot3_burger.urdf.xacro",
                                             ]
@@ -105,7 +114,7 @@ def generate_launch_description():
                                     ]
                                 ),
                                 "frame_prefix": PathJoinSubstitution(
-                                    [LaunchConfiguration("color"), ""]
+                                    [LaunchConfiguration("robot_name"), ""]
                                 ),
                             }
                         ],

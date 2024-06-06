@@ -1,10 +1,23 @@
 <launch>
     <arg name="drl_algorithm" default="ppo" />
+    <arg name="robot_name" default="bot_0" />
+    <arg name="use_rviz" default="true" />
+    <arg name="multi" default="true" />
+
+    <group if="$(var use_rviz)">
+        <node
+            pkg="rviz2"
+            exec="rviz2"
+            name="rviz2"
+            args="-d $(find-pkg-share nuturtle_deep_rl)/config/drl.rviz"
+        />
+    </group>
 
     <include file="$(find-pkg-share nuturtle_slam)/launch/nuturtle_slam.launch.xml">
         <arg name="teleop" value="false" />
         <arg name="slam" value="false" />
         <arg name="use_rviz" value="false" />
+        <arg name="robot_name" value="$(var robot_name)" />
     </include>
 
     <node
@@ -18,6 +31,16 @@
         <param name="algorithm" value="$(var drl_algorithm)" />
     </node>
 
-    <node pkg="rviz2" exec="rviz2" name="rviz2"
-        args="-d $(find-pkg-share nuturtle_deep_rl)/config/drl.rviz" />
+    <group unless="$(var multi)">
+        <node pkg="nusim" exec="nusim" name="draw">
+            <param name="draw_only" value="True" />
+            <param name="odom_frame_id" value="nusim/world" />
+            <param name="body_frame_id" value="$(var robot_name)/base_footprint" />
+            <param name="scan_frame_id" value="$(var robot_name)/base_scan" />
+            <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+            <!-- <remap from="wheel_cmd" to="$(var robot_name)/wheel_cmd" /> -->
+            <!-- <remap from="sensor_data" to="$(var robot_name)/sensor_data" /> -->
+        </node>
+    </group>
 </launch>

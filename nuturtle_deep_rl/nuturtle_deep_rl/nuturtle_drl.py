@@ -1,18 +1,10 @@
 import os
-import numpy as np
-
-import gym
-from gym import spaces
 from stable_baselines3 import PPO, DQN
 
 import rclpy
 from rclpy.node import Node
 
-from tf2_ros import TransformListener, Buffer
-
 from rcl_interfaces.msg import ParameterDescriptor
-from geometry_msgs.msg import Twist
-from nav_msgs.msg import OccupancyGrid
 
 from nuturtle_deep_rl.nuturtle_ppo_env import NuTurtlePPOEnv
 from nuturtle_deep_rl.nuturtle_dqn_env import NuTurtleDQNEnv
@@ -51,7 +43,6 @@ class NuTurtleDRL(Node):
             self.get_parameter("algorithm").get_parameter_value().string_value
         )
 
-        # self.timer = self.create_timer(0.01, self.timer_callback)
         self.log_path = os.path.join(
             self.pkg_share_dir,
             f"{self.algorithm}_{self.log_dirname}",
@@ -65,7 +56,6 @@ class NuTurtleDRL(Node):
                 env=self.env_dqn,
                 verbose=1,
                 policy_kwargs=dict(net_arch=[64, 64]),
-                # learning_rate=0.01,
                 tensorboard_log=self.log_path,
             )
 
@@ -79,11 +69,6 @@ class NuTurtleDRL(Node):
                 policy="MlpPolicy",
                 env=self.env_ppo,
                 verbose=1,
-                # learning_rate=0.05,
-                # n_steps=10,
-                # n_epochs=10,
-                # batch_size=10,
-                # gamma=0.95,
                 policy_kwargs=dict(net_arch=[64, 64]),
                 tensorboard_log=self.log_path,
             )
@@ -93,9 +78,7 @@ class NuTurtleDRL(Node):
             for name, layer in net.named_children():
                 self.get_logger().info(f"{name}, {layer}")
 
-        # self.get_logger().info(f"{self.model.policy}")
         self.get_logger().warn("Start training ...")
-        # self.model.set_logger(self.get_logger())
         self.model.learn(total_timesteps=int(1e15), progress_bar=True, log_interval=1)
         self.model.save(
             os.path.join(
@@ -104,10 +87,6 @@ class NuTurtleDRL(Node):
             )
         )
         self.get_logger().info("Training finished")
-        # self.model = PPO(env=self.env)
-
-    # def timer_callback(self):
-    #     pass
 
 
 def main(args=None):

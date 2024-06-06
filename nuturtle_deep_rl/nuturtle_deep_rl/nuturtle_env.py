@@ -29,11 +29,6 @@ class NuTurtleEnv(gymnasium.Env):
     def __init__(self, node: Node) -> None:
         super().__init__()
         self.node = node
-        # self.action_space = spaces.Box(
-        #     low=np.array([0.0, -2.0]),
-        #     high=np.array([0.22, 2.0]),
-        #     dtype=np.float64,
-        # )
         self.action_space = spaces.Discrete(n=3, seed=42)
         self.observation_space = spaces.Box(
             low=np.array([-1.0, -0.5, -np.pi]),
@@ -42,7 +37,6 @@ class NuTurtleEnv(gymnasium.Env):
             shape=(3,),
         )
         self.reward_range = (-1.0, 1.0)
-        # self.time_
         self.odom: Odometry = None
         self.state = np.zeros(3)
         self.collide = False
@@ -119,13 +113,10 @@ class NuTurtleEnv(gymnasium.Env):
 
     def sub_odom_callback(self, msg: Odometry):
         self.odom = msg
-        # self.node.get_logger().warn(f"got odom: {msg.pose.pose.position}")
-        # self.node.get_logger().info(f"State: {self.state}")
 
     def sub_collide_callback(self, msg: Bool):
         if msg.data:
             self.collide = True
-        # self.node.get_logger().info(f"Collsion: {self.collide}")
 
     def update_state(self):
         if self.odom is None:
@@ -143,7 +134,6 @@ class NuTurtleEnv(gymnasium.Env):
 
             q = (qx, qy, qz, qw)
             e = euler_from_quaternion(q)
-            # self.node.get_logger().info(f"euler angle: {e}")
             theta = self.normalize_angle(e[2])
 
             self.state = np.array([x, y, theta])

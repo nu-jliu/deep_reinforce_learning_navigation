@@ -257,6 +257,7 @@ private:
     tf_broadcaster_->sendTransform(tf);
   }
 
+  /// \brief publish the odometry data
   void publish_odom_()
   {
     Odometry odom;
@@ -883,6 +884,8 @@ private:
   bool draw_only_;
   std::string odom_frame_id_;
   std::string world_frame_id_;
+  std::string body_frame_id_;
+  std::string scan_frame_id_;
   std::vector<double> wall_starts_x_;
   std::vector<double> wall_starts_y_;
   std::vector<double> wall_ends_x_;
@@ -903,8 +906,6 @@ private:
   double obstacle_height_;
   bool wheel_cmd_available_;
   bool collide_with_wall_;
-  std::string body_frame_id_;
-  std::string scan_frame_id_;
   turtlelib::DiffDrive turtlebot_;
   std::vector<PoseStamped> poses_;
   std::default_random_engine generator_;
@@ -920,8 +921,7 @@ public:
   NuSim()
   : Node("nusim"), marker_qos_(10), laser_qos_(10), count_(0), timestep_(0), wall_r_(1.0),
     wall_g_(0.0), wall_b_(0.0), wall_height_(0.25), wall_thickness_(0.1), obstacle_height_(0.25),
-    wheel_cmd_available_(false), collide_with_wall_(false), body_frame_id_("red/base_footprint"),
-    scan_frame_id_("red/base_scan")
+    wheel_cmd_available_(false), collide_with_wall_(false)
   {
     /// parameter descriptions
     ParameterDescriptor rate_des;
@@ -950,6 +950,8 @@ public:
     ParameterDescriptor draw_only_des;
     ParameterDescriptor odom_frame_id_des;
     ParameterDescriptor world_frame_id_des;
+    ParameterDescriptor body_frame_id_des;
+    ParameterDescriptor scan_frame_id_des;
     ParameterDescriptor wall_starts_x_des;
     ParameterDescriptor wall_starts_y_des;
     ParameterDescriptor wall_ends_x_des;
@@ -980,6 +982,8 @@ public:
     draw_only_des.description = "Whether this is behave as draw only";
     odom_frame_id_des.description = "The frame id of the odom frame";
     world_frame_id_des.description = "The frame id of the world frame";
+    body_frame_id_des.description = "The frame id of the body frame";
+    scan_frame_id_des.description = "The frame id of the world frame";
     wall_starts_x_des.description = "The start x coordinates of the wall";
     wall_starts_y_des.description = "The start y coordinates of the wall";
     wall_ends_x_des.description = "The end x coordinates of the wall";
@@ -1020,6 +1024,8 @@ public:
     declare_parameter<bool>("draw_only", false, draw_only_des);
     declare_parameter<std::string>("odom_frame_id", "nusim/world", odom_frame_id_des);
     declare_parameter<std::string>("world_frame_id", "nusim/world", world_frame_id_des);
+    declare_parameter<std::string>("body_frame_id", "bot_0/base_footprint", body_frame_id_des);
+    declare_parameter<std::string>("scan_frame_id", "bot_0/base_footprint", scan_frame_id_des);
     declare_parameter<std::vector<double>>(
       "wall_starts.x",
       std::vector<double>{0.0},
@@ -1069,6 +1075,8 @@ public:
     draw_only_ = get_parameter("draw_only").as_bool();
     odom_frame_id_ = get_parameter("odom_frame_id").as_string();
     world_frame_id_ = get_parameter("world_frame_id").as_string();
+    body_frame_id_ = get_parameter("body_frame_id").as_string();
+    scan_frame_id_ = get_parameter("scan_frame_id").as_string();
     wall_starts_x_ = get_parameter("wall_starts.x").as_double_array();
     wall_starts_y_ = get_parameter("wall_starts.y").as_double_array();
     wall_ends_x_ = get_parameter("wall_ends.x").as_double_array();
@@ -1094,8 +1102,6 @@ public:
       distribution_laser_ = std::normal_distribution<double>(0.0, sqrt(basic_sensor_variance_));
       reset_turtle_pose_();
 
-      // set marker qos policy
-      marker_qos_.transient_local();
       // laser_qos_.transient_local();
       laser_qos_.best_effort();
       laser_qos_.durability_volatile();
@@ -1121,13 +1127,13 @@ public:
       // subscribers
       sub_wheel_cmd_ =
         create_subscription<WheelCommands>(
-        "red/wheel_cmd", 10,
+        "wheel_cmd", 10,
         std::bind(&NuSim::sub_wheel_cmd_callback_, this, std::placeholders::_1));
 
       // publishers
       pub_timestep_ = create_publisher<UInt64>("~/timestep", 10);
       pub_collide_ = create_publisher<Bool>("~/collide", 10);
-      pub_sensor_data_ = create_publisher<SensorData>("red/sensor_data", 10);
+      pub_sensor_data_ = create_publisher<SensorData>("sensor_data", 10);
       pub_fake_sensor_markers_ = create_publisher<MarkerArray>("fake_sensor", marker_qos_);
       pub_path_ = create_publisher<Path>("~/path", 10);
       pub_footprint_ = create_publisher<PolygonStamped>("~/footprint", 10);
@@ -1135,17 +1141,24 @@ public:
       pub_laser_scan_ = create_publisher<LaserScan>("scan", laser_qos_);
       pub_obstacles_ = create_publisher<ObstacleMeasurements>("obs_pos", 10);
     }
-    pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
-    pub_cell_markers_ = create_publisher<MarkerArray>("~/cells", marker_qos_);
-    pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
 
     /// transform broadcasters
     tf_broadcaster_ = std::make_unique<TransformBroadcaster>(*this);
 
     parse_walls_();
-    publish_wall_markers_();
-    publish_cell_markers_();
-    publish_obstacle_markers_();
+
+    if (draw_only_) {
+      // set marker qos policy
+      marker_qos_.transient_local();
+
+      pub_wall_markers_ = create_publisher<MarkerArray>("~/walls", marker_qos_);
+      pub_cell_markers_ = create_publisher<MarkerArray>("~/cells", marker_qos_);
+      pub_obstacle_markers_ = create_publisher<MarkerArray>("~/obstacles", marker_qos_);
+
+      publish_wall_markers_();
+      publish_cell_markers_();
+      publish_obstacle_markers_();
+    }
   }
 };
 

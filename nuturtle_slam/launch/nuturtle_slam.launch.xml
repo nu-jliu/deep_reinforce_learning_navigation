@@ -3,6 +3,7 @@
     <arg name="teleop" default="true" />
     <arg name="slam" default="true" />
     <arg name="use_rviz" default="true" />
+    <arg name="robot_name" default="bot_0" />
 
 
     <group if="$(var teleop)">
@@ -23,6 +24,7 @@
             <arg name="use_rviz" value="false" />
             <arg name="use_jsp" value="false" />
             <arg name="odom_frame_id" value="odom" />
+            <arg name="robot_name" value="$(var robot_name)" />
         </include>
     </group>
 
@@ -31,14 +33,15 @@
             <arg name="use_rviz" value="false" />
             <arg name="use_jsp" value="false" />
             <arg name="odom_frame_id" value="nusim/world" />
+            <arg name="robot_name" value="$(var robot_name)" />
         </include>
     </group>
 
     <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-        <remap from="joint_states" to="red/joint_states" />
-        <remap from="wheel_cmd" to="red/wheel_cmd" />
-        <remap from="sensor_data" to="red/sensor_data" />
+        <remap from="joint_states" to="$(var robot_name)/joint_states" />
+        <!-- <remap from="wheel_cmd" to="$(var robot_name)/wheel_cmd" /> -->
+        <!-- <remap from="sensor_data" to="$(var robot_name)/sensor_data" /> -->
     </node>
 
     <group if="$(var slam)">
