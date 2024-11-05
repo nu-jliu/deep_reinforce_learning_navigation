@@ -2,7 +2,7 @@
 
 * Allen Liu
 * Spring 2024
-* [Portfolio Post](https://nu-jliu.github.io/slam/)
+* [Portfolio Post](https://nu-jliu.github.io/deeprl/)
 
 ## Package List
 
